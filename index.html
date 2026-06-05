@@ -14,7 +14,8 @@ body{background:#0d1117;color:#e6edf3;font-family:-apple-system,"Microsoft Jheng
 .tab{padding:5px 12px;border-radius:6px;border:1px solid #30363d;background:#21262d;color:#8b949e;cursor:pointer;font-size:12px}
 .tab.on{background:#e3b341;color:#0d1117;border-color:#e3b341;font-weight:700}
 .btn-refresh{padding:5px 14px;border-radius:6px;border:1px solid #26a641;background:#0d2a12;color:#26a641;cursor:pointer;font-size:12px;font-weight:700}
-.sgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:6px;margin-bottom:10px}
+.sgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(115px,1fr));gap:6px;margin-bottom:10px}
+.mkt-label{font-size:13px;font-weight:700;color:#e3b341;margin:8px 0 5px;padding-left:2px}
 .sc{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:9px;cursor:pointer}
 .sc.on{border:2px solid #e3b341}
 .sc-nm{font-size:10px;color:#8b949e}
@@ -54,16 +55,16 @@ body{background:#0d1117;color:#e6edf3;font-family:-apple-system,"Microsoft Jheng
 <div class="hdr">
   <div><div class="title">🤖 AI股監控</div><div class="sub">Google AI王朝供應鏈 ｜ 即時資料</div></div>
   <div class="tabs">
+    <button class="btn-refresh" onclick="loadAll()">🔄 更新</button>
     <button class="tab on" id="tAll" onclick="setMkt('all',this)">全部</button>
+    <button class="tab" onclick="setView('summary',this)">總覽</button>
     <button class="tab" onclick="setMkt('TW',this)">台股</button>
     <button class="tab" onclick="setMkt('US',this)">美股</button>
-    <button class="tab" id="vChart" onclick="setView('chart',this)">K線</button>
-    <button class="tab" onclick="setView('summary',this)">總覽</button>
-    <button class="btn-refresh" onclick="loadAll()">🔄 更新</button>
+    <button class="tab" onclick="setView('calc',this)">🧮 計算機</button>
   </div>
 </div>
 
-<div class="sgrid" id="sgrid"><div class="loading">載入中...</div></div>
+<div id="sgrid"><div class="loading">載入中...</div></div>
 <div id="mainView"></div>
 <div class="tt" id="tt"></div>
 
@@ -72,10 +73,19 @@ const STOCKS=[
   {sym:"2330.TW",name:"台積電",mkt:"TW",cur:"TWD"},
   {sym:"3017.TW",name:"奇鋐",mkt:"TW",cur:"TWD"},
   {sym:"3324.TW",name:"雙鴻",mkt:"TW",cur:"TWD"},
+  {sym:"6873.TW",name:"泓德能源",mkt:"TW",cur:"TWD"},
+  {sym:"0050.TW",name:"元大台灣50",mkt:"TW",cur:"TWD"},
+  {sym:"0056.TW",name:"元大高股息",mkt:"TW",cur:"TWD"},
   {sym:"GOOGL",name:"Google",mkt:"US",cur:"USD"},
-  {sym:"NVDA",name:"輝達",mkt:"US",cur:"USD"},
+  {sym:"NVDA",name:"NVDA 輝達",mkt:"US",cur:"USD"},
+  {sym:"AAPL",name:"AAPL 蘋果",mkt:"US",cur:"USD"},
+  {sym:"TSLA",name:"TSLA 特斯拉",mkt:"US",cur:"USD"},
   {sym:"ENPH",name:"ENPH",mkt:"US",cur:"USD"},
   {sym:"MRVL",name:"MRVL",mkt:"US",cur:"USD"},
+  {sym:"BE",name:"BE 能源",mkt:"US",cur:"USD"},
+  {sym:"QQQ",name:"QQQ",mkt:"US",cur:"USD"},
+  {sym:"GLD",name:"GLD 黃金",mkt:"US",cur:"USD"},
+  {sym:"IAU",name:"IAU 黃金",mkt:"US",cur:"USD"},
 ];
 
 const DB={};
@@ -161,27 +171,38 @@ async function loadAll(){
 }
 
 function setMkt(m,el){curMkt=m;document.querySelectorAll('.tabs .tab').forEach((t,i)=>{if(i<3)t.classList.remove('on');});el.classList.add('on');renderGrid();}
-function setView(v,el){curView=v;if(v==='summary')renderSummary();else renderChart(curSym);}
+function setView(v,el){curView=v;if(v==='summary')renderSummary();else if(v==='calc')renderCalcPage();else renderChart(curSym);}
 function selectSym(sym){curSym=sym;renderGrid();if(curView==='chart')renderChart(sym);else renderSummary();}
 
+function cardHTML(s){
+  const db=DB[s.sym];
+  if(!db)return`<div class="sc"><div class="sc-nm">${s.name}</div><div style="color:#f85149;font-size:11px">無資料</div></div>`;
+  const chg=rnd(db.last.c-db.prev.c),chgP=rnd(chg/db.prev.c*100);
+  const cls=chg>0?'up':chg<0?'dn':'fl';
+  return`<div class="sc${s.sym===curSym?' on':''}" onclick="selectSym('${s.sym}')">
+    <div class="sc-nm">${s.name}</div><div class="sc-pr ${cls}">${db.last.c}</div>
+    <div class="sc-ch ${cls}">${chg>0?'+':''}${chg} (${chgP>0?'+':''}${chgP}%)</div>
+    </div>`;
+}
 function renderGrid(){
-  const filtered=STOCKS.filter(s=>curMkt==='all'||s.mkt===curMkt);
-  document.getElementById('sgrid').innerHTML=filtered.map(s=>{
-    const db=DB[s.sym];
-    if(!db)return`<div class="sc"><div class="sc-nm">${s.sym}</div><div style="color:#f85149;font-size:11px">無資料</div></div>`;
-    const chg=rnd(db.last.c-db.prev.c),chgP=rnd(chg/db.prev.c*100);
-    const cls=chg>0?'up':chg<0?'dn':'fl';
-    return`<div class="sc${s.sym===curSym?' on':''}" onclick="selectSym('${s.sym}')">
-      <div class="sc-nm">${s.sym}</div><div class="sc-pr ${cls}">${db.last.c}</div>
-      <div class="sc-ch ${cls}">${chg>0?'+':''}${chg} (${chgP>0?'+':''}${chgP}%)</div>
-      <div style="font-size:10px;color:#8b949e;margin-top:3px">${s.name}</div></div>`;
-  }).join('');
+  const tw=STOCKS.filter(s=>s.mkt==='TW');
+  const us=STOCKS.filter(s=>s.mkt==='US');
+  let html='';
+  if(curMkt==='all'||curMkt==='TW'){
+    html+=`<div class="mkt-label">📌 台股</div>`;
+    html+=`<div class="sgrid">${tw.map(cardHTML).join('')}</div>`;
+  }
+  if(curMkt==='all'||curMkt==='US'){
+    html+=`<div class="mkt-label">🌐 美股</div>`;
+    html+=`<div class="sgrid">${us.map(cardHTML).join('')}</div>`;
+  }
+  document.getElementById('sgrid').innerHTML=html;
 }
 
 function renderChart(sym){
   const stk=STOCKS.find(s=>s.sym===sym),db=DB[sym];
   if(!db){document.getElementById('mainView').innerHTML='<div class="panel"><div class="loading">此股票無資料</div></div>';return;}
-  const SHOW=30;
+  const SHOW=22;
   const slice=db.data.slice(-SHOW);
   const m5=db.ma5.slice(-SHOW),m10=db.ma10.slice(-SHOW),m20=db.ma20.slice(-SHOW),m60=db.ma60.slice(-SHOW);
   const kd=db.kd.slice(-SHOW),hist=db.macd.hist.slice(-SHOW),dif=db.macd.dif.slice(-SHOW);
@@ -202,7 +223,7 @@ function renderChart(sym){
   document.getElementById('mainView').innerHTML=`
 <div class="panel">
   <div class="phead">
-    <div><div class="pname">${stk.name} (${sym})</div><div style="font-size:10px;color:#8b949e">近30日K線 ｜ 滑鼠移到K線看數據</div></div>
+    <div><div class="pname">${stk.name} (${sym})</div><div style="font-size:10px;color:#8b949e">近一個月K線 ｜ 滑鼠移到K線看數據</div></div>
     <div style="text-align:right"><div class="ppr ${chgCls}">${db.last.c} ${stk.cur}</div><div style="font-size:11px" class="${chgCls}">${chg>0?'+':''}${chg} (${chgP>0?'+':''}${chgP}%)</div></div>
   </div>
   <div class="ma-row">
@@ -294,38 +315,109 @@ function drawMACD(id,hist,dif){
   [mn,0,mx].forEach(v=>{ctx.fillStyle='#8b949e';ctx.font='9px Arial';ctx.textAlign='left';ctx.fillText(v.toFixed(2),W-P.r+4,yS(v)+3);});
 }
 
+function summaryRow(s){
+  const db=DB[s.sym];
+  if(!db)return`<tr><td>${s.name}</td><td colspan="7" style="color:#f85149">無資料</td></tr>`;
+  const last=db.last,prev=db.prev,chg=rnd(last.c-prev.c),chgP=rnd(chg/prev.c*100);
+  const kL=db.kd[db.kd.length-1],kP=db.kd[db.kd.length-2];
+  const hL=db.macd.hist[db.macd.hist.length-1],hP=db.macd.hist[db.macd.hist.length-2];
+  const m20=db.ma20[db.ma20.length-1],m20p=db.ma20[db.ma20.length-2];
+  const al=[];
+  if(kP&&kP.K<kP.D&&kL.K>kL.D)al.push(`<span class="badge s-gold">KD金叉</span>`);
+  if(m20&&last.c>m20&&prev.c<=m20p)al.push(`<span class="badge s-blue">突破20MA</span>`);
+  else if(m20&&Math.abs(last.c-m20)/m20<=0.03)al.push(`<span class="badge s-blue">近20MA</span>`);
+  if(hP<0&&hL>0)al.push(`<span class="badge s-grn">MACD翻正</span>`);
+  const rp=db.pats.filter(p=>p.i>=db.data.length-3);
+  [...new Map(rp.map(p=>[p.type,p])).values()].forEach(p=>al.push(`<span class="badge ${p.type.includes('早晨')?'s-prp':p.type.includes('錘')?'s-grn':'s-gold'}">${p.type}</span>`));
+  if(!al.length)al.push(`<span class="badge s-gray">無訊號</span>`);
+  const cls=chg>0?'up':chg<0?'dn':'fl';
+  return`<tr style="cursor:pointer" onclick="selectSym('${s.sym}');setView('chart')">
+    <td><b>${s.name}</b></td>
+    <td class="${cls}">${last.c}</td><td class="${cls}">${chg>0?'+':''}${chg}<br>${chgP>0?'+':''}${chgP}%</td>
+    <td style="color:#e3b341">${db.ma5[db.ma5.length-1]??'—'}</td>
+    <td style="color:#bc8cff">${m20??'—'}</td><td style="color:#26a641">${db.ma60[db.ma60.length-1]??'—'}</td>
+    <td>${kL.K}/${kL.D}</td><td>${al.join('')}</td></tr>`;
+}
+function summaryTable(stocks,title){
+  return`<div style="font-size:13px;font-weight:700;margin:12px 0 4px;color:#e3b341">${title}</div>
+  <table class="sum-tbl"><thead><tr><th>股票</th><th>收盤</th><th>漲跌</th><th style="color:#e3b341">MA5</th><th style="color:#bc8cff">MA20</th><th style="color:#26a641">MA60</th><th>K/D</th><th>⚠️ 入場訊號</th></tr></thead>
+  <tbody>${stocks.map(summaryRow).join('')}</tbody></table>`;
+}
 function renderSummary(){
-  const rows=STOCKS.map(s=>{
-    const db=DB[s.sym];
-    if(!db)return`<tr><td>${s.sym}</td><td colspan="7" style="color:#f85149">無資料</td></tr>`;
-    const last=db.last,prev=db.prev,chg=rnd(last.c-prev.c),chgP=rnd(chg/prev.c*100);
-    const kL=db.kd[db.kd.length-1],kP=db.kd[db.kd.length-2];
-    const hL=db.macd.hist[db.macd.hist.length-1],hP=db.macd.hist[db.macd.hist.length-2];
-    const m20=db.ma20[db.ma20.length-1],m20p=db.ma20[db.ma20.length-2];
-    const al=[];
-    if(kP&&kP.K<kP.D&&kL.K>kL.D)al.push(`<span class="badge s-gold">KD金叉</span>`);
-    if(m20&&last.c>m20&&prev.c<=m20p)al.push(`<span class="badge s-blue">突破20MA</span>`);
-    else if(m20&&Math.abs(last.c-m20)/m20<=0.03)al.push(`<span class="badge s-blue">近20MA</span>`);
-    if(hP<0&&hL>0)al.push(`<span class="badge s-grn">MACD翻正</span>`);
-    const rp=db.pats.filter(p=>p.i>=db.data.length-3);
-    [...new Map(rp.map(p=>[p.type,p])).values()].forEach(p=>al.push(`<span class="badge ${p.type.includes('早晨')?'s-prp':p.type.includes('錘')?'s-grn':'s-gold'}">${p.type}</span>`));
-    if(!al.length)al.push(`<span class="badge s-gray">無訊號</span>`);
-    const cls=chg>0?'up':chg<0?'dn':'fl';
-    return`<tr style="cursor:pointer" onclick="selectSym('${s.sym}');setView('chart')">
-      <td><b>${s.sym}</b><br><span style="color:#8b949e;font-size:10px">${s.name}</span></td>
-      <td class="${cls}">${last.c}</td><td class="${cls}">${chg>0?'+':''}${chg}<br>${chgP>0?'+':''}${chgP}%</td>
-      <td style="color:#e3b341">${db.ma5[db.ma5.length-1]??'—'}</td>
-      <td style="color:#bc8cff">${m20??'—'}</td><td style="color:#26a641">${db.ma60[db.ma60.length-1]??'—'}</td>
-      <td>${kL.K}/${kL.D}</td><td>${al.join('')}</td></tr>`;
-  });
+  const tw=STOCKS.filter(s=>s.mkt==='TW');
+  const us=STOCKS.filter(s=>s.mkt==='US');
   document.getElementById('mainView').innerHTML=`
 <div class="panel">
-  <div style="font-size:14px;font-weight:700;margin-bottom:10px;color:#e3b341">📊 總覽｜點擊任一列看K線</div>
-  <table class="sum-tbl"><thead><tr><th>股票</th><th>收盤</th><th>漲跌</th><th style="color:#e3b341">MA5</th><th style="color:#bc8cff">MA20</th><th style="color:#26a641">MA60</th><th>K/D</th><th>⚠️ 訊號</th></tr></thead><tbody>${rows.join('')}</tbody></table>
+  <div style="font-size:14px;font-weight:700;margin-bottom:6px;color:#e3b341">📊 總覽 ｜ 點擊任一列看K線</div>
+  ${summaryTable(tw,'📌 台股')}
+  ${summaryTable(us,'🌐 美股')}
   <div style="margin-top:10px;font-size:10px;color:#8b949e">
     <span class="badge s-gold">KD金叉</span>K穿D <span class="badge s-blue">近/突破20MA</span> <span class="badge s-grn">MACD翻正</span> <span class="badge s-prp">⭐早晨之星</span> <span class="badge s-grn">🔨錘子線</span> <span class="badge s-gold">✛十字線</span>
   </div>
 </div>`;
+}
+
+// ── 獨立計算機分頁 ──
+let calcSym=STOCKS[0].sym;
+function renderCalcPage(){
+  const opts=STOCKS.map(s=>`<option value="${s.sym}"${s.sym===calcSym?' selected':''}>${s.name}</option>`).join('');
+  document.getElementById('mainView').innerHTML=`
+<div class="panel">
+  <div style="font-size:14px;font-weight:700;margin-bottom:10px;color:#e3b341">🧮 股票計算機</div>
+  <div class="calc-row" style="margin-bottom:12px">
+    <label style="width:70px">選擇股票</label>
+    <select id="calcSel" onchange="changeCalcSym(this.value)" style="flex:1;background:#21262d;border:1px solid #30363d;border-radius:5px;padding:7px 8px;color:#e6edf3;font-size:13px">${opts}</select>
+  </div>
+  <div id="calcPriceBox" style="font-size:13px;color:#e3b341;margin-bottom:12px;padding:8px;background:#21262d;border-radius:6px"></div>
+</div>
+<div class="calc">
+  <div class="calc-h" style="color:#26a641">💰 計算機一：投入金額 → 可買股數</div>
+  <div class="calc-row"><label>投入金額</label><input type="number" id="cInv" value="10000" oninput="cCalc1()"><span style="color:#8b949e" id="cu1">—</span><button class="calc-clr" onclick="document.getElementById('cInv').value=0;cCalc1()">C</button></div>
+  <div class="calc-row"><label>可買股數</label><div class="calc-out up" id="cBuy">—</div><span style="color:#8b949e">股</span></div>
+  <div class="calc-row"><label>實際花費</label><div class="calc-out" style="color:#58a6ff" id="cReal">—</div><span style="color:#8b949e" id="cu2">—</span></div>
+  <div class="calc-row"><label>剩餘零頭</label><div class="calc-out" style="color:#8b949e" id="cLeft">—</div><span style="color:#8b949e" id="cu3">—</span></div>
+</div>
+<div class="calc">
+  <div class="calc-h" style="color:#f85149">📊 計算機二：持股損益試算</div>
+  <div class="calc-row"><label>持有股數</label><input type="number" id="cSha" value="10" oninput="cCalc2()"><span style="color:#8b949e">股</span><button class="calc-clr" onclick="document.getElementById('cSha').value=0;cCalc2()">C</button></div>
+  <div class="calc-row"><label>買入總成本</label><input type="number" id="cCost" value="10000" oninput="cCalc2()"><span style="color:#8b949e" id="cu4">—</span><button class="calc-clr" onclick="document.getElementById('cCost').value=0;cCalc2()">C</button></div>
+  <div class="calc-row"><label>目前市值</label><div class="calc-out" style="color:#58a6ff" id="cVal">—</div><span style="color:#8b949e" id="cu5">—</span></div>
+  <div class="calc-row"><label>損益金額</label><div class="calc-out" style="color:#e3b341" id="cPnl">—</div><span style="color:#8b949e" id="cu6">—</span></div>
+  <div class="calc-row"><label>損益 %</label><div class="calc-out" style="color:#e3b341" id="cPnlP">—</div><span style="color:#8b949e">%</span></div>
+  <div class="calc-row"><label>平均成本/股</label><div class="calc-out" style="color:#8b949e" id="cAvg">—</div><span style="color:#8b949e" id="cu7">—</span></div>
+</div>`;
+  updateCalcPrice();
+  cCalc1();cCalc2();
+}
+function changeCalcSym(sym){calcSym=sym;updateCalcPrice();cCalc1();cCalc2();}
+function updateCalcPrice(){
+  const s=STOCKS.find(x=>x.sym===calcSym),db=DB[calcSym];
+  const box=document.getElementById('calcPriceBox');
+  if(!db){box.textContent='此股票無資料';return;}
+  box.textContent=`${s.name} 當日收盤：${db.last.c} ${s.cur}`;
+  ['cu1','cu2','cu3','cu4','cu5','cu6','cu7'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=s.cur;});
+}
+function cCalc1(){
+  const db=DB[calcSym];if(!db)return;const p=db.last.c;
+  const amt=+document.getElementById('cInv').value||0;
+  if(amt>0){const sh=Math.floor(amt/p);
+    document.getElementById('cBuy').textContent=sh;
+    document.getElementById('cReal').textContent=rnd(sh*p);
+    document.getElementById('cLeft').textContent=rnd(amt-sh*p);
+  }else{['cBuy','cReal','cLeft'].forEach(id=>document.getElementById(id).textContent='—');}
+}
+function cCalc2(){
+  const db=DB[calcSym];if(!db)return;const p=db.last.c;
+  const sh=+document.getElementById('cSha').value||0,cost=+document.getElementById('cCost').value||0;
+  if(sh>0){
+    const val=rnd(sh*p);document.getElementById('cVal').textContent=val;
+    if(cost>0){
+      const pnl=rnd(val-cost);
+      document.getElementById('cPnl').textContent=(pnl>0?'+':'')+pnl;
+      document.getElementById('cPnlP').textContent=(pnl>0?'+':'')+rnd(pnl/cost*100);
+      document.getElementById('cAvg').textContent=rnd(cost/sh);
+    }else{['cPnl','cPnlP','cAvg'].forEach(id=>document.getElementById(id).textContent='—');}
+  }else{['cVal','cPnl','cPnlP','cAvg'].forEach(id=>document.getElementById(id).textContent='—');}
 }
 
 loadAll();
