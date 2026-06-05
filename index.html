@@ -94,33 +94,41 @@ let curSym=STOCKS[0].sym,curMkt='all',curView='chart';
 function rnd(n,d=2){return n==null?null:+n.toFixed(d);}
 
 // ── 抓取真實股價（透過免費代理避開跨域限制）──
-async function fetchStock(sym){
-  const end=Math.floor(Date.now()/1000);
-  const start=end-120*86400;
+// 多個免費代理，失敗自動換下一個 + 重試
+const PROXIES=[
+  u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+  u=>`https://corsproxy.io/?url=${encodeURIComponent(u)}`,
+  u=>`https://thingproxy.freeboard.io/fetch/${u}`,
+];
+function parseChart(json){
+  const R=json.chart.result[0];
+  const q=R.indicators.quote[0];
+  const data=[];
+  R.timestamp.forEach((ts,i)=>{
+    if(q.close[i]==null)return;
+    const d=new Date(ts*1000);
+    const mo=(d.getMonth()+1).toString().padStart(2,'0');
+    const dy=d.getDate().toString().padStart(2,'0');
+    data.push({date:`${mo}/${dy}`,o:rnd(q.open[i]||q.close[i]),h:rnd(q.high[i]||q.close[i]),l:rnd(q.low[i]||q.close[i]),c:rnd(q.close[i]),vol:q.volume[i]||0});
+  });
+  return data;
+}
+async function fetchStock(sym,tries=0){
+  const end=Math.floor(Date.now()/1000),start=end-120*86400;
   const yahoo=`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&period1=${start}&period2=${end}`;
-  const proxy=`https://api.allorigins.win/raw?url=${encodeURIComponent(yahoo)}`;
-  try{
-    const res=await fetch(proxy);
-    const json=await res.json();
-    const R=json.chart.result[0];
-    const q=R.indicators.quote[0];
-    const data=[];
-    R.timestamp.forEach((ts,i)=>{
-      if(q.close[i]==null)return;
-      const d=new Date(ts*1000);
-      const mo=(d.getMonth()+1).toString().padStart(2,'0');
-      const dy=d.getDate().toString().padStart(2,'0');
-      data.push({
-        date:`${mo}/${dy}`,
-        o:rnd(q.open[i]||q.close[i]),
-        h:rnd(q.high[i]||q.close[i]),
-        l:rnd(q.low[i]||q.close[i]),
-        c:rnd(q.close[i]),
-        vol:q.volume[i]||0
-      });
-    });
-    return data;
-  }catch(e){console.error(sym,e);return[];}
+  for(let p=0;p<PROXIES.length;p++){
+    try{
+      const ctrl=new AbortController();
+      const timer=setTimeout(()=>ctrl.abort(),8000);
+      const res=await fetch(PROXIES[p](yahoo),{signal:ctrl.signal});
+      clearTimeout(timer);
+      const json=await res.json();
+      const data=parseChart(json);
+      if(data.length>=30)return data;
+    }catch(e){}
+  }
+  if(tries<2){await new Promise(r=>setTimeout(r,1200));return fetchStock(sym,tries+1);}
+  console.error('fail',sym);return [];
 }
 
 function ma(arr,p){return arr.map((_,i)=>i<p-1?null:rnd(arr.slice(i-p+1,i+1).reduce((a,b)=>a+b,0)/p));}
@@ -155,19 +163,29 @@ function detectPatterns(data){
   return pats;
 }
 
+function processStock(sym,data){
+  if(data.length<30){DB[sym]=null;return;}
+  const closes=data.map(d=>d.c);
+  DB[sym]={data,closes,
+    ma5:ma(closes,5),ma10:ma(closes,10),ma20:ma(closes,20),ma60:ma(closes,60),
+    kd:calcKD(data),macd:calcMACD(closes),pats:detectPatterns(data),
+    last:data[data.length-1],prev:data[data.length-2]};
+}
 async function loadAll(){
-  document.getElementById('sgrid').innerHTML='<div class="loading">🔄 載入即時股價中...</div>';
-  for(const s of STOCKS){
+  document.getElementById('sgrid').innerHTML='<div class="loading">🔄 並行載入 16 支股票中...</div>';
+  // 並行抓取全部股票（邊抓邊顯示）
+  let done=0;
+  await Promise.all(STOCKS.map(async s=>{
     const data=await fetchStock(s.sym);
-    if(data.length<30){DB[s.sym]=null;continue;}
-    const closes=data.map(d=>d.c);
-    DB[s.sym]={data,closes,
-      ma5:ma(closes,5),ma10:ma(closes,10),ma20:ma(closes,20),ma60:ma(closes,60),
-      kd:calcKD(data),macd:calcMACD(closes),pats:detectPatterns(data),
-      last:data[data.length-1],prev:data[data.length-2]};
-  }
+    processStock(s.sym,data);
+    done++;
+    document.querySelector('.loading')&&(document.querySelector('.loading').textContent=`🔄 載入中... ${done}/${STOCKS.length}`);
+    renderGrid();
+  }));
   renderGrid();
-  if(curView==='chart')renderChart(curSym);else renderSummary();
+  if(curView==='chart')renderChart(curSym);
+  else if(curView==='calc')renderCalcPage();
+  else renderSummary();
 }
 
 function setMkt(m,el){curMkt=m;document.querySelectorAll('.tabs .tab').forEach((t,i)=>{if(i<3)t.classList.remove('on');});el.classList.add('on');renderGrid();}
