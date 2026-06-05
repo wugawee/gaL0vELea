@@ -295,7 +295,57 @@ function chartHTML(sym){
     <canvas id="kdC" style="width:100%"></canvas>
     <div style="font-size:10px;color:#8b949e;margin:6px 0 3px">MACD　柱狀: ${hL.toFixed(4)}</div>
     <canvas id="mC" style="width:100%"></canvas>
+  </div>
+  <div class="panel" style="overflow-x:auto">
+    <div style="font-size:13px;font-weight:700;margin-bottom:8px;color:#e3b341">📋 近20日數據（可回顧）</div>
+    ${dataTableHTML(sym)}
   </div>`;
+}
+
+// 近20日逐日數據表格（像看盤軟體）
+function dataTableHTML(sym){
+  const db=DB[sym];if(!db)return'';
+  const N=20;
+  const data=db.data.slice(-N);
+  const m5=db.ma5.slice(-N),m20=db.ma20.slice(-N),m60=db.ma60.slice(-N);
+  const kd=db.kd.slice(-N),dif=db.macd.dif.slice(-N),hist=db.macd.hist.slice(-N);
+  const macdL=db.macd.dif.slice(-N).map((d,i)=>{
+    // 重算MACD訊號線值用 dif-hist
+    return rnd(dif[i]-hist[i],2);
+  });
+  // 反序：最新在上
+  const idxArr=[...Array(data.length).keys()].reverse();
+  const rows=idxArr.map(i=>{
+    const d=data[i];
+    const prev=i>0?data[i-1].c:d.c;
+    const chg=rnd(d.c-prev),chgP=rnd(chg/prev*100);
+    const cls=chg>0?'up':chg<0?'dn':'fl';
+    const k=kd[i];
+    const kdState=k?(k.K>k.D?'<span class="up">▲K&gt;D</span>':'<span class="dn">▼K&lt;D</span>'):'—';
+    const hv=hist[i];
+    return`<tr>
+      <td>${d.date}</td>
+      <td>${d.o}</td><td>${d.h}</td><td>${d.l}</td>
+      <td class="${cls}"><b>${d.c}</b></td>
+      <td style="color:#8b949e">${(d.vol/1000).toFixed(0)}</td>
+      <td style="color:#e3b341">${m5[i]??'—'}</td>
+      <td style="color:#bc8cff">${m20[i]??'—'}</td>
+      <td style="color:#26a641">${m60[i]??'—'}</td>
+      <td>${k?k.K:'—'}</td><td>${k?k.D:'—'}</td>
+      <td>${kdState}</td>
+      <td>${dif[i]??'—'}</td>
+      <td>${macdL[i]??'—'}</td>
+      <td class="${hv>0?'up':hv<0?'dn':'fl'}">${hv??'—'}</td>
+      <td class="${cls}">${chg>0?'+':''}${chg}</td>
+      <td class="${cls}">${chgP>0?'+':''}${chgP}%</td>
+    </tr>`;
+  }).join('');
+  return`<table class="tbl" style="min-width:900px">
+    <thead><tr>
+      <th>日期</th><th>開盤</th><th>最高</th><th>最低</th><th>收盤</th><th>成交量(張)</th>
+      <th style="color:#e3b341">MA5</th><th style="color:#bc8cff">MA20</th><th style="color:#26a641">MA60</th>
+      <th>K值</th><th>D值</th><th>KD狀態</th><th>DIF</th><th>MACD</th><th>柱狀</th><th>漲跌</th><th>漲跌%</th>
+    </tr></thead><tbody>${rows}</tbody></table>`;
 }
 function drawAll(sym){
   const db=DB[sym];if(!db)return;
