@@ -105,14 +105,23 @@ const PROXIES=[
   u=>`https://api.codetabs.com/v1/proxy/?quest=${u}`,
 ];
 function parseChart(json){
-  const R=json.chart.result[0];const q=R.indicators.quote[0];const data=[];
+  const R=json.chart.result[0];const q=R.indicators.quote[0];
+  // 取得交易狀態：盤中(REGULAR)時，最後一筆是未完成的即時K棒
+  const meta=R.meta||{};
+  const isLive=meta.marketState&&['PRE','REGULAR','POST'].includes(meta.marketState);
+  const data=[];
   R.timestamp.forEach((ts,i)=>{
     if(q.close[i]==null)return;
     const d=new Date(ts*1000);
     const mo=(d.getMonth()+1).toString().padStart(2,'0');
     const dy=d.getDate().toString().padStart(2,'0');
-    data.push({date:`${mo}/${dy}`,o:rnd(q.open[i]||q.close[i]),h:rnd(q.high[i]||q.close[i]),l:rnd(q.low[i]||q.close[i]),c:rnd(q.close[i]),vol:q.volume[i]||0});
+    data.push({date:`${mo}/${dy}`,o:rnd(q.open[i]||q.close[i]),h:rnd(q.high[i]||q.close[i]),l:rnd(q.low[i]||q.close[i]),c:rnd(q.close[i]),vol:q.volume[i]||0,ts:ts});
   });
+  // 若該市場正在盤中交易，最後一筆是「未收盤」的即時資料，標記它（不刪除，但記錄狀態）
+  if(data.length>0){
+    data._marketState=meta.marketState||'CLOSED';
+    data._isLive=isLive;
+  }
   return data;
 }
 async function fetchStock(sym,tries=0){
@@ -166,7 +175,17 @@ function detectPatterns(data){
 }
 
 function processStock(sym,data){
-  if(data.length<30){DB[sym]=null;return;}
+  if(!data||data.length<30){
+    // 抓取失敗：若已有舊資料就保留，不要清空（避免代理失敗導致資料消失）
+    if(!DB[sym])DB[sym]=null;
+    return;
+  }
+  // 防退化：若新資料的最新日期比現有的舊（代理回傳快取），保留現有較新的資料
+  if(DB[sym]&&DB[sym].data&&DB[sym].data.length>0){
+    const oldTs=DB[sym].data[DB[sym].data.length-1].ts||0;
+    const newTs=data[data.length-1].ts||0;
+    if(newTs<oldTs)return; // 新抓的更舊，不覆蓋
+  }
   const closes=data.map(d=>d.c);
   DB[sym]={data,closes,ma5:ma(closes,5),ma10:ma(closes,10),ma20:ma(closes,20),ma60:ma(closes,60),kd:calcKD(data),macd:calcMACD(closes),pats:detectPatterns(data),last:data[data.length-1],prev:data[data.length-2]};
 }
@@ -245,12 +264,24 @@ function renderSummary(){
     以及所有看漲K線型態：<span class="badge s-prp">⭐早晨之星</span><span class="badge s-grn">🔨錘子線</span><span class="badge s-grn">倒錘線</span><span class="badge s-grn">蜻蜓十字</span><span class="badge s-blue">🔴吞噬紅K</span><span class="badge s-blue">貫穿線</span><span class="badge s-grn">多頭孕線</span><span class="badge s-gold">✛十字線</span>
   </div>
 </div>`;
-  // 顯示最新資料日期
-  const sample=DB["2330.TW"]||DB[STOCKS[0].sym]||Object.values(DB).find(d=>d);
+  // 台股、美股各自顯示最新資料日期（避免互相干擾）
+  const twS=DB["2330.TW"]||Object.values(DB).find(d=>d&&STOCKS.find(s=>s.sym===Object.keys(DB).find(k=>DB[k]===d)&&s.mkt==="TW"));
+  const twSample=STOCKS.filter(s=>s.mkt==="TW").map(s=>DB[s.sym]).find(d=>d);
+  const usSample=STOCKS.filter(s=>s.mkt==="US").map(s=>DB[s.sym]).find(d=>d);
   const dd=document.getElementById('dataDate');
-  if(sample&&dd){
-    const latest=sample.data[sample.data.length-1].date;
-    dd.textContent='（資料日期：'+latest+'）';
+  if(dd){
+    let txt='';
+    if(twSample){
+      const twDate=twSample.data[twSample.data.length-1].date;
+      const twLive=twSample.data._isLive?'(盤中)':'';
+      txt+='台股:'+twDate+twLive;
+    }
+    if(usSample){
+      const usDate=usSample.data[usSample.data.length-1].date;
+      const usLive=usSample.data._isLive?'(盤中)':'';
+      txt+='　美股:'+usDate+usLive;
+    }
+    dd.textContent='（'+txt+'）';
   }
 }
 
