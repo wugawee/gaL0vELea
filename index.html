@@ -117,12 +117,14 @@ function parseChart(json){
 }
 async function fetchStock(sym,tries=0){
   const end=Math.floor(Date.now()/1000),start=end-120*86400;
-  const yahoo=`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&period1=${start}&period2=${end}`;
+  // 加 _t 時間戳 + range=6mo，雙重防止代理回傳快取的舊資料
+  const cacheBuster=Date.now();
+  const yahoo=`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&period1=${start}&period2=${end}&_t=${cacheBuster}`;
   for(let p=0;p<PROXIES.length;p++){
     try{
       const ctrl=new AbortController();
       const timer=setTimeout(()=>ctrl.abort(),9000);
-      const res=await fetch(PROXIES[p](yahoo),{signal:ctrl.signal});
+      const res=await fetch(PROXIES[p](yahoo),{signal:ctrl.signal,cache:'no-store'});
       clearTimeout(timer);
       const json=await res.json();
       const data=parseChart(json);
@@ -231,7 +233,7 @@ function renderSummary(){
   const head=`<tr><th>名稱</th><th>代號</th><th>收盤</th><th style="color:#e3b341">MA5</th><th style="color:#bc8cff">MA20</th><th style="color:#26a641">MA60</th><th>K值</th><th>D值</th><th>KD比</th><th>MACD</th><th style="text-align:left">⚠️ 入場提醒</th></tr>`;
   document.getElementById('mainView').innerHTML=`
 <div class="panel">
-  <div style="font-size:14px;font-weight:700;margin-bottom:8px;color:#e3b341">📊 總覽 ｜ 點任一列看K線</div>
+  <div style="font-size:14px;font-weight:700;margin-bottom:8px;color:#e3b341">📊 總覽 ｜ 點任一列看K線　<span id="dataDate" style="font-size:11px;color:#8b949e;font-weight:400"></span></div>
   <table class="tbl"><thead>${head}</thead><tbody>
     <tr class="sec-row"><td colspan="11">📌 台股</td></tr>
     ${tw.map(sumRow).join('')}
@@ -243,6 +245,13 @@ function renderSummary(){
     以及所有看漲K線型態：<span class="badge s-prp">⭐早晨之星</span><span class="badge s-grn">🔨錘子線</span><span class="badge s-grn">倒錘線</span><span class="badge s-grn">蜻蜓十字</span><span class="badge s-blue">🔴吞噬紅K</span><span class="badge s-blue">貫穿線</span><span class="badge s-grn">多頭孕線</span><span class="badge s-gold">✛十字線</span>
   </div>
 </div>`;
+  // 顯示最新資料日期
+  const sample=DB["2330.TW"]||DB[STOCKS[0].sym]||Object.values(DB).find(d=>d);
+  const dd=document.getElementById('dataDate');
+  if(sample&&dd){
+    const latest=sample.data[sample.data.length-1].date;
+    dd.textContent='（資料日期：'+latest+'）';
+  }
 }
 
 // ── 台股/美股列表（卡片）──
