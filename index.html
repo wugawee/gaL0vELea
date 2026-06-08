@@ -99,14 +99,11 @@ let curView='summary',curSym=STOCKS[0].sym,calcSym=STOCKS[0].sym;
 function rnd(n,d=2){return n==null?null:+n.toFixed(d);}
 
 // 多代理，最穩定的優先
-const PROXIES=[
-  u=>`https://corsproxy.io/?url=${encodeURIComponent(u)}`,
-  u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-  u=>`https://api.codetabs.com/v1/proxy/?quest=${u}`,
-];
+// 你的專屬 Cloudflare Worker（穩定、免費、無 CORS 問題）
+const WORKER_URL="https://gentle-mountain-7c00.wugawee.workers.dev";
+
 function parseChart(json){
   const R=json.chart.result[0];const q=R.indicators.quote[0];
-  // 取得交易狀態：盤中(REGULAR)時，最後一筆是未完成的即時K棒
   const meta=R.meta||{};
   const isLive=meta.marketState&&['PRE','REGULAR','POST'].includes(meta.marketState);
   const data=[];
@@ -117,7 +114,6 @@ function parseChart(json){
     const dy=d.getDate().toString().padStart(2,'0');
     data.push({date:`${mo}/${dy}`,o:rnd(q.open[i]||q.close[i]),h:rnd(q.high[i]||q.close[i]),l:rnd(q.low[i]||q.close[i]),c:rnd(q.close[i]),vol:q.volume[i]||0,ts:ts});
   });
-  // 若該市場正在盤中交易，最後一筆是「未收盤」的即時資料，標記它（不刪除，但記錄狀態）
   if(data.length>0){
     data._marketState=meta.marketState||'CLOSED';
     data._isLive=isLive;
@@ -125,22 +121,19 @@ function parseChart(json){
   return data;
 }
 async function fetchStock(sym,tries=0){
-  const end=Math.floor(Date.now()/1000),start=end-120*86400;
-  // 加 _t 時間戳 + range=6mo，雙重防止代理回傳快取的舊資料
   const cacheBuster=Date.now();
-  const yahoo=`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&period1=${start}&period2=${end}&_t=${cacheBuster}`;
-  for(let p=0;p<PROXIES.length;p++){
-    try{
-      const ctrl=new AbortController();
-      const timer=setTimeout(()=>ctrl.abort(),9000);
-      const res=await fetch(PROXIES[p](yahoo),{signal:ctrl.signal,cache:'no-store'});
-      clearTimeout(timer);
-      const json=await res.json();
-      const data=parseChart(json);
-      if(data.length>=30)return data;
-    }catch(e){}
-  }
-  if(tries<3){await new Promise(r=>setTimeout(r,1500));return fetchStock(sym,tries+1);}
+  const url=`${WORKER_URL}/?symbol=${encodeURIComponent(sym)}&_t=${cacheBuster}`;
+  try{
+    const ctrl=new AbortController();
+    const timer=setTimeout(()=>ctrl.abort(),12000);
+    const res=await fetch(url,{signal:ctrl.signal,cache:'no-store'});
+    clearTimeout(timer);
+    const json=await res.json();
+    const data=parseChart(json);
+    if(data.length>=30)return data;
+  }catch(e){}
+  // 失敗重試（最多3次）
+  if(tries<3){await new Promise(r=>setTimeout(r,1200));return fetchStock(sym,tries+1);}
   return [];
 }
 
