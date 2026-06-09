@@ -106,14 +106,46 @@ function parseChart(json){
   const R=json.chart.result[0];const q=R.indicators.quote[0];
   const meta=R.meta||{};
   const isLive=meta.marketState&&['PRE','REGULAR','POST'].includes(meta.marketState);
+  const ts_arr=R.timestamp||[];
+  const lastIdx=ts_arr.length-1;
   const data=[];
-  R.timestamp.forEach((ts,i)=>{
-    if(q.close[i]==null)return;
+  for(let i=0;i<ts_arr.length;i++){
+    const ts=ts_arr[i];
+    let close=q.close[i];
+    let open=q.open[i], hi=q.high[i], lo=q.low[i];
+    // 最後一筆若收盤為null（盤中或盤後未回填），直接用即時價補上
+    if(i===lastIdx && close==null && meta.regularMarketPrice!=null){
+      close=meta.regularMarketPrice;
+      if(open==null)open=meta.regularMarketOpen??meta.regularMarketPrice;
+      if(hi==null)hi=meta.regularMarketDayHigh??close;
+      if(lo==null)lo=meta.regularMarketDayLow??close;
+    }
+    if(close==null)continue; // 中間的null才跳過
+    open=open??close; hi=hi??close; lo=lo??close;
     const d=new Date(ts*1000);
     const mo=(d.getMonth()+1).toString().padStart(2,'0');
     const dy=d.getDate().toString().padStart(2,'0');
-    data.push({date:`${mo}/${dy}`,o:rnd(q.open[i]||q.close[i]),h:rnd(q.high[i]||q.close[i]),l:rnd(q.low[i]||q.close[i]),c:rnd(q.close[i]),vol:q.volume[i]||0,ts:ts});
-  });
+    data.push({date:`${mo}/${dy}`,o:rnd(open),h:rnd(hi),l:rnd(lo),c:rnd(close),vol:q.volume[i]||0,ts:ts});
+  }
+  // 若 meta 的即時時間比最後一筆還新（代表盤中當天K棒根本沒進timestamp），補一筆
+  if(meta.regularMarketPrice!=null && meta.regularMarketTime!=null){
+    const lastTs=data.length?data[data.length-1].ts:0;
+    const mt=meta.regularMarketTime;
+    const lastDay=new Date(lastTs*1000).toDateString();
+    const mtDay=new Date(mt*1000).toDateString();
+    if(mtDay!==lastDay){
+      // 當天還沒有K棒，用即時價新增今天這筆
+      const d=new Date(mt*1000);
+      const mo=(d.getMonth()+1).toString().padStart(2,'0');
+      const dy=d.getDate().toString().padStart(2,'0');
+      data.push({date:`${mo}/${dy}`,
+        o:rnd(meta.regularMarketOpen??meta.regularMarketPrice),
+        h:rnd(meta.regularMarketDayHigh??meta.regularMarketPrice),
+        l:rnd(meta.regularMarketDayLow??meta.regularMarketPrice),
+        c:rnd(meta.regularMarketPrice),
+        vol:meta.regularMarketVolume||0,ts:mt});
+    }
+  }
   if(data.length>0){
     data._marketState=meta.marketState||'CLOSED';
     data._isLive=isLive;
@@ -199,6 +231,9 @@ async function loadAll(){
   }
   document.getElementById('prog').textContent='';
   render();
+  // 自動更新：每60秒重抓一次（盤中即時跟動）
+  if(window._autoTimer)clearInterval(window._autoTimer);
+  window._autoTimer=setInterval(()=>{loadAll();},60000);
 }
 
 function setView(v,el){curView=v;document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));if(el)el.classList.add('on');render();}
