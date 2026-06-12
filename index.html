@@ -513,7 +513,46 @@ const NEWS_LINKS=[
     {name:"台灣證交所",url:"https://www.twse.com.tw/zh/"},
   ]},
 ];
+// 市場大事看板（影響台美股的關鍵事件）
+const MARKET_EVENTS={
+  upcoming:[
+    {date:"6/18",title:"聯準會 FOMC 利率決議",impact:"high",
+     desc:"新主席 Kevin Warsh 上任後首次會議，市場關注升息/降息訊號與點陣圖。結果台灣時間凌晨公布，將大幅影響美股與台股開盤。"},
+    {date:"持續",title:"美伊地緣衝突 / 荷莫茲海峽",impact:"high",
+     desc:"美以對伊朗開戰、停火反覆。影響油價→通膨→降息預期。荷莫茲海峽是否封鎖牽動全球能源與股市。"},
+    {date:"6月底",title:"AI 晶片股財報餘波",impact:"mid",
+     desc:"博通(AVGO)財報後 AI 股大跌，後續輝達等財報與 AI 資本支出展望持續影響費半與台積電。"},
+  ],
+  happening:[
+    {date:"已上市",title:"SpaceX (SPCX) 上市",impact:"mid",
+     desc:"6/12 那斯達克掛牌，發行價135美元、市值1.77兆，史上最大IPO，募資750億。馬斯克概念帶動市場情緒。"},
+    {date:"近期",title:"費城半導體指數重挫",impact:"high",
+     desc:"6/5 費半單日崩10.3%(2020年來最慘)，蒸發1.3兆美元，直接拖累台股6/8開盤大跌2694點。AI股回檔風險。"},
+    {date:"近期",title:"非農就業強勁→升息預期",impact:"high",
+     desc:"5月非農17.2萬(超預期近一倍)，市場消化年底前升息25基點預期。利率走向是當前最大變數。"},
+  ]
+};
+function eventCard(e){
+  const color=e.impact==='high'?'#f85149':e.impact==='mid'?'#e3b341':'#8b949e';
+  const tag=e.impact==='high'?'🔴 高影響':e.impact==='mid'?'🟡 中影響':'⚪ 低影響';
+  return `<div style="background:#161b22;border:1px solid #30363d;border-left:3px solid ${color};border-radius:8px;padding:12px;margin-bottom:8px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;flex-wrap:wrap;gap:4px">
+      <span style="font-weight:700;font-size:14px;color:#e6edf3">${e.title}</span>
+      <span style="font-size:10px;color:${color};font-weight:700">${tag} · ${e.date}</span>
+    </div>
+    <div style="font-size:12px;color:#8b949e;line-height:1.6">${e.desc}</div>
+  </div>`;
+}
 function renderNews(){
+  const eventsHtml=`
+  <div class="panel">
+    <div style="font-size:15px;font-weight:700;color:#e3b341;margin-bottom:4px">⚠️ 影響股市大事看板</div>
+    <div style="font-size:11px;color:#8b949e;margin-bottom:12px">手動整理的重點事件，建議搭配下方新聞連結追蹤最新發展</div>
+    <div style="font-size:13px;font-weight:700;color:#58a6ff;margin:10px 0 6px">📅 即將發生（要注意）</div>
+    ${MARKET_EVENTS.upcoming.map(eventCard).join('')}
+    <div style="font-size:13px;font-weight:700;color:#f85149;margin:14px 0 6px">🔥 正在發生（影響中）</div>
+    ${MARKET_EVENTS.happening.map(eventCard).join('')}
+  </div>`;
   const html=NEWS_LINKS.map(g=>`
     <div style="margin-bottom:16px">
       <div style="font-size:14px;font-weight:700;color:#e3b341;margin-bottom:8px">${g.cat}</div>
@@ -521,7 +560,7 @@ function renderNews(){
         ${g.links.map(l=>`<a href="${l.url}" target="_blank" rel="noopener" style="display:block;background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px;color:#58a6ff;text-decoration:none;font-size:13px;font-weight:600;transition:all .15s" onmouseover="this.style.borderColor='#58a6ff';this.style.background='#1c2128'" onmouseout="this.style.borderColor='#30363d';this.style.background='#161b22'">${l.name} ↗</a>`).join('')}
       </div>
     </div>`).join('');
-  document.getElementById('mainView').innerHTML=`
+  document.getElementById('mainView').innerHTML=eventsHtml+`
   <div class="panel">
     <div style="font-size:15px;font-weight:700;color:#e3b341;margin-bottom:4px">📰 財經新聞 & 時事連結</div>
     <div style="font-size:11px;color:#8b949e;margin-bottom:14px">點任一連結會開新分頁，前往外部網站</div>
