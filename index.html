@@ -84,6 +84,7 @@ const STOCKS=[
   {sym:"NVDA",name:"輝達",mkt:"US",cur:"USD"},
   {sym:"AAPL",name:"蘋果",mkt:"US",cur:"USD"},
   {sym:"TSLA",name:"特斯拉",mkt:"US",cur:"USD"},
+  {sym:"SPCX",name:"SpaceX",mkt:"US",cur:"USD"},
   {sym:"ENPH",name:"ENPH",mkt:"US",cur:"USD"},
   {sym:"MRVL",name:"MRVL",mkt:"US",cur:"USD"},
   {sym:"BE",name:"BE能源",mkt:"US",cur:"USD"},
@@ -163,7 +164,7 @@ async function fetchStock(sym,tries=0){
     clearTimeout(timer);
     const json=await res.json();
     const data=parseChart(json);
-    if(data.length>=30)return data;
+    if(data.length>=2)return data;
   }catch(e){}
   // 失敗重試（最多3次）
   if(tries<3){await new Promise(r=>setTimeout(r,1200));return fetchStock(sym,tries+1);}
@@ -201,7 +202,7 @@ function detectPatterns(data){
 }
 
 function processStock(sym,data){
-  if(!data||data.length<30){
+  if(!data||data.length<5){
     // 抓取失敗：若已有舊資料就保留，不要清空（避免代理失敗導致資料消失）
     if(!DB[sym])DB[sym]=null;
     return;
