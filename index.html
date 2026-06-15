@@ -164,7 +164,7 @@ async function fetchStock(sym,tries=0){
     clearTimeout(timer);
     const json=await res.json();
     const data=parseChart(json);
-    if(data.length>=2)return data;
+    if(data.length>=1)return data;
   }catch(e){}
   // 失敗重試（最多3次）
   if(tries<3){await new Promise(r=>setTimeout(r,1200));return fetchStock(sym,tries+1);}
@@ -202,7 +202,7 @@ function detectPatterns(data){
 }
 
 function processStock(sym,data){
-  if(!data||data.length<5){
+  if(!data||data.length<1){
     // 抓取失敗：若已有舊資料就保留，不要清空（避免代理失敗導致資料消失）
     if(!DB[sym])DB[sym]=null;
     return;
@@ -214,7 +214,7 @@ function processStock(sym,data){
     if(newTs<oldTs)return; // 新抓的更舊，不覆蓋
   }
   const closes=data.map(d=>d.c);
-  DB[sym]={data,closes,ma5:ma(closes,5),ma10:ma(closes,10),ma20:ma(closes,20),ma60:ma(closes,60),kd:calcKD(data),macd:calcMACD(closes),pats:detectPatterns(data),last:data[data.length-1],prev:data[data.length-2]};
+  DB[sym]={data,closes,ma5:ma(closes,5),ma10:ma(closes,10),ma20:ma(closes,20),ma60:ma(closes,60),kd:calcKD(data),macd:calcMACD(closes),pats:detectPatterns(data),last:data[data.length-1],prev:(data.length>=2?data[data.length-2]:data[data.length-1])};
 }
 
 // 分批並行（每批5支，避免代理塞車）
