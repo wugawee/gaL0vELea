@@ -63,6 +63,7 @@ body{background:#0d1117;color:#e6edf3;font-family:-apple-system,"Microsoft Jheng
     <button class="tab" id="t-us" onclick="setView('us',this)">美股</button>
     <button class="tab" id="t-calc" onclick="setView('calc',this)">🧮 計算機</button>
     <button class="tab" id="t-news" onclick="setView('news',this)">📰 新聞</button>
+    <button class="tab" id="t-keyword" onclick="setView('keyword',this)">🔑 關鍵字</button>
   </div>
 </div>
 
@@ -248,6 +249,7 @@ function render(){
   else if(curView==='us')renderList('US');
   else if(curView==='calc')renderCalcPage();
   else if(curView==='news')renderNews();
+  else if(curView==='keyword')renderKeyword();
   else renderChart(curSym);
 }
 
@@ -514,61 +516,167 @@ const NEWS_LINKS=[
     {name:"台灣證交所",url:"https://www.twse.com.tw/zh/"},
   ]},
 ];
-// 市場大事看板（影響台美股的關鍵事件）
-const MARKET_EVENTS={
-  upcoming:[
-    {date:"6/18",title:"聯準會 FOMC 利率決議",impact:"high",
-     desc:"新主席 Kevin Warsh 上任後首次會議，市場關注升息/降息訊號與點陣圖。結果台灣時間凌晨公布，將大幅影響美股與台股開盤。"},
-    {date:"持續",title:"美伊地緣衝突 / 荷莫茲海峽",impact:"high",
-     desc:"美以對伊朗開戰、停火反覆。影響油價→通膨→降息預期。荷莫茲海峽是否封鎖牽動全球能源與股市。"},
-    {date:"6月底",title:"AI 晶片股財報餘波",impact:"mid",
-     desc:"博通(AVGO)財報後 AI 股大跌，後續輝達等財報與 AI 資本支出展望持續影響費半與台積電。"},
-  ],
-  happening:[
-    {date:"已上市",title:"SpaceX (SPCX) 上市",impact:"mid",
-     desc:"6/12 那斯達克掛牌，發行價135美元、市值1.77兆，史上最大IPO，募資750億。馬斯克概念帶動市場情緒。"},
-    {date:"近期",title:"費城半導體指數重挫",impact:"high",
-     desc:"6/5 費半單日崩10.3%(2020年來最慘)，蒸發1.3兆美元，直接拖累台股6/8開盤大跌2694點。AI股回檔風險。"},
-    {date:"近期",title:"非農就業強勁→升息預期",impact:"high",
-     desc:"5月非農17.2萬(超預期近一倍)，市場消化年底前升息25基點預期。利率走向是當前最大變數。"},
-  ]
-};
-function eventCard(e){
-  const color=e.impact==='high'?'#f85149':e.impact==='mid'?'#e3b341':'#8b949e';
-  const tag=e.impact==='high'?'🔴 高影響':e.impact==='mid'?'🟡 中影響':'⚪ 低影響';
-  return `<div style="background:#161b22;border:1px solid #30363d;border-left:3px solid ${color};border-radius:8px;padding:12px;margin-bottom:8px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;flex-wrap:wrap;gap:4px">
-      <span style="font-weight:700;font-size:14px;color:#e6edf3">${e.title}</span>
-      <span style="font-size:10px;color:${color};font-weight:700">${tag} · ${e.date}</span>
+// 時事主題看板（影響 AI 與全球經濟的關鍵脈絡）
+const MEGA_TRENDS=[
+  {
+    icon:"⚡",
+    title:"AI 缺電潮：算力競賽的決勝點轉向電力",
+    impact:"high",
+    summary:"AI 競賽決勝點已從『晶片交期』轉向『電力與電網』。資料中心用電暴增，變壓器嚴重短缺(交期從50週拉長到120週以上)，科技巨頭砸數百億搶核電。「沒有綠電，就沒有算力」成矽谷新信條。",
+    why:"➜ 影響你的持股：電力成主要瓶頸 → 利多泓德能源(儲能)、利空受電價擠壓的資料中心；台積電等晶片製造是吃電怪獸，能源成本直接影響獲利。",
+    links:[
+      {name:"數位時代：AI缺電潮深度報導",url:"https://www.bnext.com.tw/article/91199/ai-power-grid-infrastructure-crisis"},
+      {name:"報導者：台灣資料中心用電壓力",url:"https://www.twreporter.org/a/data-center-electricity-demand"},
+    ]
+  },
+  {
+    icon:"🔥",
+    title:"中東戰火 → 能源斷鏈 → 推升 AI 成本",
+    impact:"high",
+    summary:"美伊衝突威脅荷莫茲海峽能源運輸,推升油價與天然氣。這股壓力會傳導到美國電價,直接衝擊高耗能的 AI 資料中心擴建,加劇能源可負擔性爭議。戰爭不只是地緣政治,更是 AI 發展的能源變數。",
+    why:"➜ 影響你的持股：油價↑→通膨↑→聯準會難降息→科技股(NVDA/台積電)承壓。這就是你看到的『戰爭→股市波動』因果鏈。",
+    links:[
+      {name:"INSIDE：美伊戰事與資料中心用電",url:"https://www.inside.com.tw/article/40818-iran-war-oil-gas-prices-data-center-electricity"},
+      {name:"遠見：AI缺電與核能綠能賽局",url:"https://www.gvm.com.tw/article/128811"},
+    ]
+  },
+  {
+    icon:"☢️",
+    title:"核能復興：科技巨頭包下核電廠",
+    impact:"mid",
+    summary:"為確保 AI 算力的穩定電力,微軟重啟三哩島核電廠、Meta 簽超過6GW核能協議、亞馬遜鎖定5GW小型反應爐(SMR)。電力採購從『廠房管理』升級成『董事會級戰略決策』。能源即國力。",
+    why:"➜ 投資意義：能源基建(核能、儲能、電網設備)成為新戰略資產。關注電力供應鏈、變壓器、儲能相關標的。",
+    links:[
+      {name:"TAISE：2026能源大轉折",url:"https://taise.org.tw/news/"},
+      {name:"綠色和平：AI與台灣能源轉型",url:"https://www.greenpeace.org/taiwan/"},
+    ]
+  },
+  {
+    icon:"🚀",
+    title:"SpaceX 上市：史上最大 IPO",
+    impact:"mid",
+    summary:"SpaceX 於6/12那斯達克掛牌(代號SPCX),發行價135美元、估值1.77兆、募資750億。馬斯克結合 xAI 打造『太空 AI 資料中心』願景,引爆市場超額認購。但公司2025年仍虧損49億美元。",
+    why:"➜ 影響：馬斯克概念帶動市場情緒,連動特斯拉。但IPO新股波動極大、技術分析失效,你已加入觀測名單,觀察為主。",
+    links:[
+      {name:"Nasdaq IPO 行事曆",url:"https://www.nasdaq.com/market-activity/ipos"},
+    ]
+  },
+  {
+    icon:"🏦",
+    title:"聯準會 FOMC 利率決議",
+    impact:"high",
+    summary:"新主席 Kevin Warsh 上任後首次會議。市場在『升息vs降息』十字路口,5月非農就業超預期近一倍,升息預期升溫。結果台灣時間凌晨公布,大幅影響美股與台股開盤。",
+    why:"➜ 影響你的持股：利率是所有資產的『地心引力』。鴿派(降息)→股市可能漲;鷹派(升息)→科技股承壓。別賭結果,等塵埃落定看訊號。",
+    links:[
+      {name:"CNBC 聯準會新聞",url:"https://www.cnbc.com/federal-reserve/"},
+      {name:"鉅亨網 國際財經",url:"https://news.cnyes.com/news/cat/wd_macro"},
+    ]
+  },
+];
+function trendCard(t){
+  const color=t.impact==='high'?'#f85149':t.impact==='mid'?'#e3b341':'#8b949e';
+  const tag=t.impact==='high'?'🔴 高度影響':t.impact==='mid'?'🟡 中度影響':'⚪ 觀察';
+  return `<div style="background:#161b22;border:1px solid #30363d;border-left:3px solid ${color};border-radius:8px;padding:14px;margin-bottom:10px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:4px">
+      <span style="font-weight:700;font-size:14px;color:#e6edf3">${t.icon} ${t.title}</span>
+      <span style="font-size:10px;color:${color};font-weight:700">${tag}</span>
     </div>
-    <div style="font-size:12px;color:#8b949e;line-height:1.6">${e.desc}</div>
-  </div>`;
-}
-function renderNews(){
-  const eventsHtml=`
-  <div class="panel">
-    <div style="font-size:15px;font-weight:700;color:#e3b341;margin-bottom:4px">⚠️ 影響股市大事看板</div>
-    <div style="font-size:11px;color:#8b949e;margin-bottom:12px">手動整理的重點事件，建議搭配下方新聞連結追蹤最新發展</div>
-    <div style="font-size:13px;font-weight:700;color:#58a6ff;margin:10px 0 6px">📅 即將發生（要注意）</div>
-    ${MARKET_EVENTS.upcoming.map(eventCard).join('')}
-    <div style="font-size:13px;font-weight:700;color:#f85149;margin:14px 0 6px">🔥 正在發生（影響中）</div>
-    ${MARKET_EVENTS.happening.map(eventCard).join('')}
-  </div>`;
-  const html=NEWS_LINKS.map(g=>`
-    <div style="margin-bottom:16px">
-      <div style="font-size:14px;font-weight:700;color:#e3b341;margin-bottom:8px">${g.cat}</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px">
-        ${g.links.map(l=>`<a href="${l.url}" target="_blank" rel="noopener" style="display:block;background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px;color:#58a6ff;text-decoration:none;font-size:13px;font-weight:600;transition:all .15s" onmouseover="this.style.borderColor='#58a6ff';this.style.background='#1c2128'" onmouseout="this.style.borderColor='#30363d';this.style.background='#161b22'">${l.name} ↗</a>`).join('')}
-      </div>
-    </div>`).join('');
-  document.getElementById('mainView').innerHTML=eventsHtml+`
-  <div class="panel">
-    <div style="font-size:15px;font-weight:700;color:#e3b341;margin-bottom:4px">📰 財經新聞 & 時事連結</div>
-    <div style="font-size:11px;color:#8b949e;margin-bottom:14px">點任一連結會開新分頁，前往外部網站</div>
-    ${html}
+    <div style="font-size:12px;color:#c9d1d9;line-height:1.7;margin-bottom:8px">${t.summary}</div>
+    <div style="font-size:12px;color:#58a6ff;line-height:1.6;margin-bottom:10px;background:#0d1a2d;padding:8px;border-radius:6px">${t.why}</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      ${t.links.map(l=>`<a href="${l.url}" target="_blank" rel="noopener" style="font-size:11px;color:#58a6ff;text-decoration:none;background:#21262d;border:1px solid #30363d;border-radius:6px;padding:5px 10px">${l.name} ↗</a>`).join('')}
+    </div>
   </div>`;
 }
 
+function renderNews(){
+  const trendsHtml=MEGA_TRENDS.map(trendCard).join('');
+  const linksHtml=NEWS_LINKS.map(g=>`
+    <div style="margin-bottom:14px">
+      <div style="font-size:13px;font-weight:700;color:#e3b341;margin-bottom:6px">${g.cat}</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px">
+        ${g.links.map(l=>`<a href="${l.url}" target="_blank" rel="noopener" style="display:block;background:#161b22;border:1px solid #30363d;border-radius:8px;padding:10px;color:#58a6ff;text-decoration:none;font-size:12px;font-weight:600">${l.name} ↗</a>`).join('')}
+      </div>
+    </div>`).join('');
+  document.getElementById('mainView').innerHTML=`
+  <div class="panel">
+    <div style="font-size:15px;font-weight:700;color:#e3b341;margin-bottom:4px">🌐 時事脈絡 ｜ AI 與全球經濟</div>
+    <div style="font-size:11px;color:#8b949e;margin-bottom:14px">影響 AI 發展與股市的關鍵時事，每則附『為什麼影響你』與相關新聞連結</div>
+    ${trendsHtml}
+  </div>
+  <div class="panel">
+    <div style="font-size:14px;font-weight:700;color:#e3b341;margin-bottom:4px">📰 即時新聞來源</div>
+    <div style="font-size:11px;color:#8b949e;margin-bottom:12px">點任一連結開新分頁，追蹤最新發展</div>
+    ${linksHtml}
+  </div>`;
+}
+
+// ── 關鍵字規律監控（追蹤法說會/財報/公告的常態 vs 異常）──
+const KEYWORD_BASELINE=[
+  {sym:"2330.TW",name:"台積電",
+   normal:["CoWoS產能滿載","先進製程3nm/2nm","資本支出上修","AI需求強勁","海外擴廠(亞利桑那)"],
+   watch:["CoWoS報價","2nm良率","AI訂單能見度延長","HBM4整合"],
+   alert:"若開始頻繁提到『庫存調整』『需求趨緩』『稼動率下滑』=警訊"},
+  {sym:"3017.TW",name:"奇鋐",
+   normal:["液冷散熱","3D VC均熱板","AI伺服器散熱","水冷板出貨"],
+   watch:["Vera Rubin液冷規格","110kW機櫃散熱","水冷滲透率","新客戶design win"],
+   alert:"關注是否提到『液冷訂單放量』『單機價值提升』=正面;『認證延遲』=負面"},
+  {sym:"3324.TWO",name:"雙鴻",
+   normal:["液冷模組","水冷板","散熱解決方案","AI GPU散熱"],
+   watch:["VR200散熱訂單","液冷良率","CSP直接客戶","產能擴充"],
+   alert:"留意『液冷良率提升』『大廠認證通過』=放量訊號"},
+  {sym:"6873.TW",name:"泓德能源",
+   normal:["儲能系統","太陽能EPC","售電業務","電力交易"],
+   watch:["AI資料中心供電","儲能備用容量","表後資產","綠電PPA"],
+   alert:"關注『資料中心供電合約』『儲能放量』=轉型成功訊號"},
+  {sym:"3711.TW",name:"日月光投控",
+   normal:["封測成長","先進封裝","CoWoS/FOPLP","測試訂單"],
+   watch:["AI封測單價","FOPLP放量","稼動率","資本支出"],
+   alert:"留意先進封裝佔比、稼動率變化"},
+  {sym:"3680.TWO",name:"家登精密",
+   normal:["EUV光罩盒","FOUP晶圓載具","先進封裝載具","台積電訂單"],
+   watch:["CoWoS載具放量(2026-27)","High-NA EUV認證","日本久留米廠"],
+   alert:"關注CoWoS載具量產時程、新客戶認證"},
+  {sym:"NVDA",name:"輝達",
+   normal:["資料中心成長","Blackwell/Vera Rubin","AI需求","毛利率"],
+   watch:["Vera Rubin放量","VR200量產時程","液冷良率問題","下一代Feynman"],
+   alert:"⭐核心:VR200因散熱延後到8月→留意是否再延;Feynman設計動向=領先12-18個月訊號"},
+  {sym:"TSM",name:"台積電ADR",
+   normal:["同台積電2330"],
+   watch:["美國盤的反應(台股風向球)"],
+   alert:"作為台積電2330開盤的領先指標"},
+  {sym:"CRWV",name:"CoreWeave",
+   normal:["AI雲端算力","GPU租賃","NVIDIA合作","訂單積壓backlog"],
+   watch:["算力擴充","新資料中心","客戶集中度","電力取得"],
+   alert:"留意backlog成長、電力供應是否成瓶頸"},
+  {sym:"SNPS",name:"Synopsys",
+   normal:["EDA設計軟體","AI晶片設計工具","訂單backlog"],
+   watch:["AI設計需求","新製程支援","訂閱成長"],
+   alert:"EDA是晶片設計上游,需求領先晶片放量"},
+  {sym:"CDNS",name:"Cadence",
+   normal:["EDA設計軟體","晶片設計工具","系統設計"],
+   watch:["AI設計需求","訂單能見度"],
+   alert:"同Synopsys,EDA雙雄"},
+];
+function renderKeyword(){
+  const watching=KEYWORD_BASELINE.filter(k=>STOCKS.find(s=>s.sym===k.sym));
+  const cards=watching.map(k=>`
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px;margin-bottom:8px">
+      <div style="font-weight:700;font-size:14px;color:#e3b341;margin-bottom:8px">${k.name} <span style="color:#8b949e;font-size:11px">${k.sym}</span></div>
+      <div style="font-size:11px;color:#8b949e;margin-bottom:3px">📌 常態關鍵字(規律)</div>
+      <div style="margin-bottom:8px">${k.normal.map(w=>`<span style="display:inline-block;background:#21262d;color:#c9d1d9;border-radius:10px;padding:2px 8px;font-size:10px;margin:2px">${w}</span>`).join('')}</div>
+      <div style="font-size:11px;color:#58a6ff;margin-bottom:3px">👁 本季要盯的變化</div>
+      <div style="margin-bottom:8px">${k.watch.map(w=>`<span style="display:inline-block;background:#001d3d;color:#58a6ff;border:1px solid #1f6feb;border-radius:10px;padding:2px 8px;font-size:10px;margin:2px">${w}</span>`).join('')}</div>
+      <div style="font-size:11px;color:#f85149;background:#1a0d0d;padding:8px;border-radius:6px;line-height:1.6">⚠️ ${k.alert}</div>
+    </div>`).join('');
+  document.getElementById('mainView').innerHTML=`
+  <div class="panel">
+    <div style="font-size:15px;font-weight:700;color:#e3b341;margin-bottom:4px">🔑 關鍵字規律監控</div>
+    <div style="font-size:11px;color:#8b949e;margin-bottom:6px;line-height:1.6">方法論:每間公司都有『常態關鍵字』(規律)。當法說會/財報開始<b style="color:#f85149">違背規律</b>——例如重複提到新應用、上游價格轉折、下游資本支出增加——才是值得注意的訊號。</div>
+    <div style="font-size:11px;color:#e3b341;background:#2d2200;padding:8px;border-radius:6px;margin-bottom:12px;line-height:1.6">💡 每週把你看到的法說會/財報/公告貼給我,我幫你比對『這次 vs 上一季』的語氣差異,只在『規律出現變化』時提醒你。</div>
+    ${cards}
+  </div>`;
+}
 loadAll();
 </script>
 </body>
