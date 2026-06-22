@@ -681,55 +681,79 @@ function renderKeyword(){
     ${cards}
   </div>`;
 }
-// ── 三大法人買賣超（證交所OpenAPI，當日個股）──
-let INST_DATA=null;
-async function fetchInst(){
+// ── 三大法人歷史趨勢（FinMind，近N日）──
+const INST_CACHE={};
+async function fetchInstHist(stockId){
+  if(INST_CACHE[stockId])return INST_CACHE[stockId];
+  // 抓最近約20天（多抓一點，顯示10個交易日）
+  const d=new Date();d.setDate(d.getDate()-25);
+  const start=d.toISOString().slice(0,10);
   try{
-    const res=await fetch(`${WORKER_URL}/?type=institutional&_t=${Date.now()}`,{cache:'no-store'});
-    return await res.json();
+    const res=await fetch(`${WORKER_URL}/?type=inst&id=${stockId}&start=${start}&_t=${Date.now()}`,{cache:'no-store'});
+    const json=await res.json();
+    INST_CACHE[stockId]=json;
+    return json;
   }catch(e){return null;}
 }
+// FinMind法人類別：Foreign_Investor(外資)/Investment_Trust(投信)/Dealer系列(自營)
+function aggInstByDate(rows){
+  // 把同一天的各類別整理成 {date:{foreign,trust,dealer}}
+  const byDate={};
+  rows.forEach(r=>{
+    const d=r.date;
+    if(!byDate[d])byDate[d]={foreign:0,trust:0,dealer:0};
+    const net=(r.buy-r.sell);
+    const n=r.name||"";
+    if(n.includes("Foreign"))byDate[d].foreign+=net;
+    else if(n.includes("Investment_Trust"))byDate[d].trust+=net;
+    else if(n.includes("Dealer"))byDate[d].dealer+=net;
+  });
+  return byDate;
+}
+let instCurId=null;
 async function renderInst(){
-  document.getElementById('mainView').innerHTML='<div class="panel"><div class="loading">🔄 載入三大法人資料中...</div></div>';
-  if(!INST_DATA)INST_DATA=await fetchInst();
-  const data=INST_DATA;
-  if(!data||!Array.isArray(data)){
-    document.getElementById('mainView').innerHTML='<div class="panel"><div class="loading">三大法人資料暫無法取得(可能非交易日或證交所未更新)</div></div>';
+  // 預設選第一支台股
+  const twStocks=STOCKS.filter(s=>s.mkt==='TW');
+  if(!instCurId)instCurId=twStocks[0].sym.replace(/\.TWO?$/,'');
+  const opts=twStocks.map(s=>{const id=s.sym.replace(/\.TWO?$/,'');return `<option value="${id}"${id===instCurId?' selected':''}>${s.name} (${id})</option>`;}).join('');
+  document.getElementById('mainView').innerHTML=`
+  <div class="panel">
+    <div style="font-size:15px;font-weight:700;color:#e3b341;margin-bottom:8px">🏦 三大法人買賣超趨勢（近10日，單位:張）</div>
+    <div class="calc-row" style="margin-bottom:10px"><label style="width:70px">選擇台股</label>
+      <select id="instSel" onchange="instCurId=this.value;renderInst()" style="flex:1;background:#21262d;border:1px solid #30363d;border-radius:5px;padding:7px 8px;color:#e6edf3;font-size:13px">${opts}</select></div>
+    <div id="instTable"><div class="loading">🔄 載入法人資料中...</div></div>
+  </div>`;
+  const raw=await fetchInstHist(instCurId);
+  const box=document.getElementById('instTable');
+  if(!box)return;
+  if(!raw||raw.status!==200||!raw.data||!raw.data.length){
+    const msg=raw&&raw.msg?raw.msg:'無資料（可能非交易日、或當日FinMind尚未更新）';
+    box.innerHTML=`<div class="loading">${msg}</div>`;
     return;
   }
-  // 我追蹤的台股代號（去掉.TW/.TWO）
-  const myTW=STOCKS.filter(s=>s.mkt==='TW').map(s=>({code:s.sym.replace(/\.TWO?$/,''),name:s.name}));
-  // 證交所T86欄位：證券代號/證券名稱/外陸資買賣超股數(不含外資自營)/投信買賣超股數/自營商買賣超股數/三大法人買賣超股數
-  const rows=myTW.map(stock=>{
-    const found=data.find(d=>d["證券代號"]===stock.code||d["Code"]===stock.code);
-    if(!found)return `<tr><td class="nm">${stock.name}</td><td>${stock.code}</td><td colspan="4" style="color:#8b949e">無資料(可能上櫃或非當日)</td></tr>`;
-    // 取得各欄位（證交所欄位名稱）
-    const foreign=parseInt((found["外陸資買賣超股數(不含外資自營商)"]||found["外資買賣超股數"]||"0").replace(/,/g,''))||0;
-    const trust=parseInt((found["投信買賣超股數"]||"0").replace(/,/g,''))||0;
-    const dealer=parseInt((found["自營商買賣超股數"]||"0").replace(/,/g,''))||0;
-    const total=parseInt((found["三大法人買賣超股數"]||"0").replace(/,/g,''))||0;
-    const fmt=n=>{const lots=Math.round(n/1000);const cls=lots>0?'up':lots<0?'dn':'fl';return `<span class="${cls}">${lots>0?'+':''}${lots.toLocaleString()}</span>`;};
-    return `<tr>
-      <td class="nm">${stock.name}</td><td style="color:#8b949e">${stock.code}</td>
-      <td>${fmt(foreign)}</td><td>${fmt(trust)}</td><td>${fmt(dealer)}</td>
-      <td><b>${fmt(total)}</b></td></tr>`;
-  }).join('');
-  document.getElementById('mainView').innerHTML=`
-  <div class="panel" style="overflow-x:auto">
-    <div style="font-size:15px;font-weight:700;color:#e3b341;margin-bottom:4px">🏦 三大法人買賣超（當日，單位:張）</div>
-    <div style="font-size:11px;color:#8b949e;margin-bottom:6px;line-height:1.6">資料來源:證交所OpenAPI。<span class="up">紅=買超(法人看好)</span> <span class="dn">綠=賣超(法人調節)</span>。僅顯示你追蹤的上市台股(上櫃股3324/3680證交所此API不含)。</div>
-    <table class="tbl" style="min-width:560px">
-      <thead><tr><th>名稱</th><th>代號</th><th>外資</th><th>投信</th><th>自營商</th><th>三大法人合計</th></tr></thead>
+  const byDate=aggInstByDate(raw.data);
+  const dates=Object.keys(byDate).sort().reverse().slice(0,10); // 最新10天
+  const lot=n=>Math.round(n/1000);
+  const fmt=n=>{const v=lot(n);const cls=v>0?'up':v<0?'dn':'fl';return `<span class="${cls}">${v>0?'+':''}${v.toLocaleString()}</span>`;};
+  // 計算外資連續買/賣
+  let streak=0,streakDir=0;
+  for(const d of dates){const f=byDate[d].foreign;const dir=f>0?1:f<0?-1:0;if(streak===0){streak=1;streakDir=dir;}else if(dir===streakDir&&dir!==0){streak++;}else break;}
+  const streakTxt=streakDir>0?`外資連${streak}買`:streakDir<0?`外資連${streak}賣`:'—';
+  const streakCls=streakDir>0?'up':streakDir<0?'dn':'fl';
+  const rows=dates.map(d=>{const x=byDate[d];return `<tr>
+    <td>${d.slice(5)}</td>
+    <td>${fmt(x.foreign)}</td><td>${fmt(x.trust)}</td><td>${fmt(x.dealer)}</td>
+    <td><b>${fmt(x.foreign+x.trust+x.dealer)}</b></td></tr>`;}).join('');
+  box.innerHTML=`
+    <div style="font-size:12px;margin-bottom:8px">近期趨勢：<span class="${streakCls}" style="font-weight:700">${streakTxt}</span></div>
+    <table class="tbl" style="min-width:480px">
+      <thead><tr><th>日期</th><th>外資</th><th>投信</th><th>自營商</th><th>合計</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
     <div style="margin-top:10px;font-size:10px;color:#8b949e;line-height:1.7">
-      💡 解讀:<br>
-      • <b style="color:#f85149">外資連續買超</b> = 國際資金看好,通常帶動股價<br>
-      • <b style="color:#58a6ff">投信買超</b> = 國內法人(基金)布局,常有作帳行情<br>
-      • 三大法人同步買超 = 較強訊號;互相對作 = 方向分歧<br>
-      • 此為「當日」資料,要看趨勢需連續觀察數日
-    </div>
-  </div>`;
+      <span class="up">紅=買超</span> <span class="dn">綠=賣超</span>。資料來源:FinMind(含上市櫃)。<br>
+      💡 外資連續買超→國際資金看好;連續賣超→留意調節。投信買超常有作帳行情。
+    </div>`;
 }
 loadAll();
 </script>
