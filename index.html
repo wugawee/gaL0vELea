@@ -617,10 +617,14 @@ function renderNews(){
 
 // ── 關鍵字規律監控（追蹤法說會/財報/公告的常態 vs 異常）──
 const KEYWORD_BASELINE=[
+  {sym:"_MARKET",name:"📅 大盤關鍵事件記錄",
+   normal:["每週更新:法說會/財報/公告的規律語氣"],
+   watch:["2026/06/22:聯準會維持利率不變、美伊和平協議達成→宏觀利空解除,外資大舉回流權值股,台股破47000創高","台積電7月法說會(下一個催化劑)"],
+   alert:"⚠️利空解除是『一次性事件』(已反映),別當成會持續的利多;急漲後常拉回整理(如6/9暴漲後6/10-12回檔)"},
   {sym:"2330.TW",name:"台積電",
    normal:["CoWoS產能滿載","先進製程3nm/2nm","資本支出上修","AI需求強勁","海外擴廠(亞利桑那)"],
-   watch:["CoWoS報價","2nm良率","AI訂單能見度延長","HBM4整合"],
-   alert:"若開始頻繁提到『庫存調整』『需求趨緩』『稼動率下滑』=警訊"},
+   watch:["⭐CoPoS設備交付龍潭廠試產(6/22新)","⭐外資喊目標價3500元(6/22新)","CoWoS報價","2nm良率","AI訂單能見度延長","HBM4整合","7月法說會展望"],
+   alert:"📍6/22規律變化:股價創高2510、市值破65兆、外資連2買1.4萬張、CoPoS(玻璃基板更先進封裝)試產→AI封裝再升級訊號。但華爾街喊『可續抱別加碼』、外資示警台股3大整理訊號=漲多留意。若開始頻繁提到『庫存調整』『需求趨緩』『稼動率下滑』=反轉警訊"},
   {sym:"3017.TW",name:"奇鋐",
    normal:["液冷散熱","3D VC均熱板","AI伺服器散熱","水冷板出貨"],
    watch:["Vera Rubin液冷規格","110kW機櫃散熱","水冷滲透率","新客戶design win"],
@@ -647,8 +651,8 @@ const KEYWORD_BASELINE=[
    alert:"⭐核心:VR200因散熱延後到8月→留意是否再延;Feynman設計動向=領先12-18個月訊號"},
   {sym:"TSM",name:"台積電ADR",
    normal:["同台積電2330"],
-   watch:["美國盤的反應(台股風向球)"],
-   alert:"作為台積電2330開盤的領先指標"},
+   watch:["美國盤的反應(台股風向球)","外資3500目標價是否反映在ADR溢價"],
+   alert:"作為台積電2330開盤的領先指標。6/22台積電創高2510,留意ADR溢價變化"},
   {sym:"CRWV",name:"CoreWeave",
    normal:["AI雲端算力","GPU租賃","NVIDIA合作","訂單積壓backlog"],
    watch:["算力擴充","新資料中心","客戶集中度","電力取得"],
@@ -663,7 +667,7 @@ const KEYWORD_BASELINE=[
    alert:"同Synopsys,EDA雙雄"},
 ];
 function renderKeyword(){
-  const watching=KEYWORD_BASELINE.filter(k=>STOCKS.find(s=>s.sym===k.sym));
+  const watching=KEYWORD_BASELINE.filter(k=>k.sym.startsWith('_')||STOCKS.find(s=>s.sym===k.sym));
   const cards=watching.map(k=>`
     <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px;margin-bottom:8px">
       <div style="font-weight:700;font-size:14px;color:#e3b341;margin-bottom:8px">${k.name} <span style="color:#8b949e;font-size:11px">${k.sym}</span></div>
