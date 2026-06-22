@@ -64,6 +64,7 @@ body{background:#0d1117;color:#e6edf3;font-family:-apple-system,"Microsoft Jheng
     <button class="tab" id="t-calc" onclick="setView('calc',this)">🧮 計算機</button>
     <button class="tab" id="t-news" onclick="setView('news',this)">📰 新聞</button>
     <button class="tab" id="t-keyword" onclick="setView('keyword',this)">🔑 關鍵字</button>
+    <button class="tab" id="t-inst" onclick="setView('inst',this)">🏦 法人</button>
   </div>
 </div>
 
@@ -250,6 +251,7 @@ function render(){
   else if(curView==='calc')renderCalcPage();
   else if(curView==='news')renderNews();
   else if(curView==='keyword')renderKeyword();
+  else if(curView==='inst')renderInst();
   else renderChart(curSym);
 }
 
@@ -675,6 +677,56 @@ function renderKeyword(){
     <div style="font-size:11px;color:#8b949e;margin-bottom:6px;line-height:1.6">方法論:每間公司都有『常態關鍵字』(規律)。當法說會/財報開始<b style="color:#f85149">違背規律</b>——例如重複提到新應用、上游價格轉折、下游資本支出增加——才是值得注意的訊號。</div>
     <div style="font-size:11px;color:#e3b341;background:#2d2200;padding:8px;border-radius:6px;margin-bottom:12px;line-height:1.6">💡 每週把你看到的法說會/財報/公告貼給我,我幫你比對『這次 vs 上一季』的語氣差異,只在『規律出現變化』時提醒你。</div>
     ${cards}
+  </div>`;
+}
+// ── 三大法人買賣超（證交所OpenAPI，當日個股）──
+let INST_DATA=null;
+async function fetchInst(){
+  try{
+    const res=await fetch(`${WORKER_URL}/?type=institutional&_t=${Date.now()}`,{cache:'no-store'});
+    return await res.json();
+  }catch(e){return null;}
+}
+async function renderInst(){
+  document.getElementById('mainView').innerHTML='<div class="panel"><div class="loading">🔄 載入三大法人資料中...</div></div>';
+  if(!INST_DATA)INST_DATA=await fetchInst();
+  const data=INST_DATA;
+  if(!data||!Array.isArray(data)){
+    document.getElementById('mainView').innerHTML='<div class="panel"><div class="loading">三大法人資料暫無法取得(可能非交易日或證交所未更新)</div></div>';
+    return;
+  }
+  // 我追蹤的台股代號（去掉.TW/.TWO）
+  const myTW=STOCKS.filter(s=>s.mkt==='TW').map(s=>({code:s.sym.replace(/\.TWO?$/,''),name:s.name}));
+  // 證交所T86欄位：證券代號/證券名稱/外陸資買賣超股數(不含外資自營)/投信買賣超股數/自營商買賣超股數/三大法人買賣超股數
+  const rows=myTW.map(stock=>{
+    const found=data.find(d=>d["證券代號"]===stock.code||d["Code"]===stock.code);
+    if(!found)return `<tr><td class="nm">${stock.name}</td><td>${stock.code}</td><td colspan="4" style="color:#8b949e">無資料(可能上櫃或非當日)</td></tr>`;
+    // 取得各欄位（證交所欄位名稱）
+    const foreign=parseInt((found["外陸資買賣超股數(不含外資自營商)"]||found["外資買賣超股數"]||"0").replace(/,/g,''))||0;
+    const trust=parseInt((found["投信買賣超股數"]||"0").replace(/,/g,''))||0;
+    const dealer=parseInt((found["自營商買賣超股數"]||"0").replace(/,/g,''))||0;
+    const total=parseInt((found["三大法人買賣超股數"]||"0").replace(/,/g,''))||0;
+    const fmt=n=>{const lots=Math.round(n/1000);const cls=lots>0?'up':lots<0?'dn':'fl';return `<span class="${cls}">${lots>0?'+':''}${lots.toLocaleString()}</span>`;};
+    return `<tr>
+      <td class="nm">${stock.name}</td><td style="color:#8b949e">${stock.code}</td>
+      <td>${fmt(foreign)}</td><td>${fmt(trust)}</td><td>${fmt(dealer)}</td>
+      <td><b>${fmt(total)}</b></td></tr>`;
+  }).join('');
+  document.getElementById('mainView').innerHTML=`
+  <div class="panel" style="overflow-x:auto">
+    <div style="font-size:15px;font-weight:700;color:#e3b341;margin-bottom:4px">🏦 三大法人買賣超（當日，單位:張）</div>
+    <div style="font-size:11px;color:#8b949e;margin-bottom:6px;line-height:1.6">資料來源:證交所OpenAPI。<span class="up">紅=買超(法人看好)</span> <span class="dn">綠=賣超(法人調節)</span>。僅顯示你追蹤的上市台股(上櫃股3324/3680證交所此API不含)。</div>
+    <table class="tbl" style="min-width:560px">
+      <thead><tr><th>名稱</th><th>代號</th><th>外資</th><th>投信</th><th>自營商</th><th>三大法人合計</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div style="margin-top:10px;font-size:10px;color:#8b949e;line-height:1.7">
+      💡 解讀:<br>
+      • <b style="color:#f85149">外資連續買超</b> = 國際資金看好,通常帶動股價<br>
+      • <b style="color:#58a6ff">投信買超</b> = 國內法人(基金)布局,常有作帳行情<br>
+      • 三大法人同步買超 = 較強訊號;互相對作 = 方向分歧<br>
+      • 此為「當日」資料,要看趨勢需連續觀察數日
+    </div>
   </div>`;
 }
 loadAll();
