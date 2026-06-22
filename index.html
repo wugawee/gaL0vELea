@@ -74,6 +74,7 @@ body{background:#0d1117;color:#e6edf3;font-family:-apple-system,"Microsoft Jheng
 
 <script>
 const STOCKS=[
+  {sym:"^TWII",name:"台股加權指數",mkt:"TW",cur:"TWD"},
   {sym:"2330.TW",name:"台積電",mkt:"TW",cur:"TWD"},
   {sym:"3017.TW",name:"奇鋐",mkt:"TW",cur:"TWD"},
   {sym:"3324.TWO",name:"雙鴻",mkt:"TW",cur:"TWD"},
@@ -83,6 +84,10 @@ const STOCKS=[
   {sym:"00984A.TW",name:"安聯台灣高息",mkt:"TW",cur:"TWD"},
   {sym:"3711.TW",name:"日月光投控",mkt:"TW",cur:"TWD"},
   {sym:"3680.TWO",name:"家登精密",mkt:"TW",cur:"TWD"},
+  {sym:"^SOX",name:"費城半導體指數",mkt:"US",cur:"USD"},
+  {sym:"^IXIC",name:"那斯達克指數",mkt:"US",cur:"USD"},
+  {sym:"^GSPC",name:"標普500指數",mkt:"US",cur:"USD"},
+  {sym:"VOO",name:"VOO標普500ETF",mkt:"US",cur:"USD"},
   {sym:"TSM",name:"台積電ADR",mkt:"US",cur:"USD"},
   {sym:"GOOGL",name:"Google",mkt:"US",cur:"USD"},
   {sym:"NVDA",name:"輝達",mkt:"US",cur:"USD"},
@@ -619,12 +624,12 @@ function renderNews(){
 const KEYWORD_BASELINE=[
   {sym:"_MARKET",name:"📅 大盤關鍵事件記錄",
    normal:["每週更新:法說會/財報/公告的規律語氣"],
-   watch:["2026/06/22:聯準會維持利率不變、美伊和平協議達成→宏觀利空解除,外資大舉回流權值股,台股破47000創高","台積電7月法說會(下一個催化劑)"],
-   alert:"⚠️利空解除是『一次性事件』(已反映),別當成會持續的利多;急漲後常拉回整理(如6/9暴漲後6/10-12回檔)"},
+   watch:["2026/06/22:①聯準會維持利率不變、美伊和平協議達成→宏觀利空解除,外資回流,台股破47000創高 ②泓德能源大漲+5.21%(綠能/AI資料中心題材發酵)","台積電7月法說會(下一催化劑)"],
+   alert:"⚠️利空解除是『一次性事件』(已反映),別當成持續利多;急漲後常拉回(如6/9暴漲後6/10-12回檔)。泓德這類小型題材股,漲時兇、跌時也兇,留意是『實際營收』還是『純消息面』"},
   {sym:"2330.TW",name:"台積電",
    normal:["CoWoS產能滿載","先進製程3nm/2nm","資本支出上修","AI需求強勁","海外擴廠(亞利桑那)"],
-   watch:["⭐CoPoS設備交付龍潭廠試產(6/22新)","⭐外資喊目標價3500元(6/22新)","CoWoS報價","2nm良率","AI訂單能見度延長","HBM4整合","7月法說會展望"],
-   alert:"📍6/22規律變化:股價創高2510、市值破65兆、外資連2買1.4萬張、CoPoS(玻璃基板更先進封裝)試產→AI封裝再升級訊號。但華爾街喊『可續抱別加碼』、外資示警台股3大整理訊號=漲多留意。若開始頻繁提到『庫存調整』『需求趨緩』『稼動率下滑』=反轉警訊"},
+   watch:["CoPoS設備交付龍潭廠試產(更先進封裝)","外資目標價3500元","2nm良率","AI訂單能見度延長","HBM4整合","7月法說會展望"],
+   alert:"若開始頻繁提到『庫存調整』『需求趨緩』『稼動率下滑』=反轉警訊"},
   {sym:"3017.TW",name:"奇鋐",
    normal:["液冷散熱","3D VC均熱板","AI伺服器散熱","水冷板出貨"],
    watch:["Vera Rubin液冷規格","110kW機櫃散熱","水冷滲透率","新客戶design win"],
@@ -635,8 +640,8 @@ const KEYWORD_BASELINE=[
    alert:"留意『液冷良率提升』『大廠認證通過』=放量訊號"},
   {sym:"6873.TW",name:"泓德能源",
    normal:["儲能系統","太陽能EPC","售電業務","電力交易"],
-   watch:["AI資料中心供電","儲能備用容量","表後資產","綠電PPA"],
-   alert:"關注『資料中心供電合約』『儲能放量』=轉型成功訊號"},
+   watch:["⭐AI資料中心供電(營收拚重返百億)","⭐星星電力搶下全台備用容量第一單","澳洲綠鋼Greensteel","儲能放量","綠電PPA"],
+   alert:"📍6/22規律變化:股價大漲+5.21%衝94.9元(6/18才78.8,數日漲約20%)。題材熱:AI資料中心+儲能第一單+澳洲綠鋼。但⚠️基本面仍弱(Q1 EPS僅0.25元年減63%、4月營收年減35%)→屬『題材先行、獲利未跟上』的轉型股,小型股波動大。若AI資料中心『實際營收』兌現=真利多;若只是消息面=慎防回檔"},
   {sym:"3711.TW",name:"日月光投控",
    normal:["封測成長","先進封裝","CoWoS/FOPLP","測試訂單"],
    watch:["AI封測單價","FOPLP放量","稼動率","資本支出"],
@@ -717,7 +722,7 @@ function aggInstByDate(rows){
 let instCurId=null;
 async function renderInst(){
   // 預設選第一支台股
-  const twStocks=STOCKS.filter(s=>s.mkt==='TW');
+  const twStocks=STOCKS.filter(s=>s.mkt==='TW'&&!s.sym.startsWith('^'));
   if(!instCurId)instCurId=twStocks[0].sym.replace(/\.TWO?$/,'');
   const opts=twStocks.map(s=>{const id=s.sym.replace(/\.TWO?$/,'');return `<option value="${id}"${id===instCurId?' selected':''}>${s.name} (${id})</option>`;}).join('');
   document.getElementById('mainView').innerHTML=`
