@@ -24,7 +24,7 @@ body{background:#0d1117;color:#e6edf3;font-family:-apple-system,"Microsoft Jheng
 .badge{display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;margin:1px}
 .s-gold{background:#2d2200;color:#e3b341;border:1px solid #e3b341}
 .s-blue{background:#001d3d;color:#58a6ff;border:1px solid #58a6ff}
-.s-grn{background:#0d2a12;color:#26a641;border:1px solid #26a641}
+.s-grn{background:#0d2a12;color:#26a641;border:1px solid #26a641}.s-warn{background:#5a1e1e;color:#ff7b72;border:1px solid #f85149;font-weight:700}
 .s-prp{background:#1a0d2a;color:#bc8cff;border:1px solid #bc8cff}
 .s-gray{background:#21262d;color:#8b949e;border:1px solid #30363d}
 .loading{text-align:center;padding:30px;color:#8b949e}
@@ -191,22 +191,41 @@ function detectPatterns(data){
   for(let i=2;i<data.length;i++){
     const d=data[i],body=Math.abs(d.c-d.o),lower=Math.min(d.c,d.o)-d.l,upper=d.h-Math.max(d.c,d.o),range=d.h-d.l;
     const p1=data[i-1],p2=data[i-2];
-    // 錘子線
-    if(lower>body*1.8&&upper<body*0.5&&range>0)pats.push({i,type:'🔨錘子線',color:'#26a641',short:'錘'});
-    // 倒錘（反轉）
-    if(upper>body*1.8&&lower<body*0.5&&range>0&&d.c>d.o)pats.push({i,type:'倒錘線',color:'#26a641',short:'倒'});
-    // 十字線
-    if(body<range*0.08&&range>0)pats.push({i,type:'✛十字線',color:'#e3b341',short:'十'});
+    const isRed=d.c>d.o, isGreen=d.c<d.o; // 台股:紅漲綠跌
+    const p1Red=p1.c>p1.o, p1Green=p1.c<p1.o;
+    const p2Red=p2.c>p2.o, p2Green=p2.c<p2.o;
+    // ============ 看漲/止跌訊號（紅/藍標記）============
+    // 錘子線（下影長，止跌）
+    if(lower>body*1.8&&upper<body*0.5&&range>0)pats.push({i,type:'🔨錘子線(止跌)',color:'#26a641',short:'錘',bull:true});
+    // 倒錘線
+    if(upper>body*1.8&&lower<body*0.5&&range>0&&isRed)pats.push({i,type:'倒錘線(止跌)',color:'#26a641',short:'倒',bull:true});
     // 蜻蜓十字（強力止跌）
-    if(body<range*0.1&&lower>range*0.6&&range>0)pats.push({i,type:'蜻蜓十字',color:'#26a641',short:'蜻'});
-    // 吞噬紅K
-    if(d.c>d.o&&p1.c<p1.o&&d.c>p1.o&&d.o<p1.c)pats.push({i,type:'🔴吞噬紅K',color:'#58a6ff',short:'吞'});
-    // 貫穿線（紅K收盤超過前黑K中點）
-    if(p1.c<p1.o&&d.c>d.o&&d.o<p1.c&&d.c>(p1.o+p1.c)/2&&d.c<p1.o)pats.push({i,type:'貫穿線',color:'#58a6ff',short:'貫'});
-    // 早晨之星
-    if(p2.c<p2.o&&Math.abs(p1.c-p1.o)<Math.abs(p2.c-p2.o)*0.35&&d.c>d.o&&d.c>(p2.o+p2.c)/2)pats.push({i,type:'⭐早晨之星',color:'#bc8cff',short:'晨'});
-    // 多頭母子（孕線）
-    if(p1.c<p1.o&&d.c>d.o&&d.o>p1.c&&d.c<p1.o)pats.push({i,type:'多頭孕線',color:'#26a641',short:'孕'});
+    if(body<range*0.1&&lower>range*0.6&&range>0)pats.push({i,type:'蜻蜓十字(強止跌)',color:'#26a641',short:'蜻',bull:true});
+    // 看漲吞噬（紅K吃掉前綠K）
+    if(isRed&&p1Green&&d.c>p1.o&&d.o<p1.c)pats.push({i,type:'🔴看漲吞噬',color:'#58a6ff',short:'吞',bull:true});
+    // 貫穿線
+    if(p1Green&&isRed&&d.o<p1.c&&d.c>(p1.o+p1.c)/2&&d.c<p1.o)pats.push({i,type:'貫穿線(看漲)',color:'#58a6ff',short:'貫',bull:true});
+    // 早晨之星（晨星：長綠→小實體→長紅）
+    if(p2Green&&Math.abs(p1.c-p1.o)<Math.abs(p2.c-p2.o)*0.35&&isRed&&d.c>(p2.o+p2.c)/2)pats.push({i,type:'⭐晨星(看漲)',color:'#bc8cff',short:'晨',bull:true});
+    // 多頭孕線
+    if(p1Green&&isRed&&d.o>p1.c&&d.c<p1.o)pats.push({i,type:'多頭孕線',color:'#26a641',short:'孕',bull:true});
+    // 三白兵（連3紅，下跌轉上漲）
+    if(isRed&&p1Red&&p2Red&&d.c>p1.c&&p1.c>p2.c)pats.push({i,type:'⚔️三白兵(強看漲)',color:'#f85149',short:'兵',bull:true});
+    // 錘子底（兩根K同最低）
+    if(Math.abs(d.l-p1.l)<range*0.05&&range>0&&lower>body)pats.push({i,type:'錘子底(看漲)',color:'#26a641',short:'底',bull:true});
+    // ============ 看跌/止漲警示（綠色⚠️標記）============
+    // 黃昏星（長紅→小實體→長綠，上漲末端）
+    if(p2Red&&Math.abs(p1.c-p1.o)<Math.abs(p2.c-p2.o)*0.35&&isGreen&&d.c<(p2.o+p2.c)/2)pats.push({i,type:'⚠️黃昏星(看跌)',color:'#26a641',short:'昏',bull:false});
+    // 三烏鴉（連3綠，上漲轉下跌）
+    if(isGreen&&p1Green&&p2Green&&d.c<p1.c&&p1.c<p2.c)pats.push({i,type:'⚠️三烏鴉(強看跌)',color:'#26a641',short:'鴉',bull:false});
+    // 看跌吞噬（綠K吃掉前紅K）
+    if(isGreen&&p1Red&&d.o>p1.c&&d.c<p1.o)pats.push({i,type:'⚠️看跌吞噬',color:'#26a641',short:'空吞',bull:false});
+    // 烏雲蓋頂（綠K開高於前高、收在前紅K中點下）
+    if(p1Red&&isGreen&&d.o>p1.c&&d.c<(p1.o+p1.c)/2&&d.c>p1.o)pats.push({i,type:'⚠️烏雲蓋頂(看跌)',color:'#26a641',short:'雲',bull:false});
+    // 鎚子頂（兩根K同最高，看跌）
+    if(Math.abs(d.h-p1.h)<range*0.05&&range>0&&upper>body)pats.push({i,type:'⚠️鎚子頂(看跌)',color:'#26a641',short:'頂',bull:false});
+    // 十字線（變盤，中性）
+    if(body<range*0.08&&range>0)pats.push({i,type:'✛十字線(變盤)',color:'#e3b341',short:'十',bull:null});
   }
   return pats;
 }
@@ -277,7 +296,11 @@ function sumRow(s){
   else if(m20&&Math.abs(last.c-m20)/m20<=0.03)al.push(`<span class="badge s-blue">近20MA</span>`);
   if(hP<0&&hL>0)al.push(`<span class="badge s-grn">MACD翻正</span>`);
   const rp=db.pats.filter(p=>p.i>=db.data.length-3);
-  [...new Map(rp.map(p=>[p.type,p])).values()].forEach(p=>al.push(`<span class="badge ${p.type.includes('早晨')?'s-prp':p.color==='#58a6ff'?'s-blue':p.color==='#e3b341'?'s-gold':'s-grn'}">${p.type}</span>`));
+  [...new Map(rp.map(p=>[p.type,p])).values()].forEach(p=>{
+    // 看跌(bull:false)用紅色警示徽章；看漲用綠/藍；中性用金色
+    const cls=p.bull===false?'s-warn':p.type.includes('晨')?'s-prp':p.bull===null?'s-gold':p.color==='#58a6ff'?'s-blue':'s-grn';
+    al.push(`<span class="badge ${cls}">${p.type}</span>`);
+  });
   if(!al.length)al.push(`<span class="badge s-gray">—</span>`);
   return`<tr style="cursor:pointer" onclick="selectSym('${s.sym}','${s.mkt==='TW'?'tw':'us'}')">
     <td class="nm">${s.name}</td><td style="color:#8b949e">${s.sym}</td>
