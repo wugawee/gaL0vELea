@@ -692,11 +692,33 @@ const KEYWORD_BASELINE=[
    normal:["EDA設計軟體","晶片設計工具","系統設計"],
    watch:["AI設計需求","訂單能見度"],
    alert:"同Synopsys,EDA雙雄"},
+  {sym:"MU",name:"美光Micron",
+   normal:["DRAM/NAND記憶體","HBM高頻寬記憶體","AI伺服器需求"],
+   watch:["⭐HBM完全預訂、缺貨看到2027後","⭐16份take-or-pay長約鎖定逾1000億美元","Q4財測上看500億美元","HBM4量產進度","資本支出上看100億美元"],
+   alert:"📍6/24史上最強財報:營收年增346%、毛利率84.9%全美科技業最高、客戶預付180億現金。⚠️CFO明言Q4毛利率增速『有意義放緩』=漲價動能可能見頂的領先訊號。留意2027後新產能開出是否重啟記憶體週期"},
+  {sym:"AXTI",name:"AXT磷化銦",
+   normal:["磷化銦(InP)晶圓基板","化合物半導體材料","光通訊最上游"],
+   watch:["⭐鐳芯2500萬美元InP基板大單","⭐劍橋科技大額預付鎖定產能","Q1營收年增44%、淨利+276%","CPO/矽光子需求(輝達Feynman雙軌互連)","北京通美子公司動態"],
+   alert:"光通訊最上游材料,直接受惠AI資料中心光互連(CPO)趨勢=輝達Feynman的『光』那條腿。⚠️小型股波動大、6月董事連續賣股(內部人賣壓)。留意InP基板供不應求是否延續、中國子公司地緣風險"},
+  {sym:"AAOI",name:"祥茂光電",
+   normal:["光模組/光收發器","資料中心800G","CATV寬頻"],
+   watch:["⭐超大雲端客戶連環大單合計逾2.5億美元(800G+1.6T)","1.6T新品放量進度","台灣廠產能(牽動環宇-KY 4991、全新2455)","資料中心營收佔比"],
+   alert:"2026年股價暴漲439%的光通訊飆股。⚠️波動極大:被剔除Russell指數、內部人賣股等雜訊並存。留意大單兌現進度與毛利率改善;漲多後『買消息賣事實』回檔風險高"},
 ];
+function kwFilterSet(sym){
+  document.querySelectorAll('.kwcard').forEach(c=>{c.style.display=(!sym||c.dataset.sym===sym)?'':'none';});
+  const inp=document.getElementById('kwSearch');if(inp)inp.value='';
+}
+function kwSearchFilter(q){
+  q=q.trim().toLowerCase();
+  document.querySelectorAll('.kwcard').forEach(c=>{
+    c.style.display=(!q||c.textContent.toLowerCase().includes(q)||c.dataset.sym.toLowerCase().includes(q))?'':'none';
+  });
+}
 function renderKeyword(){
   const watching=KEYWORD_BASELINE.filter(k=>k.sym.startsWith('_')||STOCKS.find(s=>s.sym===k.sym));
   const cards=watching.map(k=>`
-    <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px;margin-bottom:8px">
+    <div class="kwcard" data-sym="${k.sym}" style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px;margin-bottom:8px">
       <div style="font-weight:700;font-size:14px;color:#e3b341;margin-bottom:8px">${k.name} <span style="color:#8b949e;font-size:11px">${k.sym}</span></div>
       <div style="font-size:11px;color:#8b949e;margin-bottom:3px">📌 常態關鍵字(規律)</div>
       <div style="margin-bottom:8px">${k.normal.map(w=>`<span style="display:inline-block;background:#21262d;color:#c9d1d9;border-radius:10px;padding:2px 8px;font-size:10px;margin:2px">${w}</span>`).join('')}</div>
@@ -708,6 +730,14 @@ function renderKeyword(){
   <div class="panel">
     <div style="font-size:15px;font-weight:700;color:#e3b341;margin-bottom:4px">🔑 關鍵字規律監控 <span style="font-size:11px;color:#26a641;font-weight:400">📅 更新:2026/06/26</span></div>
     <div style="font-size:11px;color:#8b949e;margin-bottom:6px;line-height:1.6">方法論:每間公司都有『常態關鍵字』(規律)。當法說會/財報開始<b style="color:#f85149">違背規律</b>——例如重複提到新應用、上游價格轉折、下游資本支出增加——才是值得注意的訊號。</div>
+    <div style="margin-bottom:10px">
+      <div style="font-size:11px;color:#8b949e;margin-bottom:5px">⚡ 快速查詢(點代號直達 / 輸入關鍵字篩選)</div>
+      <input id="kwSearch" placeholder="🔍 輸入代號或關鍵字,如 2330、液冷、HBM、CoWoS" oninput="kwSearchFilter(this.value)" style="width:100%;background:#21262d;border:1px solid #30363d;border-radius:6px;padding:8px;color:#e6edf3;font-size:13px;margin-bottom:6px;box-sizing:border-box">
+      <div style="display:flex;gap:5px;flex-wrap:wrap">
+        <button class="kwchip" onclick="kwFilterSet('')" style="background:#e3b341;color:#0d1117;border:none;border-radius:12px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">全部</button>
+        ${watching.map(k=>`<button class="kwchip" onclick="kwFilterSet('${k.sym}')" style="background:#21262d;color:#c9d1d9;border:1px solid #30363d;border-radius:12px;padding:4px 10px;font-size:11px;cursor:pointer">${k.sym.startsWith('_')?'📅大盤':k.name}</button>`).join('')}
+      </div>
+    </div>
     <div style="font-size:11px;color:#e3b341;background:#2d2200;padding:8px;border-radius:6px;margin-bottom:12px;line-height:1.6">💡 每週把你看到的法說會/財報/公告貼給我,我幫你比對『這次 vs 上一季』的語氣差異,只在『規律出現變化』時提醒你。</div>
     ${cards}
   </div>`;
