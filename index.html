@@ -62,8 +62,6 @@ body{background:#0d1117;color:#e6edf3;font-family:-apple-system,"Microsoft Jheng
     <button class="tab" id="t-tw" onclick="setView('tw',this)">台股</button>
     <button class="tab" id="t-us" onclick="setView('us',this)">美股</button>
     <button class="tab" id="t-calc" onclick="setView('calc',this)">🧮 計算機</button>
-    <button class="tab" id="t-news" onclick="setView('news',this)">📰 新聞</button>
-    <button class="tab" id="t-keyword" onclick="setView('keyword',this)">🔑 關鍵字</button>
     <button class="tab" id="t-inst" onclick="setView('inst',this)">🏦 法人</button>
   </div>
 </div>
@@ -87,6 +85,7 @@ const STOCKS=[
   {sym:"6873.TW",name:"泓德能源",mkt:"TW",cur:"TWD"},
   {sym:"3711.TW",name:"日月光投控",mkt:"TW",cur:"TWD"},
   {sym:"3680.TWO",name:"家登精密",mkt:"TW",cur:"TWD"},
+  {sym:"5904.TWO",name:"寶雅",mkt:"TW",cur:"TWD"},
   {sym:"^SOX",name:"費城半導體指數",mkt:"US",cur:"USD"},
   {sym:"^IXIC",name:"那斯達克指數",mkt:"US",cur:"USD"},
   {sym:"^GSPC",name:"標普500指數",mkt:"US",cur:"USD"},
@@ -109,7 +108,8 @@ const STOCKS=[
   {sym:"CDNS",name:"Cadence",mkt:"US",cur:"USD"},
   {sym:"AXTI",name:"AXT磷化銦",mkt:"US",cur:"USD"},
   {sym:"AAOI",name:"祥茂光電",mkt:"US",cur:"USD"},
-  {sym:"SIVE.ST",name:"Sivers矽光子(瑞典)",mkt:"US",cur:"SEK"}
+  {sym:"SIVE.ST",name:"Sivers矽光子(瑞典)",mkt:"US",cur:"SEK"},
+  {sym:"GSHD",name:"Goosehead保險",mkt:"US",cur:"USD"}
 ];
 
 const DB={};
@@ -281,8 +281,6 @@ function render(){
   else if(curView==='tw')renderList('TW');
   else if(curView==='us')renderList('US');
   else if(curView==='calc')renderCalcPage();
-  else if(curView==='news')renderNews();
-  else if(curView==='keyword')renderKeyword();
   else if(curView==='inst')renderInst();
   else renderChart(curSym);
 }
@@ -321,15 +319,20 @@ function sumRow(s){
 }
 function renderSummary(){
   const tw=STOCKS.filter(s=>s.mkt==='TW'),us=STOCKS.filter(s=>s.mkt==='US');
+  const CAT_ETF=new Set(['0050.TW','009816.TW','00403A.TW','00981A.TW','0056.TW','00984A.TW','VOO','QQQ','GLD','IAU']);
+  const CAT_AI=new Set(['2330.TW','3017.TW','3324.TWO','3711.TW','3680.TWO','TSM','NVDA','GOOGL','MRVL','MU','CRWV','SNPS','CDNS','AXTI','AAOI','SIVE.ST']);
+  const catBlock=(arr,label)=>arr.length?`<tr><td colspan="11" style="background:#1a1f26;color:#e3b341;font-weight:700;text-align:left;font-size:12px;padding:6px 16px">${label}</td></tr>`+arr.map(sumRow).join(''):'';
+  const grp=list=>({idx:list.filter(s=>s.sym.startsWith('^')),etf:list.filter(s=>CAT_ETF.has(s.sym)),ai:list.filter(s=>CAT_AI.has(s.sym)),min:list.filter(s=>!s.sym.startsWith('^')&&!CAT_ETF.has(s.sym)&&!CAT_AI.has(s.sym))});
+  const twG=grp(tw),usG=grp(us);
   const head=`<tr><th>名稱</th><th>代號</th><th>收盤</th><th style="color:#e3b341">MA5</th><th style="color:#bc8cff">MA20</th><th style="color:#26a641">MA60</th><th>K值</th><th>D值</th><th>KD比</th><th>MACD</th><th style="text-align:left">⚠️ 入場提醒</th></tr>`;
   document.getElementById('mainView').innerHTML=`
 <div class="panel">
   <div style="font-size:14px;font-weight:700;margin-bottom:8px;color:#e3b341">📊 總覽 ｜ 點任一列看K線　<span id="dataDate" style="font-size:11px;color:#8b949e;font-weight:400"></span></div>
   <table class="tbl"><thead>${head}</thead><tbody>
     <tr class="sec-row"><td colspan="11">📌 台股</td></tr>
-    ${tw.map(sumRow).join('')}
+    ${catBlock(twG.idx,'📈 指數')}${catBlock(twG.etf,'📊 ETF')}${catBlock(twG.ai,'🤖 AI股')}${catBlock(twG.min,'🏠 民生股')}
     <tr class="sec-row"><td colspan="11">🌐 美股</td></tr>
-    ${us.map(sumRow).join('')}
+    ${catBlock(usG.idx,'📈 指數')}${catBlock(usG.etf,'📊 ETF')}${catBlock(usG.ai,'🤖 AI股')}${catBlock(usG.min,'🏠 民生股')}
   </tbody></table>
   <div style="margin-top:10px;font-size:10px;color:#8b949e;line-height:1.8">
     入場提醒包含：<span class="badge s-gold">KD金叉</span><span class="badge s-blue">突破/近20MA</span><span class="badge s-grn">MACD翻正</span>
@@ -525,228 +528,6 @@ function cC1(){const db=DB[calcSym];if(!db)return;const p=db.last.c,amt=+documen
 function cC2(){const db=DB[calcSym];if(!db)return;const p=db.last.c,sh=+document.getElementById('cSha').value||0,cost=+document.getElementById('cCost').value||0;if(sh>0){const val=rnd(sh*p);document.getElementById('cVal').textContent=val;if(cost>0){const pnl=rnd(val-cost);document.getElementById('cPnl').textContent=(pnl>0?'+':'')+pnl;document.getElementById('cPnlP').textContent=(pnl>0?'+':'')+rnd(pnl/cost*100)+'%';document.getElementById('cAvg').textContent=rnd(cost/sh);}else{['cPnl','cPnlP','cAvg'].forEach(id=>document.getElementById(id).textContent='—');}}else{['cVal','cPnl','cPnlP','cAvg'].forEach(id=>document.getElementById(id).textContent='—');}}
 
 
-// ── 新聞連結分頁 ──
-const NEWS_LINKS=[
-  {cat:"📊 美股即時 / 早盤",links:[
-    {name:"CNBC 美股即時",url:"https://www.cnbc.com/markets/"},
-    {name:"Yahoo Finance 美股",url:"https://finance.yahoo.com/"},
-    {name:"MarketWatch 早盤",url:"https://www.marketwatch.com/"},
-    {name:"Investing.com 美股",url:"https://www.investing.com/indices/major-indices"},
-    {name:"TradingView 美股",url:"https://www.tradingview.com/markets/stocks-usa/"},
-  ]},
-  {cat:"🌍 國際時事 / 財經要聞",links:[
-    {name:"Reuters 路透財經",url:"https://www.reuters.com/business/"},
-    {name:"Bloomberg 彭博",url:"https://www.bloomberg.com/markets"},
-    {name:"鉅亨網 國際",url:"https://news.cnyes.com/news/cat/wd_stock"},
-    {name:"經濟日報 國際",url:"https://money.udn.com/money/cate/5588"},
-    {name:"財訊 快訊",url:"https://www.wealth.com.tw/"},
-  ]},
-  {cat:"🚀 IPO 新股 / 上市",links:[
-    {name:"Nasdaq IPO 行事曆",url:"https://www.nasdaq.com/market-activity/ipos"},
-    {name:"IPO Calendar 美股",url:"https://www.marketwatch.com/tools/ipo-calendar"},
-    {name:"台灣證交所 新上市",url:"https://www.twse.com.tw/zh/listing/listed/new.html"},
-    {name:"櫃買中心 新上櫃",url:"https://www.tpex.org.tw/web/regular_emerging/apply_schedule/applyschedule.php"},
-  ]},
-  {cat:"📈 台股即時",links:[
-    {name:"玩股網",url:"https://www.wantgoo.com/"},
-    {name:"鉅亨網 台股",url:"https://news.cnyes.com/news/cat/tw_stock"},
-    {name:"Goodinfo 台股",url:"https://goodinfo.tw/tw/index.asp"},
-    {name:"台灣證交所",url:"https://www.twse.com.tw/zh/"},
-  ]},
-];
-// 時事主題看板（影響 AI 與全球經濟的關鍵脈絡）
-const MEGA_TRENDS=[
-  {
-    icon:"🩸",
-    title:"717慘案:台股崩2953點,史上最大單日跌點",
-    impact:"high",
-    summary:"(7/17)台股暴跌2953.71點(-6.47%)收42671,刷新史上最大單日跌點、跌破季線43525。台積電重挫180元(-7.29%)收2290(史上最大跌點、破季線2325、尾盤逾9000張摜壓)。外資賣超1890.39億創史上最大、自營商倒821.79億、僅投信買超95億。1770檔下跌、134檔跌停(聯電/國巨/南亞跌停)。00403A遭外資單日賣超46.87萬張居冠。",
-    why:"➜ 影響你的持股:全面性系統賣壓,你的清單無一倖免。但專家共識:台積電非殺盤兇手、非基本面變差,是上半年漲逾5成的漲多修正+去槓桿。最危險的不是下跌,是之前所有人相信不會跌+高槓桿追價。你沒持股沒槓桿=毫髮無傷。",
-    links:[]
-  },
-  {
-    icon:"🤔",
-    title:"為什麼法說大好卻暴跌?利多出盡的完整解剖",
-    impact:"high",
-    summary:"(7/17)四個原因:①預期拉太高,同三星模式『好還不夠要非常好』②Q3毛利率指引65-67%,低於Q2創高的67.7%=首見季減(2奈米+海外廠稀釋)③資本支出上修至640億,大摩指設備成本通膨侵蝕利潤、市場憂自由現金流④估值偏高:台積電今年漲逾50%、預估本益比約20倍高於5年均值18倍。",
-    why:"➜ 影響你的持股:這是教科書級的『利多出盡』案例——基本面(Q2純益7065億創高、EPS 27.25)與股價(-7.29%)完全背離。老虎證券:市場在質疑成長空間能否支撐價位。資金正從晶片股輪動,龍洲資本:這不是AI交易的終結,AI是多年過程。",
-    links:[]
-  },
-  {
-    icon:"🐻",
-    title:"費半跌入技術性熊市:自高點回落20.2%",
-    impact:"high",
-    summary:"(7/17美股)四大指數盡墨:道瓊-0.77%收52146、那指-1.40%收25520、標普-1.01%、費半-1.63%收11674——較6/22歷史高點回落20.2%,跨過熊市門檻。記憶體恐慌拋售:SK海力士-13%、閃迪-12%、希捷-10%、西數-9%、美光/英特爾/AMD/博通-5%。美國對三星輝達等7家DRAM公司啟動337調查、韓國突擊搜查瑞薩/Rambus辦公室(價格串通)。",
-    why:"➜ 影響你的持股:費半熊市=你美股清單的整體環境轉守。記憶體三重利空(恐慌拋售+337調查+CXMT擴產疑慮)糾纏,美光短線雜訊多。監管調查是新變數,追蹤337調查對DRAM供應鏈的影響。",
-    links:[]
-  },
-  {
-    icon:"🇰🇷",
-    title:"去槓桿風暴源頭:韓國正式收緊槓桿ETF監管",
-    impact:"mid",
-    summary:"(7/16)韓國金融服務委員會(FSC)正式宣布收緊單一股票槓桿ETF監管:最低保證金1000萬→3000萬韓元、僅限現金、每次最多買20股、禁止推出新品。這是本輪亞股連環去槓桿的直接導火索,也解釋了SK海力士/三星的異常暴跌如何傳染全亞洲。",
-    why:"➜ 影響你的持股:印證謝金河『去槓桿效應』判斷——韓國散戶槓桿盤被強制降溫→韓股崩→連動台日。這是制度面事件,去槓桿有盡頭(保證金補足或斷頭完畢),不是需求消失。追蹤韓股何時止穩=台股情緒風向球。",
-    links:[]
-  },
-  {
-    icon:"💬",
-    title:"分析師怎麼看:修正非崩盤,轉折點與買點條件",
-    impact:"mid",
-    summary:"(7/17-7/18)多數分析師正面解讀:蔡明翰:毛利率不用擔心(漲價可彌補)、台積電說法相對保守、EPS從年初75元上修到破百、每次大回檔都是長線布局機會,下週二(7/21)可能是黃金買點但要看三大觀察訊號。李鎮宇(台新投顧):Q3進入中段整理、下檔看半年線38500、短線降槓桿、4萬點以下就是好買點。魏哲家6月股東會名言:『如果要買股票,請繼續』。",
-    why:"➜ 影響你的持股:專業圈的共識是『漲多修正』而非趨勢反轉,但短線都建議降槓桿、等止穩。對你:止穩訊號=量縮+外資賣壓收斂+站回5日線,用你網站的法人分頁和K線驗證,別接刀。",
-    links:[]
-  },
-  {
-    icon:"📡",
-    title:"個股警訊集:SpaceX破發、Google延後Gemini、Meta威脅算力二房東",
-    impact:"mid",
-    summary:"(7/16-7/17)①SpaceX收盤首次跌破IPO發行價135美元(-3%)②Google跌4.4%,Gemini 3.5 Pro傳延後發布③Meta內部『Meta Compute』計畫擬出租過剩AI算力,CoreWeave/Nebius當日曾重挫逾10%④Netflix盤前跌11%。初請失業金20.8萬優於預期、零售銷售+0.2%=美國經濟仍有韌性。",
-    why:"➜ 影響你的持股:你清單裡的SPCX(破發)、GOOGL(AI進度雜訊)、CRWV(Meta變競爭者威脅商業模式)都有個股層級的利空,跟大盤修正疊加。CRWV的『Meta Compute』威脅要持續追蹤——若巨頭出租自有算力,算力二房東的定價權受衝擊。",
-    links:[]
-  },
-];
-function trendCard(t){
-  const color=t.impact==='high'?'#f85149':t.impact==='mid'?'#e3b341':'#8b949e';
-  const tag=t.impact==='high'?'🔴 高度影響':t.impact==='mid'?'🟡 中度影響':'⚪ 觀察';
-  return `<div style="background:#161b22;border:1px solid #30363d;border-left:3px solid ${color};border-radius:8px;padding:14px;margin-bottom:10px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:4px">
-      <span style="font-weight:700;font-size:14px;color:#e6edf3">${t.icon} ${t.title}</span>
-      <span style="font-size:10px;color:${color};font-weight:700">${tag}</span>
-    </div>
-    <div style="font-size:12px;color:#c9d1d9;line-height:1.7;margin-bottom:8px">${t.summary}</div>
-    <div style="font-size:12px;color:#58a6ff;line-height:1.6;margin-bottom:10px;background:#0d1a2d;padding:8px;border-radius:6px">${t.why}</div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap">
-      ${t.links.map(l=>`<a href="${l.url}" target="_blank" rel="noopener" style="font-size:11px;color:#58a6ff;text-decoration:none;background:#21262d;border:1px solid #30363d;border-radius:6px;padding:5px 10px">${l.name} ↗</a>`).join('')}
-    </div>
-  </div>`;
-}
-
-function renderNews(){
-  const trendsHtml=MEGA_TRENDS.map(trendCard).join('');
-  const linksHtml=NEWS_LINKS.map(g=>`
-    <div style="margin-bottom:14px">
-      <div style="font-size:13px;font-weight:700;color:#e3b341;margin-bottom:6px">${g.cat}</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px">
-        ${g.links.map(l=>`<a href="${l.url}" target="_blank" rel="noopener" style="display:block;background:#161b22;border:1px solid #30363d;border-radius:8px;padding:10px;color:#58a6ff;text-decoration:none;font-size:12px;font-weight:600">${l.name} ↗</a>`).join('')}
-      </div>
-    </div>`).join('');
-  document.getElementById('mainView').innerHTML=`
-  <div class="panel">
-    <div style="font-size:15px;font-weight:700;color:#e3b341;margin-bottom:4px">🌐 時事脈絡 ｜ AI 與全球經濟 <span style="font-size:11px;color:#26a641;font-weight:400">📅 更新:2026/07/18</span></div>
-    <div style="font-size:11px;color:#8b949e;margin-bottom:14px">影響 AI 發展與股市的關鍵時事，每則附『為什麼影響你』與相關新聞連結</div>
-    ${trendsHtml}
-  </div>
-  <div class="panel">
-    <div style="font-size:14px;font-weight:700;color:#e3b341;margin-bottom:4px">📰 即時新聞來源</div>
-    <div style="font-size:11px;color:#8b949e;margin-bottom:12px">點任一連結開新分頁，追蹤最新發展</div>
-    ${linksHtml}
-  </div>`;
-}
-
-// ── 關鍵字規律監控（追蹤法說會/財報/公告的常態 vs 異常）──
-const KEYWORD_BASELINE=[
-  {sym:"_MARKET",name:"📅 大盤關鍵事件記錄",
-   normal:["每週更新:法說會/財報/公告的規律語氣"],
-   watch:["2026/07/18更新:①717慘案!台股崩2953點史上最大跌點、收42671破季線,台積電-7.29%收2290(史上最大跌點),外資賣超1890億史上最大 ②原因=利多出盡四重奏:預期太高/Q3毛利率指引季減/資本支出憂現金流/本益比20倍偏高 ③費半跌入技術性熊市(自6/22高點-20.2%),記憶體恐慌:SK海力士-13%、美國337調查7家DRAM公司 ④導火索=韓國FSC收緊槓桿ETF監管引發連環去槓桿 ⑤00403A遭外資單日賣46.87萬張居冠 ⑥分析師:漲多修正非趨勢反轉,蔡明翰看7/21可能轉折、李鎮宇:4萬以下好買點、半年線38500","下一觀察:止穩三訊號(量縮/外資賣壓收斂/站回5日線)、韓股動向、美國CPI"],
-   alert:"⚠️史上最大跌點隔天的紀律:①別接刀——用你的方法論檢查,幾乎所有標的都在跌勢中,沒有進場訊號 ②別恐慌——基本面沒壞(台積電Q2純益創高),是漲多修正+去槓桿 ③你的優勢=沒持股沒槓桿,現金是唯一不需要解釋的部位。等止穩訊號(量縮+法人賣壓收斂+站回5日線)再談別的。魏哲家:『如果要買股票,請繼續』——但那是給有資金配置計畫的人,你的計畫是存預備金到9月轉貸"},
-  {sym:"2330.TW",name:"台積電",
-   normal:["CoWoS產能滿載","先進製程3nm/2nm","資本支出上修","AI需求強勁","海外擴廠(亞利桑那)"],
-   watch:["⭐法說會後:全年營收上修至略高於40%","⭐資本支出上修至600-640億美元","加碼亞利桑那1000億(美國總投資2650億)","CoWoS月產能衝13-14萬片仍供不應求到2027底","CoPoS實驗線2026設立、2028底量產、首客戶輝達","2奈米稀釋毛利2-3個百分點"],
-   alert:"📍7/18:717慘案主角——法說大好(Q2純益7065億創高、全年上修40%)卻暴跌7.29%收2290,史上最大單日跌點、破季線2325、尾盤9000張摜壓。教科書級利多出盡:Q3毛利率指引65-67%低於Q2的67.7%(2奈米+海外稀釋)、資本支出640億憂現金流、本益比20倍高於5年均值18。但外資調升目標價上看4200、分析師:EPS年初75上修到破百、大回檔=長線布局機會。觀察:止穩訊號+7/21轉折說+能否收復季線2325"},
-  {sym:"3017.TW",name:"奇鋐",
-   normal:["液冷散熱","3D VC均熱板","水冷板出貨","AI伺服器散熱"],
-   watch:["⭐訂單能見度直達2029年(6/2股東會)","⭐水冷板月產能20萬→100萬組(年增4倍)","⭐分歧管月產能1000→7000套(增6倍)","VR200單櫃液冷值3.5→6.5萬美元(+50%)","推論LPU機櫃單櫃256片水冷板","越南廠投資逾13億美元滿載","GB200轉GB300單Tray產值更高"],
-   alert:"📍7/9更新:Kyber延後傳聞輝達已官方否認(路線圖不變),且爆料卡關點是PCB中介背板(非散熱)——本波賣壓集中在載板股(台光電南電跌停),散熱鏈非爆料主角。奇鋐基本面未變:Q1 EPS 20.17創高、水冷板產能擴4倍、訂單能見度2029。7/16台積電法說對AI需求的說法=最終驗證"},
-  {sym:"3324.TWO",name:"雙鴻",
-   normal:["液冷模組","水冷板","散熱解決方案","AI GPU散熱"],
-   watch:["⭐亞馬遜T3/T4水冷專案(泰國產能)","In-row CDU斬獲2000台訂單","已取得輝達GB300液冷認證","MCCP→MCL封裝級散熱演進"],
-   alert:"📍7/9更新:同奇鋐——Kyber傳聞輝達官方已否認,卡關爆料點是PCB背板非散熱,雙鴻不是這次風暴主角。亞馬遜T3/T4專案、GB300認證、2026營收估增50%軌道未變。族群隨大盤高估值調整震盪,汰弱留強盤持續"},
-  {sym:"6873.TW",name:"泓德能源",
-   normal:["儲能系統","太陽能EPC","售電業務","電力交易"],
-   watch:["⭐AI資料中心供電(營收拚重返百億)","⭐星星電力搶下全台備用容量第一單","澳洲綠鋼Greensteel","儲能放量","綠電PPA"],
-   alert:"📍7/5:貝萊德報告點名『AI下一波是電力』(GE Vernova資料中心設備訂單創紀錄、能源安全成持久主題)=泓德AI資料中心供電題材的國際級背書。台股重電族群訂單排到2029。但泓德自身基本面仍弱(等海外案場下半年併網),題材與獲利的落差仍在"},
-  {sym:"3711.TW",name:"日月光投控",
-   normal:["封測成長","先進封裝","CoWoS/FOPLP","測試訂單"],
-   watch:["⭐資本支出上調至85億美元(原53億)","⭐2026先進封測營收估倍增至32億美元","15座新建廠計畫","群創南科Fab5廠房","輝達點名矽品擴產"],
-   alert:"📍7/16法說最大連帶受惠者之一:台積電先進封裝產能『非常緊張』、CoWoS供不應求到2027底,魏哲家歡迎競爭對手/OSAT提供額外產能=日月光憑全球最大封測能量,承接台積電外溢訂單優勢最明顯。2026先進封測營收估倍增至32億美元、資本支出85億美元。CoWoS on-substrate委外+自有FoCoS+面板級封裝是核心觀察。認列順序:OSAT在設備商之後、材料商之前"},
-  {sym:"3680.TWO",name:"家登精密",
-   normal:["EUV光罩盒","FOUP晶圓載具","先進封裝載具","台積電訂單"],
-   watch:["⭐德鑫聯盟擴至18家(市值3280億)","CoWoS/FOSB載具放量2026H2","High-NA EUV Pod全球唯一認證","日本久留米廠2026底投產"],
-   alert:"📍7/16法說連帶影響:台積電資本支出衝640億、2奈米放量=家登EUV光罩盒(2奈米以下基本配備)剛性需求利多、CoPoS載具受惠(首客戶輝達)。⚠️但台積電再度明確High-NA EUV『暫緩導入』,家登的High-NA題材線短期無催化。受惠層級屬『設備材料』,認列順序較前面但要看訂單能見度與交機節奏。你今天衝動買2股521元,金額小(1042元)對計畫無影響,放著別加碼"},
-  {sym:"NVDA",name:"輝達",
-   normal:["資料中心成長","Blackwell/Vera Rubin","AI需求","毛利率","CUDA生態護城河"],
-   watch:["⭐Vera Rubin全面量產(6/1台北GTC宣布)","⭐7顆新晶片、Q3出貨AWS/Google/Azure/Oracle","⭐訂單backlog看到2027約1兆美元","VR200 NVL72:推論效能3.3倍、成本1/10","整合Groq LPU(約200億美元併購,第7顆晶片)","HBM4三供應商(SK海力士/三星/美光)Q3出貨","AWS計畫部署逾100萬顆"],
-   alert:"📍7/9更新【Kyber傳聞:官方已否認】:爆料源頭是SemiAnalysis(7/6於X稱PCB中介背板卡關、Kyber延至2028、Rubin Ultra砍4die留2die)。輝達發言人7/6書面聲明:Our road map is intact(路線圖不變)。注意SemiAnalysis前科:6/5稱Vera Rubin記憶體砍半→美光崩13%→事後被打臉。美銀:供給約束非需求逆轉;瑞穗:這類傳聞是噪音。訊號從警訊降為雜訊保留觀察。Vera Rubin 7月出貨CSP不變、backlog約1兆"},
-  {sym:"TSM",name:"台積電ADR",
-   normal:["同台積電2330"],
-   watch:["美國盤的反應(台股風向球)","外資3500目標價是否反映在ADR溢價"],
-   alert:"作為台積電2330開盤的領先指標。6/22台積電創高2510,留意ADR溢價變化"},
-  {sym:"CRWV",name:"CoreWeave",
-   normal:["AI雲端算力","GPU租賃","NVIDIA合作","訂單積壓backlog"],
-   watch:["算力擴充","新資料中心","客戶集中度","電力取得"],
-   alert:"📍7/18【商業模式警訊】:Meta內部『Meta Compute』計畫擬出租過剩AI算力——若巨頭變成競爭者,算力二房東的定價權受衝擊,CRWV當日曾重挫逾10%。這是比大盤修正更深層的個股風險:backlog 994億是跟巨頭簽的,巨頭自己出租算力=既是客戶又是對手。追蹤Meta Compute進度=CRWV最重要的關鍵字"},
-  {sym:"SNPS",name:"Synopsys",
-   normal:["EDA設計軟體","AI晶片設計工具","訂單backlog"],
-   watch:["AI設計需求","新製程支援","訂閱成長"],
-   alert:"EDA是晶片設計上游,需求領先晶片放量"},
-  {sym:"CDNS",name:"Cadence",
-   normal:["EDA設計軟體","晶片設計工具","系統設計"],
-   watch:["AI設計需求","訂單能見度"],
-   alert:"同Synopsys,EDA雙雄"},
-  {sym:"MU",name:"美光Micron",
-   normal:["DRAM/NAND記憶體","HBM高頻寬記憶體","AI伺服器需求"],
-   watch:["⭐HBM完全預訂、缺貨看到2027後","⭐16份take-or-pay長約鎖定逾1000億美元","Q4財測上看500億美元","HBM4量產進度","資本支出上看100億美元"],
-   alert:"📍7/18:記憶體三重利空糾纏——①恐慌拋售(SK海力士-13%、閃迪-12%、美光-5%)②美國對三星輝達美光等7家DRAM公司啟動337調查(價格串通)③CXMT擴產疑慮壓記憶體價格預期。基本面(HBM缺貨到2027、16份長約)未變但雜訊太多,短線訊號混亂。等337調查明朗+恐慌拋售止穩,別在雜訊裡做判斷"},
-  {sym:"AXTI",name:"AXT磷化銦",
-   normal:["磷化銦(InP)晶圓基板","化合物半導體材料","光通訊最上游"],
-   watch:["⭐鐳芯2500萬美元InP基板大單","⭐劍橋科技大額預付鎖定產能","Q1營收年增44%、淨利+276%","CPO/矽光子需求(輝達Feynman雙軌互連)","北京通美子公司動態"],
-   alert:"📍7/14:大立光法說證實CPO量產客戶送樣、明年中放量=光通訊供應鏈實體化訊號,對InP基板需求是中長線利多。基本面(鐳芯大單、劍橋鎖產能)未變。但⚠️7/1光通訊才崩過(康寧-13%),高波動+董事賣股風險仍在。CPO題材發酵vs獲利了結拉鋸"},
-  {sym:"AAOI",name:"祥茂光電",
-   normal:["光模組/光收發器","資料中心800G","CATV寬頻"],
-   watch:["⭐超大雲端客戶連環大單合計逾2.5億美元(800G+1.6T)","1.6T新品放量進度","台灣廠產能(牽動環宇-KY 4991、全新2455)","資料中心營收佔比"],
-   alert:"📍7/5:年漲439%的飆股遇上7/1光通訊崩跌(康寧-13%、族群全倒),高漲幅=獲利了結首選,回檔幅度會大於大盤。大單(2.5億美元)基本面仍在,但『買消息賣事實』+族群輪動雙壓。觀察它比觀察大型股更需要耐心,劇烈震盪是常態"},
-  {sym:"SIVE.ST",name:"Sivers矽光子",
-   normal:["InP雷射/光學放大器","矽光子(與GlobalFoundries合作)","5G毫米波","瑞典斯德哥爾摩主上市"],
-   watch:["⭐Nasdaq上市計畫(估2026底-2027初)","⭐外部光源ELS模組(攻AI資料中心/CPO)","7/1完成7億瑞典克朗募資(每股57克朗、折價9.7%)","與O-Net/Enablence策略合作","F-1遞交或轉板公告=關鍵催化"],
-   alert:"📍7/18新入列:光通訊上游『光源』角色,呼應CPO趨勢(銅走向光,光源越來越重要)。⚠️三重風險:①股價自高點跌約三分之二+內部人賣股疑慮②剛增發稀釋股本③主市場在瑞典(SIVE.ST瑞典克朗計價),美股僅OTC(SIVEF)流動性薄。高波動小型股,先觀察熟悉再說"},
-];
-function kwFilterSet(sym){
-  document.querySelectorAll('.kwcard').forEach(c=>{c.style.display=(!sym||c.dataset.sym===sym)?'':'none';});
-  const inp=document.getElementById('kwSearch');if(inp)inp.value='';
-}
-function kwSearchFilter(q){
-  q=q.trim().toLowerCase();
-  document.querySelectorAll('.kwcard').forEach(c=>{
-    c.style.display=(!q||c.textContent.toLowerCase().includes(q)||c.dataset.sym.toLowerCase().includes(q))?'':'none';
-  });
-}
-function renderKeyword(){
-  const watching=KEYWORD_BASELINE.filter(k=>k.sym.startsWith('_')||STOCKS.find(s=>s.sym===k.sym));
-  const cards=watching.map(k=>`
-    <div class="kwcard" data-sym="${k.sym}" style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px;margin-bottom:8px">
-      <div style="font-weight:700;font-size:14px;color:#e3b341;margin-bottom:8px">${k.name} <span style="color:#8b949e;font-size:11px">${k.sym}</span></div>
-      <div style="font-size:11px;color:#8b949e;margin-bottom:3px">📌 常態關鍵字(規律)</div>
-      <div style="margin-bottom:8px">${k.normal.map(w=>`<span style="display:inline-block;background:#21262d;color:#c9d1d9;border-radius:10px;padding:2px 8px;font-size:10px;margin:2px">${w}</span>`).join('')}</div>
-      <div style="font-size:11px;color:#58a6ff;margin-bottom:3px">👁 本季要盯的變化</div>
-      <div style="margin-bottom:8px">${k.watch.map(w=>`<span style="display:inline-block;background:#001d3d;color:#58a6ff;border:1px solid #1f6feb;border-radius:10px;padding:2px 8px;font-size:10px;margin:2px">${w}</span>`).join('')}</div>
-      <div style="font-size:11px;color:#f85149;background:#1a0d0d;padding:8px;border-radius:6px;line-height:1.6">⚠️ ${k.alert}</div>
-    </div>`).join('');
-  document.getElementById('mainView').innerHTML=`
-  <div class="panel">
-    <div style="font-size:15px;font-weight:700;color:#e3b341;margin-bottom:4px">🔑 關鍵字規律監控 <span style="font-size:11px;color:#26a641;font-weight:400">📅 更新:2026/07/18</span></div>
-    <div style="font-size:11px;color:#8b949e;margin-bottom:6px;line-height:1.6">方法論:每間公司都有『常態關鍵字』(規律)。當法說會/財報開始<b style="color:#f85149">違背規律</b>——例如重複提到新應用、上游價格轉折、下游資本支出增加——才是值得注意的訊號。</div>
-    <div style="margin-bottom:10px">
-      <div style="font-size:11px;color:#8b949e;margin-bottom:5px">⚡ 快速查詢(點代號直達 / 輸入關鍵字篩選)</div>
-      <input id="kwSearch" placeholder="🔍 輸入代號或關鍵字,如 2330、液冷、HBM、CoWoS" oninput="kwSearchFilter(this.value)" style="width:100%;background:#21262d;border:1px solid #30363d;border-radius:6px;padding:8px;color:#e6edf3;font-size:13px;margin-bottom:6px;box-sizing:border-box">
-      <div style="display:flex;gap:5px;flex-wrap:wrap">
-        <button class="kwchip" onclick="kwFilterSet('')" style="background:#e3b341;color:#0d1117;border:none;border-radius:12px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">全部</button>
-        ${watching.map(k=>`<button class="kwchip" onclick="kwFilterSet('${k.sym}')" style="background:#21262d;color:#c9d1d9;border:1px solid #30363d;border-radius:12px;padding:4px 10px;font-size:11px;cursor:pointer">${k.sym.startsWith('_')?'📅大盤':k.name}</button>`).join('')}
-      </div>
-    </div>
-    <div style="font-size:11px;color:#e3b341;background:#2d2200;padding:8px;border-radius:6px;margin-bottom:12px;line-height:1.6">💡 每週把你看到的法說會/財報/公告貼給我,我幫你比對『這次 vs 上一季』的語氣差異,只在『規律出現變化』時提醒你。</div>
-    ${cards}
-  </div>`;
-}
 // ── 三大法人歷史趨勢（FinMind，近N日）──
 const INST_CACHE={};
 async function fetchInstHist(stockId){
