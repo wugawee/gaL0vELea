@@ -417,7 +417,7 @@ function chartHTML(sym){
     <canvas id="mC" style="width:100%"></canvas>
   </div>
   <div class="panel" style="overflow-x:auto">
-    <div style="font-size:13px;font-weight:700;margin-bottom:8px;color:#e3b341">📋 近20日數據（可回顧）</div>
+    <div style="font-size:13px;font-weight:700;margin-bottom:8px;color:#e3b341">📋 近60日數據（可回顧）</div>
     ${dataTableHTML(sym)}
   </div>`;
 }
@@ -425,8 +425,11 @@ function chartHTML(sym){
 // 近20日逐日數據表格（像看盤軟體）
 function dataTableHTML(sym){
   const db=DB[sym];if(!db)return'';
-  const N=20;
+  const N=60;
   const data=db.data.slice(-N);
+  const offset=db.data.length-data.length;
+  const _PP={'兵':10,'鴉':10,'晨':10,'昏':10,'吞':8,'空吞':8,'雲':8,'貫':8,'錘':6,'倒':6,'蜻':6,'頂':6,'底':6,'孕':6,'十':2};
+  const patOf=(fi)=>{const ps=(db.pats||[]).filter(p=>p.i===fi);if(!ps.length)return{txt:'—',color:'#8b949e'};ps.sort((a,b)=>(_PP[b.short]||5)-(_PP[a.short]||5));return{txt:ps[0].type,color:ps[0].color};};
   const m5=db.ma5.slice(-N),m20=db.ma20.slice(-N),m60=db.ma60.slice(-N);
   const kd=db.kd.slice(-N),dif=db.macd.dif.slice(-N),hist=db.macd.hist.slice(-N);
   const macdL=db.macd.dif.slice(-N).map((d,i)=>{
@@ -437,6 +440,7 @@ function dataTableHTML(sym){
   const idxArr=[...Array(data.length).keys()].reverse();
   const rows=idxArr.map(i=>{
     const d=data[i];
+    const pat=patOf(offset+i);
     const prev=i>0?data[i-1].c:d.c;
     const chg=rnd(d.c-prev),chgP=rnd(chg/prev*100);
     const cls=chg>0?'up':chg<0?'dn':'fl';
@@ -447,6 +451,7 @@ function dataTableHTML(sym){
       <td>${d.date}</td>
       <td>${d.o}</td><td>${d.h}</td><td>${d.l}</td>
       <td class="${cls}"><b>${d.c}</b></td>
+      <td style="color:${pat.color};font-weight:600;text-align:left;white-space:nowrap">${pat.txt}</td>
       <td style="color:#8b949e">${(d.vol/1000).toFixed(0)}</td>
       <td style="color:#e3b341">${m5[i]??'—'}</td>
       <td style="color:#bc8cff">${m20[i]??'—'}</td>
@@ -460,9 +465,9 @@ function dataTableHTML(sym){
       <td class="${cls}">${chgP>0?'+':''}${chgP}%</td>
     </tr>`;
   }).join('');
-  return`<table class="tbl" style="min-width:900px">
+  return`<table class="tbl" style="min-width:1020px">
     <thead><tr>
-      <th>日期</th><th>開盤</th><th>最高</th><th>最低</th><th>收盤</th><th>成交量(張)</th>
+      <th>日期</th><th>開盤</th><th>最高</th><th>最低</th><th>收盤</th><th>K棒型態</th><th>成交量(張)</th>
       <th style="color:#e3b341">MA5</th><th style="color:#bc8cff">MA20</th><th style="color:#26a641">MA60</th>
       <th>K值</th><th>D值</th><th>KD狀態</th><th>DIF</th><th>MACD</th><th>柱狀</th><th>漲跌</th><th>漲跌%</th>
     </tr></thead><tbody>${rows}</tbody></table>`;
