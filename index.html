@@ -140,9 +140,10 @@ function parseChart(json){
     }
     if(close==null)continue; // 中間的null才跳過
     open=open??close; hi=hi??close; lo=lo??close;
-    const d=new Date(ts*1000);
-    const mo=(d.getMonth()+1).toString().padStart(2,'0');
-    const dy=d.getDate().toString().padStart(2,'0');
+    const _off=(meta.gmtoffset??meta.gmtOffset??28800);
+    const d=new Date((ts+_off)*1000);
+    const mo=(d.getUTCMonth()+1).toString().padStart(2,'0');
+    const dy=d.getUTCDate().toString().padStart(2,'0');
     data.push({date:`${mo}/${dy}`,o:rnd(open),h:rnd(hi),l:rnd(lo),c:rnd(close),vol:q.volume[i]||0,ts:ts});
   }
   // 若 meta 的即時時間比最後一筆還新（代表盤中當天K棒根本沒進timestamp），補一筆
