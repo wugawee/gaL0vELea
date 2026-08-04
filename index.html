@@ -148,15 +148,16 @@ function parseChart(json){
   }
   // 若 meta 的即時時間比最後一筆還新（代表盤中當天K棒根本沒進timestamp），補一筆
   if(meta.regularMarketPrice!=null && meta.regularMarketTime!=null){
+    const _off2=(meta.gmtoffset??meta.gmtOffset??28800);
     const lastTs=data.length?data[data.length-1].ts:0;
     const mt=meta.regularMarketTime;
-    const lastDay=new Date(lastTs*1000).toDateString();
-    const mtDay=new Date(mt*1000).toDateString();
+    const lastDay=new Date((lastTs+_off2)*1000).toISOString().slice(0,10);
+    const mtDay=new Date((mt+_off2)*1000).toISOString().slice(0,10);
     if(mtDay!==lastDay){
-      // 當天還沒有K棒，用即時價新增今天這筆
-      const d=new Date(mt*1000);
-      const mo=(d.getMonth()+1).toString().padStart(2,'0');
-      const dy=d.getDate().toString().padStart(2,'0');
+      // 當天還沒有K棒，且盤中才補（收盤/未開盤不補，避免幽靈K棒）
+      const d=new Date((mt+_off2)*1000);
+      const mo=(d.getUTCMonth()+1).toString().padStart(2,'0');
+      const dy=d.getUTCDate().toString().padStart(2,'0');
       data.push({date:`${mo}/${dy}`,
         o:rnd(meta.regularMarketOpen??meta.regularMarketPrice),
         h:rnd(meta.regularMarketDayHigh??meta.regularMarketPrice),
