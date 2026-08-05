@@ -86,6 +86,8 @@ const STOCKS=[
   {sym:"3711.TW",name:"日月光投控",mkt:"TW",cur:"TWD"},
   {sym:"3680.TWO",name:"家登精密",mkt:"TW",cur:"TWD"},
   {sym:"5904.TWO",name:"寶雅",mkt:"TW",cur:"TWD"},
+  {sym:"009826.TW",name:"貝萊德世界股票",mkt:"TW",cur:"TWD"},
+  {sym:"00878.TW",name:"國泰永續高股息",mkt:"TW",cur:"TWD"},
   {sym:"^SOX",name:"費城半導體指數",mkt:"US",cur:"USD"},
   {sym:"^IXIC",name:"那斯達克指數",mkt:"US",cur:"USD"},
   {sym:"^GSPC",name:"標普500指數",mkt:"US",cur:"USD"},
@@ -138,7 +140,13 @@ function parseChart(json){
       if(hi==null)hi=meta.regularMarketDayHigh??close;
       if(lo==null)lo=meta.regularMarketDayLow??close;
     }
-    if(close==null)continue; // 中間的null才跳過
+    // 收盤null但當天有其他價格 → 用高低中值/開盤/前一日收盤補，避免整根消失（如00403A等主動式ETF偶爾缺值）
+    if(close==null){
+      if(hi!=null&&lo!=null)close=(hi+lo)/2;
+      else if(open!=null)close=open;
+      else if(data.length)close=data[data.length-1].c;
+    }
+    if(close==null)continue; // 真的完全無資料才跳過
     open=open??close; hi=hi??close; lo=lo??close;
     const _off=(meta.gmtoffset??meta.gmtOffset??28800);
     const d=new Date((ts+_off)*1000);
@@ -321,7 +329,7 @@ function sumRow(s){
 }
 function renderSummary(){
   const tw=STOCKS.filter(s=>s.mkt==='TW'),us=STOCKS.filter(s=>s.mkt==='US');
-  const CAT_ETF=new Set(['0050.TW','009816.TW','00403A.TW','00981A.TW','0056.TW','00984A.TW','VOO','QQQ','GLD','IAU']);
+  const CAT_ETF=new Set(['0050.TW','009816.TW','00403A.TW','00981A.TW','0056.TW','00984A.TW','009826.TW','00878.TW','VOO','QQQ','GLD','IAU']);
   const CAT_AI=new Set(['2330.TW','3017.TW','3324.TWO','3711.TW','3680.TWO','TSM','NVDA','GOOGL','MRVL','MU','CRWV','SNPS','CDNS','AXTI','AAOI','SIVE.ST']);
   const catBlock=(arr,label)=>arr.length?`<tr><td colspan="11" style="background:#1a1f26;color:#e3b341;font-weight:700;text-align:left;font-size:12px;padding:6px 16px">${label}</td></tr>`+arr.map(sumRow).join(''):'';
   const grp=list=>({idx:list.filter(s=>s.sym.startsWith('^')),etf:list.filter(s=>CAT_ETF.has(s.sym)),ai:list.filter(s=>CAT_AI.has(s.sym)),min:list.filter(s=>!s.sym.startsWith('^')&&!CAT_ETF.has(s.sym)&&!CAT_AI.has(s.sym))});
