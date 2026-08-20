@@ -174,6 +174,11 @@ function parseChart(json){
         vol:meta.regularMarketVolume||0,ts:mt});
     }
   }
+  // 濾掉補洞產生的假K棒（量0且開高低收四價完全相同，多為ETF前一日資料延遲），保留最後一根
+  for(let _k=data.length-2;_k>=0;_k--){
+    const _d=data[_k];
+    if(_d.vol===0 && _d.o===_d.h && _d.h===_d.l && _d.l===_d.c) data.splice(_k,1);
+  }
   if(data.length>0){
     data._marketState=meta.marketState||'CLOSED';
     data._isLive=isLive;
@@ -451,6 +456,19 @@ function dataTableHTML(sym){
   const rows=idxArr.map(i=>{
     const d=data[i];
     const pat=patOf(offset+i);
+    // MA20 單一均線交易訊號（圖6：進場站上/停損進場當日最低/續抱未跌破/出場跌破；KD黃金交叉標強）
+    let sig={txt:'—',color:'#8b949e'};
+    const _ma=m20[i];
+    if(_ma!=null){
+      const _ab=d.c>=_ma;
+      const _pab=(i>0&&m20[i-1]!=null)?(data[i-1].c>=m20[i-1]):_ab;
+      const _kN=kd[i], _kP=i>0?kd[i-1]:null;
+      const _gold=_kN&&_kP&&_kP.K<=_kP.D&&_kN.K>_kN.D;
+      if(_ab&&!_pab) sig=_gold?{txt:'🟢進場(強) 停損'+d.l,color:'#26a641'}:{txt:'🟢進場 停損'+d.l,color:'#26a641'};
+      else if(!_ab&&_pab) sig={txt:'🔴出場',color:'#f85149'};
+      else if(_ab) sig={txt:'🔵續抱',color:'#58a6ff'};
+      else sig={txt:'⚪觀望',color:'#8b949e'};
+    }
     const prev=i>0?data[i-1].c:d.c;
     const chg=rnd(d.c-prev),chgP=rnd(chg/prev*100);
     const cls=chg>0?'up':chg<0?'dn':'fl';
@@ -462,6 +480,7 @@ function dataTableHTML(sym){
       <td>${d.o}</td><td>${d.h}</td><td>${d.l}</td>
       <td class="${cls}"><b>${d.c}</b></td>
       <td style="color:${pat.color};font-weight:600;text-align:left;white-space:nowrap">${pat.txt}</td>
+      <td style="color:${sig.color};font-weight:600;text-align:left;white-space:nowrap">${sig.txt}</td>
       <td style="color:#8b949e">${(d.vol/1000).toFixed(0)}</td>
       <td style="color:#e3b341">${m5[i]??'—'}</td>
       <td style="color:#bc8cff">${m20[i]??'—'}</td>
@@ -475,9 +494,9 @@ function dataTableHTML(sym){
       <td class="${cls}">${chgP>0?'+':''}${chgP}%</td>
     </tr>`;
   }).join('');
-  return`<table class="tbl" style="min-width:1020px">
+  return`<table class="tbl" style="min-width:1160px">
     <thead><tr>
-      <th>日期</th><th>開盤</th><th>最高</th><th>最低</th><th>收盤</th><th>K棒型態</th><th>成交量(張)</th>
+      <th>日期</th><th>開盤</th><th>最高</th><th>最低</th><th>收盤</th><th>K棒型態</th><th>操作訊號(MA20)</th><th>成交量(張)</th>
       <th style="color:#e3b341">MA5</th><th style="color:#bc8cff">MA20</th><th style="color:#26a641">MA60</th>
       <th>K值</th><th>D值</th><th>KD狀態</th><th>DIF</th><th>MACD</th><th>柱狀</th><th>漲跌</th><th>漲跌%</th>
     </tr></thead><tbody>${rows}</tbody></table>`;
