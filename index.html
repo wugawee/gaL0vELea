@@ -85,9 +85,11 @@ const STOCKS=[
   {sym:"6873.TW",name:"泓德能源",mkt:"TW",cur:"TWD"},
   {sym:"3711.TW",name:"日月光投控",mkt:"TW",cur:"TWD"},
   {sym:"3680.TWO",name:"家登精密",mkt:"TW",cur:"TWD"},
+  {sym:"2408.TW",name:"南亞科",mkt:"TW",cur:"TWD"},
+  {sym:"2344.TW",name:"華邦電",mkt:"TW",cur:"TWD"},
+  {sym:"2337.TW",name:"旺宏",mkt:"TW",cur:"TWD"},
   {sym:"5904.TWO",name:"寶雅",mkt:"TW",cur:"TWD"},
   {sym:"009826.TW",name:"貝萊德世界股票",mkt:"TW",cur:"TWD"},
-  {sym:"00878.TW",name:"國泰永續高股息",mkt:"TW",cur:"TWD"},
   {sym:"^SOX",name:"費城半導體指數",mkt:"US",cur:"USD"},
   {sym:"^IXIC",name:"那斯達克指數",mkt:"US",cur:"USD"},
   {sym:"^GSPC",name:"標普500指數",mkt:"US",cur:"USD"},
@@ -334,8 +336,8 @@ function sumRow(s){
 }
 function renderSummary(){
   const tw=STOCKS.filter(s=>s.mkt==='TW'),us=STOCKS.filter(s=>s.mkt==='US');
-  const CAT_ETF=new Set(['0050.TW','009816.TW','00403A.TW','00981A.TW','0056.TW','00984A.TW','009826.TW','00878.TW','VOO','QQQ','GLD','IAU']);
-  const CAT_AI=new Set(['2330.TW','3017.TW','3324.TWO','3711.TW','3680.TWO','TSM','NVDA','GOOGL','MRVL','MU','CRWV','SNPS','CDNS','AXTI','AAOI','SIVE.ST']);
+  const CAT_ETF=new Set(['0050.TW','009816.TW','00403A.TW','00981A.TW','0056.TW','00984A.TW','009826.TW','VOO','QQQ','GLD','IAU']);
+  const CAT_AI=new Set(['2330.TW','3017.TW','3324.TWO','3711.TW','3680.TWO','2408.TW','2344.TW','2337.TW','TSM','NVDA','GOOGL','MRVL','MU','CRWV','SNPS','CDNS','AXTI','AAOI','SIVE.ST']);
   const catBlock=(arr,label)=>arr.length?`<tr><td colspan="11" style="background:#1a1f26;color:#e3b341;font-weight:700;text-align:left;font-size:12px;padding:6px 16px">${label}</td></tr>`+arr.map(sumRow).join(''):'';
   const grp=list=>({idx:list.filter(s=>s.sym.startsWith('^')),etf:list.filter(s=>CAT_ETF.has(s.sym)),ai:list.filter(s=>CAT_AI.has(s.sym)),min:list.filter(s=>!s.sym.startsWith('^')&&!CAT_ETF.has(s.sym)&&!CAT_AI.has(s.sym))});
   const twG=grp(tw),usG=grp(us);
@@ -503,7 +505,7 @@ function dataTableHTML(sym){
 }
 function drawAll(sym){
   const db=DB[sym];if(!db)return;
-  const SHOW=22;
+  const SHOW=80;
   const sl=db.data.slice(-SHOW),m5=db.ma5.slice(-SHOW),m10=db.ma10.slice(-SHOW),m20=db.ma20.slice(-SHOW),m60=db.ma60.slice(-SHOW);
   const kd=db.kd.slice(-SHOW),hist=db.macd.hist.slice(-SHOW),dif=db.macd.dif.slice(-SHOW);
   const pats=db.pats.filter(p=>p.i>=db.data.length-SHOW).map(p=>({...p,si:p.i-(db.data.length-SHOW)}));
