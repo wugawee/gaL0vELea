@@ -90,6 +90,7 @@ const STOCKS=[
   {sym:"2337.TW",name:"旺宏",mkt:"TW",cur:"TWD"},
   {sym:"6770.TW",name:"力積電",mkt:"TW",cur:"TWD"},
   {sym:"5904.TWO",name:"寶雅",mkt:"TW",cur:"TWD"},
+  {sym:"5314.TWO",name:"世紀民生",mkt:"TW",cur:"TWD"},
   {sym:"009826.TW",name:"貝萊德世界股票",mkt:"TW",cur:"TWD"},
   {sym:"^SOX",name:"費城半導體指數",mkt:"US",cur:"USD"},
   {sym:"^IXIC",name:"那斯達克指數",mkt:"US",cur:"USD"},
@@ -104,6 +105,8 @@ const STOCKS=[
   {sym:"ENPH",name:"ENPH",mkt:"US",cur:"USD"},
   {sym:"MRVL",name:"MRVL",mkt:"US",cur:"USD"},
   {sym:"MU",name:"美光Micron",mkt:"US",cur:"USD"},
+  {sym:"SKHY",name:"SK海力士ADR",mkt:"US",cur:"USD"},
+  {sym:"ASX",name:"日月光ADR",mkt:"US",cur:"USD"},
   {sym:"BE",name:"BE能源",mkt:"US",cur:"USD"},
   {sym:"QQQ",name:"QQQ",mkt:"US",cur:"USD"},
   {sym:"GLD",name:"GLD黃金",mkt:"US",cur:"USD"},
@@ -338,7 +341,7 @@ function sumRow(s){
 function renderSummary(){
   const tw=STOCKS.filter(s=>s.mkt==='TW'),us=STOCKS.filter(s=>s.mkt==='US');
   const CAT_ETF=new Set(['0050.TW','009816.TW','00403A.TW','00981A.TW','0056.TW','00984A.TW','009826.TW','VOO','QQQ','GLD','IAU']);
-  const CAT_AI=new Set(['2330.TW','3017.TW','3324.TWO','3711.TW','3680.TWO','2408.TW','2344.TW','2337.TW','6770.TW','TSM','NVDA','GOOGL','MRVL','MU','CRWV','SNPS','CDNS','AXTI','AAOI','SIVE.ST']);
+  const CAT_AI=new Set(['2330.TW','3017.TW','3324.TWO','3711.TW','3680.TWO','2408.TW','2344.TW','2337.TW','6770.TW','TSM','NVDA','SKHY','ASX','GOOGL','MRVL','MU','CRWV','SNPS','CDNS','AXTI','AAOI','SIVE.ST']);
   const catBlock=(arr,label)=>arr.length?`<tr><td colspan="11" style="background:#1a1f26;color:#e3b341;font-weight:700;text-align:left;font-size:12px;padding:6px 16px">${label}</td></tr>`+arr.map(sumRow).join(''):'';
   const grp=list=>({idx:list.filter(s=>s.sym.startsWith('^')),etf:list.filter(s=>CAT_ETF.has(s.sym)),ai:list.filter(s=>CAT_AI.has(s.sym)),min:list.filter(s=>!s.sym.startsWith('^')&&!CAT_ETF.has(s.sym)&&!CAT_AI.has(s.sym))});
   const twG=grp(tw),usG=grp(us);
