@@ -63,6 +63,7 @@ body{background:#0d1117;color:#e6edf3;font-family:-apple-system,"Microsoft Jheng
     <button class="tab" id="t-us" onclick="setView('us',this)">美股</button>
     <button class="tab" id="t-calc" onclick="setView('calc',this)">🧮 計算機</button>
     <button class="tab" id="t-inst" onclick="setView('inst',this)">🏦 法人</button>
+    <button class="tab" id="t-instrank" onclick="setView('instrank',this)">🌊 法人排行</button>
   </div>
 </div>
 
@@ -82,6 +83,8 @@ const STOCKS=[
   {sym:"2330.TW",name:"台積電",mkt:"TW",cur:"TWD"},
   {sym:"3017.TW",name:"奇鋐",mkt:"TW",cur:"TWD"},
   {sym:"3324.TWO",name:"雙鴻",mkt:"TW",cur:"TWD"},
+  {sym:"2421.TW",name:"建準",mkt:"TW",cur:"TWD"},
+  {sym:"3105.TWO",name:"穩懋",mkt:"TW",cur:"TWD"},
   {sym:"6873.TW",name:"泓德能源",mkt:"TW",cur:"TWD"},
   {sym:"3711.TW",name:"日月光投控",mkt:"TW",cur:"TWD"},
   {sym:"3680.TWO",name:"家登精密",mkt:"TW",cur:"TWD"},
@@ -99,7 +102,9 @@ const STOCKS=[
   {sym:"TSM",name:"台積電ADR",mkt:"US",cur:"USD"},
   {sym:"GOOGL",name:"Google",mkt:"US",cur:"USD"},
   {sym:"NVDA",name:"輝達",mkt:"US",cur:"USD"},
+  {sym:"INTC",name:"英特爾",mkt:"US",cur:"USD"},
   {sym:"AAPL",name:"蘋果",mkt:"US",cur:"USD"},
+  {sym:"AMZN",name:"亞馬遜",mkt:"US",cur:"USD"},
   {sym:"TSLA",name:"特斯拉",mkt:"US",cur:"USD"},
   {sym:"SPCX",name:"SpaceX",mkt:"US",cur:"USD"},
   {sym:"ENPH",name:"ENPH",mkt:"US",cur:"USD"},
@@ -303,6 +308,7 @@ function render(){
   else if(curView==='us')renderList('US');
   else if(curView==='calc')renderCalcPage();
   else if(curView==='inst')renderInst();
+  else if(curView==='instrank')renderInstRank();
   else renderChart(curSym);
 }
 
@@ -341,7 +347,7 @@ function sumRow(s){
 function renderSummary(){
   const tw=STOCKS.filter(s=>s.mkt==='TW'),us=STOCKS.filter(s=>s.mkt==='US');
   const CAT_ETF=new Set(['0050.TW','009816.TW','00403A.TW','00981A.TW','0056.TW','00984A.TW','009826.TW','VOO','QQQ','GLD','IAU']);
-  const CAT_AI=new Set(['2330.TW','3017.TW','3324.TWO','3711.TW','3680.TWO','2408.TW','2344.TW','2337.TW','6770.TW','TSM','NVDA','SKHY','ASX','GOOGL','MRVL','MU','CRWV','SNPS','CDNS','AXTI','AAOI','SIVE.ST']);
+  const CAT_AI=new Set(['2330.TW','3017.TW','3324.TWO','2421.TW','3105.TWO','3711.TW','3680.TWO','2408.TW','2344.TW','2337.TW','6770.TW','TSM','NVDA','INTC','SKHY','ASX','GOOGL','MRVL','MU','CRWV','SNPS','CDNS','AXTI','AAOI','SIVE.ST']);
   const catBlock=(arr,label)=>arr.length?`<tr><td colspan="11" style="background:#1a1f26;color:#e3b341;font-weight:700;text-align:left;font-size:12px;padding:6px 16px">${label}</td></tr>`+arr.map(sumRow).join(''):'';
   const grp=list=>({idx:list.filter(s=>s.sym.startsWith('^')),etf:list.filter(s=>CAT_ETF.has(s.sym)),ai:list.filter(s=>CAT_AI.has(s.sym)),min:list.filter(s=>!s.sym.startsWith('^')&&!CAT_ETF.has(s.sym)&&!CAT_AI.has(s.sym))});
   const twG=grp(tw),usG=grp(us);
@@ -573,7 +579,7 @@ const INST_CACHE={};
 async function fetchInstHist(stockId){
   if(INST_CACHE[stockId])return INST_CACHE[stockId];
   // 抓最近約20天（多抓一點，顯示10個交易日）
-  const d=new Date();d.setDate(d.getDate()-25);
+  const d=new Date();d.setDate(d.getDate()-40);
   const start=d.toISOString().slice(0,10);
   try{
     const res=await fetch(`${WORKER_URL}/?type=inst&id=${stockId}&start=${start}&_t=${Date.now()}`,{cache:'no-store'});
@@ -596,6 +602,48 @@ function aggInstByDate(rows){
     else if(n.includes("Dealer"))byDate[d].dealer+=net;
   });
   return byDate;
+}
+let rankPeriod=1;
+async function renderInstRank(){
+  const twStocks=STOCKS.filter(s=>s.mkt==='TW'&&!s.sym.startsWith('^'));
+  const pb=(p,t)=>`<button onclick="rankPeriod=${p};renderInstRank()" style="padding:6px 14px;border-radius:6px;border:1px solid #30363d;background:${rankPeriod===p?'#e3b341':'#21262d'};color:${rankPeriod===p?'#0d1117':'#8b949e'};font-weight:700;font-size:13px;cursor:pointer">${t}</button>`;
+  document.getElementById('mainView').innerHTML=`
+  <div class="panel">
+    <div style="font-size:15px;font-weight:700;color:#e3b341;margin-bottom:10px">🌊 三大法人買賣超排行（自選${twStocks.length}檔，單位:張）</div>
+    <div style="display:flex;gap:8px;margin-bottom:12px">${pb(1,'今日')}${pb(5,'近5日')}${pb(20,'近20日')}</div>
+    <div id="rankBox"><div class="loading">🔄 載入法人資料中…（約${twStocks.length}檔，第一次較久）</div></div>
+  </div>`;
+  const results=[];
+  const BATCH=5;
+  for(let i=0;i<twStocks.length;i+=BATCH){
+    const batch=twStocks.slice(i,i+BATCH);
+    await Promise.all(batch.map(async s=>{
+      const id=s.sym.replace(/\.TWO?$/,'');
+      const raw=await fetchInstHist(id);
+      if(raw&&raw.status===200&&raw.data&&raw.data.length){
+        const byDate=aggInstByDate(raw.data);
+        const dates=Object.keys(byDate).sort().reverse().slice(0,rankPeriod);
+        let f=0,t=0,dl=0;
+        dates.forEach(d=>{f+=byDate[d].foreign;t+=byDate[d].trust;dl+=byDate[d].dealer;});
+        results.push({name:s.name,id,f,t,dl,total:f+t+dl});
+      }else{
+        results.push({name:s.name,id,f:0,t:0,dl:0,total:0,err:true});
+      }
+    }));
+    if(i+BATCH<twStocks.length)await new Promise(r=>setTimeout(r,150));
+  }
+  const box=document.getElementById('rankBox');
+  if(!box)return;
+  results.sort((a,b)=>b.total-a.total);
+  const lot=n=>Math.round(n/1000);
+  const cell=n=>{const v=lot(n);const cls=v>0?'up':v<0?'dn':'fl';return `<td class="${cls}" style="text-align:right">${v>0?'+':''}${v.toLocaleString()}</td>`;};
+  const rows=results.map((r,idx)=>{
+    if(r.err)return `<tr><td style="color:#8b949e">${idx+1}</td><td>${r.name} <span style="color:#8b949e">${r.id}</span></td><td colspan="4" style="color:#8b949e;text-align:center">—</td></tr>`;
+    const tl=lot(r.total);const tc=tl>0?'up':tl<0?'dn':'fl';
+    return `<tr><td style="color:#8b949e">${idx+1}</td><td style="white-space:nowrap">${r.name} <span style="color:#8b949e">${r.id}</span></td>${cell(r.f)}${cell(r.t)}${cell(r.dl)}<td class="${tc}" style="text-align:right;font-weight:700">${tl>0?'+':''}${tl.toLocaleString()}</td></tr>`;
+  }).join('');
+  box.innerHTML=`<div style="overflow-x:auto"><table class="tbl" style="min-width:520px;width:100%"><thead><tr><th>#</th><th>股票</th><th>外資</th><th>投信</th><th>自營</th><th>合計</th></tr></thead><tbody>${rows}</tbody></table></div>
+  <div style="font-size:11px;color:#8b949e;margin-top:8px">依「合計」買賣超排序（買超在上、賣超在下）。單位:張(1張=1000股)。標「—」為當下抓取失敗(FinMind限流,可稍後重點分頁)。資料源:FinMind。非投資建議。</div>`;
 }
 let instCurId=null;
 async function renderInst(){
