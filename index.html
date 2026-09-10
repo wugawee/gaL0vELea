@@ -524,7 +524,7 @@ function drawAll(sym){
 }
 function drawCandle(id,data,m5,m10,m20,m60,pats){
   const c=document.getElementById(id);if(!c)return;
-  const W=c.offsetWidth||640,H=280;c.width=W;c.height=H;const ctx=c.getContext('2d');ctx.clearRect(0,0,W,H);
+  const W=c.offsetWidth||640,H=280;const _dpr=window._chartDpr||(window.devicePixelRatio||1);c.width=Math.round(W*_dpr);c.height=Math.round(H*_dpr);c.style.height=H+'px';const ctx=c.getContext('2d');ctx.scale(_dpr,_dpr);ctx.clearRect(0,0,W,H);
   const P={t:30,b:28,l:8,r:50},cw=W-P.l-P.r,ch=H-P.t-P.b,n=data.length,bw=Math.max(3,Math.floor(cw/n*0.62));
   const allV=[...data.flatMap(d=>[d.h,d.l]),...m5,...m10,...m20,...m60].filter(v=>v!=null);
   const mn=Math.min(...allV)*0.999,mx=Math.max(...allV)*1.001;
@@ -540,41 +540,72 @@ function drawCandle(id,data,m5,m10,m20,m60,pats){
   c.onmousemove=e=>{const r=c.getBoundingClientRect(),mx2=(e.clientX-r.left)*(W/r.width);let cl=-1,md=9999;data.forEach((_,i)=>{const dd=Math.abs(xS(i)-mx2);if(dd<md){md=dd;cl=i;}});if(cl<0||md>30)return;const d=data[cl];const ch2=cl>0?rnd(d.c-data[cl-1].c):0,chp2=cl>0?rnd(ch2/data[cl-1].c*100):0;const pat=pats.find(p=>p.si===cl);const tt=document.getElementById('tt');tt.style.display='block';tt.style.left=(e.clientX+14)+'px';tt.style.top=(e.clientY-10)+'px';tt.innerHTML=`<b>${d.date}</b><br>開 ${d.o} | 高 ${d.h}<br>低 ${d.l} | 收 <b>${d.c}</b><br>漲跌 <span style="color:${ch2>=0?'#f85149':'#26a641'}">${ch2>=0?'+':''}${ch2} (${chp2}%)</span><br>MA5:${m5[cl]??'—'} MA10:${m10[cl]??'—'}<br>MA20:${m20[cl]??'—'} MA60:${m60[cl]??'—'}${pat?`<br><span style="color:${pat.color}">${pat.type}</span>`:''}`;};
   c.onmouseleave=()=>{document.getElementById('tt').style.display='none';};
 }
-function drawKD(id,kd){const c=document.getElementById(id);if(!c)return;const W=c.offsetWidth||640,H=90;c.width=W;c.height=H;const ctx=c.getContext('2d');const n=kd.length,P={t:8,b:8,l:8,r:50},cw=W-P.l-P.r,ch=H-P.t-P.b;const xS=i=>P.l+i*(cw/(n-1||1)),yS=v=>(1-v/100)*ch+P.t;ctx.strokeStyle='#21262d';ctx.lineWidth=0.5;[0,20,50,80,100].forEach(v=>{ctx.beginPath();ctx.moveTo(P.l,yS(v));ctx.lineTo(W-P.r,yS(v));ctx.stroke();ctx.fillStyle='#8b949e';ctx.font='9px Arial';ctx.textAlign='left';ctx.fillText(v,W-P.r+4,yS(v)+3);});[[kd.map(k=>k.K),'#58a6ff'],[kd.map(k=>k.D),'#f85149']].forEach(([arr,col])=>{ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.beginPath();arr.forEach((v,i)=>{i===0?ctx.moveTo(xS(i),yS(v)):ctx.lineTo(xS(i),yS(v));});ctx.stroke();});}
-function drawMACD(id,hist,dif){const c=document.getElementById(id);if(!c)return;const W=c.offsetWidth||640,H=90;c.width=W;c.height=H;const ctx=c.getContext('2d');const n=hist.length,P={t:8,b:8,l:8,r:50},cw=W-P.l-P.r,ch=H-P.t-P.b;const xS=i=>P.l+i*(cw/(n-1||1));const allV=[...hist,...dif].filter(v=>v!=null);const mn=Math.min(...allV),mx=Math.max(...allV),rng=mx-mn||0.001;const yS=v=>((mx-v)/rng)*ch+P.t,y0=yS(0);ctx.strokeStyle='#21262d';ctx.lineWidth=0.5;ctx.beginPath();ctx.moveTo(P.l,y0);ctx.lineTo(W-P.r,y0);ctx.stroke();const bw=Math.max(2,cw/n*0.6);hist.forEach((v,i)=>{const x=xS(i),yt=Math.min(yS(v),y0),h=Math.abs(yS(v)-y0);ctx.fillStyle=v>=0?'rgba(248,81,73,0.7)':'rgba(38,166,65,0.7)';ctx.fillRect(x-bw/2,yt,bw,Math.max(1,h));});ctx.strokeStyle='#58a6ff';ctx.lineWidth=1.5;ctx.beginPath();dif.forEach((v,i)=>{if(v==null)return;i===0?ctx.moveTo(xS(i),yS(v)):ctx.lineTo(xS(i),yS(v));});ctx.stroke();[mn,0,mx].forEach(v=>{ctx.fillStyle='#8b949e';ctx.font='9px Arial';ctx.textAlign='left';ctx.fillText(v.toFixed(2),W-P.r+4,yS(v)+3);});}
+function drawKD(id,kd){const c=document.getElementById(id);if(!c)return;const W=c.offsetWidth||640,H=90;const _dpr=window._chartDpr||(window.devicePixelRatio||1);c.width=Math.round(W*_dpr);c.height=Math.round(H*_dpr);c.style.height=H+'px';const ctx=c.getContext('2d');ctx.scale(_dpr,_dpr);const n=kd.length,P={t:8,b:8,l:8,r:50},cw=W-P.l-P.r,ch=H-P.t-P.b;const xS=i=>P.l+i*(cw/(n-1||1)),yS=v=>(1-v/100)*ch+P.t;ctx.strokeStyle='#21262d';ctx.lineWidth=0.5;[0,20,50,80,100].forEach(v=>{ctx.beginPath();ctx.moveTo(P.l,yS(v));ctx.lineTo(W-P.r,yS(v));ctx.stroke();ctx.fillStyle='#8b949e';ctx.font='9px Arial';ctx.textAlign='left';ctx.fillText(v,W-P.r+4,yS(v)+3);});[[kd.map(k=>k.K),'#58a6ff'],[kd.map(k=>k.D),'#f85149']].forEach(([arr,col])=>{ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.beginPath();arr.forEach((v,i)=>{i===0?ctx.moveTo(xS(i),yS(v)):ctx.lineTo(xS(i),yS(v));});ctx.stroke();});}
+function drawMACD(id,hist,dif){const c=document.getElementById(id);if(!c)return;const W=c.offsetWidth||640,H=90;const _dpr=window._chartDpr||(window.devicePixelRatio||1);c.width=Math.round(W*_dpr);c.height=Math.round(H*_dpr);c.style.height=H+'px';const ctx=c.getContext('2d');ctx.scale(_dpr,_dpr);const n=hist.length,P={t:8,b:8,l:8,r:50},cw=W-P.l-P.r,ch=H-P.t-P.b;const xS=i=>P.l+i*(cw/(n-1||1));const allV=[...hist,...dif].filter(v=>v!=null);const mn=Math.min(...allV),mx=Math.max(...allV),rng=mx-mn||0.001;const yS=v=>((mx-v)/rng)*ch+P.t,y0=yS(0);ctx.strokeStyle='#21262d';ctx.lineWidth=0.5;ctx.beginPath();ctx.moveTo(P.l,y0);ctx.lineTo(W-P.r,y0);ctx.stroke();const bw=Math.max(2,cw/n*0.6);hist.forEach((v,i)=>{const x=xS(i),yt=Math.min(yS(v),y0),h=Math.abs(yS(v)-y0);ctx.fillStyle=v>=0?'rgba(248,81,73,0.7)':'rgba(38,166,65,0.7)';ctx.fillRect(x-bw/2,yt,bw,Math.max(1,h));});ctx.strokeStyle='#58a6ff';ctx.lineWidth=1.5;ctx.beginPath();dif.forEach((v,i)=>{if(v==null)return;i===0?ctx.moveTo(xS(i),yS(v)):ctx.lineTo(xS(i),yS(v));});ctx.stroke();[mn,0,mx].forEach(v=>{ctx.fillStyle='#8b949e';ctx.font='9px Arial';ctx.textAlign='left';ctx.fillText(v.toFixed(2),W-P.r+4,yS(v)+3);});}
 
 // ── 計算機 ──
 function renderCalcPage(){
   const opts=STOCKS.map(s=>`<option value="${s.sym}"${s.sym===calcSym?' selected':''}>${s.name}</option>`).join('');
   document.getElementById('mainView').innerHTML=`
 <div class="panel">
-  <div style="font-size:14px;font-weight:700;margin-bottom:10px;color:#e3b341">🧮 股票計算機</div>
-  <div class="calc-row" style="margin-bottom:10px"><label style="width:70px">選擇股票</label><select id="cSel" onchange="calcSym=this.value;updCP();cC1();cC2()">${opts}</select></div>
+  <div style="font-size:14px;font-weight:700;margin-bottom:10px;color:#e3b341">🧮 持股均價計算機</div>
+  <div class="calc-row" style="margin-bottom:10px"><label style="width:70px">選擇股票</label><select id="cSel" onchange="calcSym=this.value;updCP();cUseLive()">${opts}</select></div>
   <div id="cBox" style="font-size:13px;color:#e3b341;margin-bottom:8px;padding:8px;background:#21262d;border-radius:6px"></div>
 </div>
 <div class="calc">
-  <div class="calc-h" style="color:#26a641">💰 計算機一：投入金額 → 可買股數</div>
-  <div class="calc-row"><label>投入金額</label><input type="number" id="cInv" value="10000" oninput="cC1()"><button class="calc-clr" onclick="document.getElementById('cInv').value=0;cC1()">C</button></div>
-  <div class="calc-row"><label>可買股數</label><div class="calc-out up" id="cBuy">—</div><span style="color:#8b949e">股</span></div>
-  <div class="calc-row"><label>實際花費</label><div class="calc-out" style="color:#58a6ff" id="cReal">—</div></div>
-  <div class="calc-row"><label>剩餘零頭</label><div class="calc-out" style="color:#8b949e" id="cLeft">—</div></div>
+  <div class="calc-h" style="color:#58a6ff">📥 我的持股</div>
+  <div class="calc-row"><label>我的持股(股)</label><input type="number" step="any" id="cQ" value="1" oninput="cCalc()"><button class="calc-clr" onclick="document.getElementById('cQ').value=0;cCalc()">C</button></div>
+  <div class="calc-row"><label>我的持股均價</label><input type="number" step="any" id="cA" value="0" oninput="cCalc()"><button class="calc-clr" onclick="document.getElementById('cA').value=0;cCalc()">C</button></div>
+  <div class="calc-row"><label>目前股價</label><input type="number" step="any" id="cP" value="0" oninput="cCalc()"><button class="calc-clr" onclick="cUseLive()" title="帶入網站最新價">↻最新</button></div>
+  <div class="calc-row"><label>目標均價</label><input type="number" step="any" id="cT" value="0" oninput="cCalc()"><button class="calc-clr" onclick="document.getElementById('cT').value=document.getElementById('cP').value;cCalc()" title="設為目前股價">=現價</button></div>
 </div>
 <div class="calc">
-  <div class="calc-h" style="color:#f85149">📊 計算機二：持股損益試算</div>
-  <div class="calc-row"><label>持有股數</label><input type="number" id="cSha" value="10" oninput="cC2()"><button class="calc-clr" onclick="document.getElementById('cSha').value=0;cC2()">C</button></div>
-  <div class="calc-row"><label>買入總成本</label><input type="number" id="cCost" value="10000" oninput="cC2()"><button class="calc-clr" onclick="document.getElementById('cCost').value=0;cC2()">C</button></div>
-  <div class="calc-row"><label>目前市值</label><div class="calc-out" style="color:#58a6ff" id="cVal">—</div></div>
-  <div class="calc-row"><label>損益金額</label><div class="calc-out" style="color:#e3b341" id="cPnl">—</div></div>
-  <div class="calc-row"><label>損益 %</label><div class="calc-out" style="color:#e3b341" id="cPnlP">—</div></div>
-  <div class="calc-row"><label>平均成本/股</label><div class="calc-out" style="color:#8b949e" id="cAvg">—</div></div>
+  <div class="calc-h" style="color:#e3b341">📊 目前損益</div>
+  <div class="calc-row"><label>目前市值</label><div class="calc-out" style="color:#58a6ff" id="oVal">—</div></div>
+  <div class="calc-row"><label>損益金額</label><div class="calc-out" id="oPnl">—</div></div>
+  <div class="calc-row"><label>損益 %</label><div class="calc-out" id="oPnlP">—</div></div>
+</div>
+<div class="calc">
+  <div class="calc-h" style="color:#26a641">🎯 要達到目標均價，需加碼</div>
+  <div class="calc-row"><label>需加碼股數</label><div class="calc-out up" id="oX">—</div><span style="color:#8b949e">股</span></div>
+  <div class="calc-row"><label>需投入金額</label><div class="calc-out" style="color:#58a6ff" id="oCost">—</div></div>
+  <div class="calc-row"><label>加碼後總持股</label><div class="calc-out" style="color:#8b949e" id="oQ2">—</div></div>
+  <div class="calc-row"><label>加碼後均價</label><div class="calc-out" style="color:#e3b341" id="oA2">—</div></div>
+  <div id="oNote" style="font-size:12px;color:#8b949e;margin-top:6px;line-height:1.7"></div>
 </div>`;
-  updCP();cC1();cC2();
+  updCP();cUseLive();
 }
-function updCP(){const s=STOCKS.find(x=>x.sym===calcSym),db=DB[calcSym];const b=document.getElementById('cBox');if(!b)return;b.textContent=db?`${s.name} 當日收盤：${db.last.c} ${s.cur}`:'此股票無資料';}
-function cC1(){const db=DB[calcSym];if(!db)return;const p=db.last.c,amt=+document.getElementById('cInv').value||0;if(amt>0){const sh=Math.floor(amt/p);document.getElementById('cBuy').textContent=sh;document.getElementById('cReal').textContent=rnd(sh*p);document.getElementById('cLeft').textContent=rnd(amt-sh*p);}else{['cBuy','cReal','cLeft'].forEach(id=>document.getElementById(id).textContent='—');}}
-function cC2(){const db=DB[calcSym];if(!db)return;const p=db.last.c,sh=+document.getElementById('cSha').value||0,cost=+document.getElementById('cCost').value||0;if(sh>0){const val=rnd(sh*p);document.getElementById('cVal').textContent=val;if(cost>0){const pnl=rnd(val-cost);document.getElementById('cPnl').textContent=(pnl>0?'+':'')+pnl;document.getElementById('cPnlP').textContent=(pnl>0?'+':'')+rnd(pnl/cost*100)+'%';document.getElementById('cAvg').textContent=rnd(cost/sh);}else{['cPnl','cPnlP','cAvg'].forEach(id=>document.getElementById(id).textContent='—');}}else{['cVal','cPnl','cPnlP','cAvg'].forEach(id=>document.getElementById(id).textContent='—');}}
-
-
+function updCP(){const s=STOCKS.find(x=>x.sym===calcSym),db=DB[calcSym];const b=document.getElementById('cBox');if(!b)return;b.textContent=db?`${s.name} 最新價：${db.last.c} ${s.cur}`:'此股票無資料';}
+function cUseLive(){const db=DB[calcSym];const p=document.getElementById('cP');if(!p)return;if(db){p.value=db.last.c;const t=document.getElementById('cT');if(t&&!(+t.value>0))t.value=db.last.c;}cCalc();}
+function cCalc(){
+  const g=id=>+((document.getElementById(id)||{}).value)||0;
+  const q=g('cQ'),a=g('cA'),p=g('cP'),T=g('cT');
+  const set=(id,v,cls)=>{const el=document.getElementById(id);if(!el)return;el.textContent=v;if(cls!==undefined)el.className='calc-out '+cls;};
+  const note=document.getElementById('oNote');
+  if(q>0&&a>0&&p>0){
+    const val=q*p,cost=q*a,pnl=val-cost,pct=pnl/cost*100;
+    set('oVal',rnd(val,2));
+    set('oPnl',(pnl>=0?'+':'')+rnd(pnl,2),pnl>=0?'up':'dn');
+    set('oPnlP',(pct>=0?'+':'')+rnd(pct,2)+'%',pnl>=0?'up':'dn');
+  }else{['oVal','oPnl','oPnlP'].forEach(id=>set(id,'—',''));}
+  const clr=()=>{['oX','oCost','oQ2','oA2'].forEach(id=>set(id,'—',''));};
+  if(!(q>0&&a>0&&p>0&&T>0)){clr();if(note)note.textContent='';return;}
+  if(Math.abs(p-T)<1e-9){
+    clr();
+    const rows=[1,2,5,10].map(m=>{const x=q*m;const na=(q*a+x*p)/(q+x);return `加碼 ${rnd(x,4)} 股（現持股 ${m} 倍）→ 均價 ${rnd(na,2)}`;}).join('<br>');
+    if(note)note.innerHTML=`⚠️ <b>目標均價＝目前股價：用現價買，均價只會「無限逼近」、永遠無法剛好等於。</b><br>把目標設在現價與你均價之間（例如 ${rnd((a+p)/2,2)}），才有確切股數。<br><span style="color:#58a6ff">越買越接近：</span><br>${rows}`;
+    return;
+  }
+  const x=q*(T-a)/(p-T);
+  const inRange=T>Math.min(a,p)&&T<Math.max(a,p);
+  if(!inRange||x<=0){
+    clr();
+    if(note)note.innerHTML=`⚠️ 目標均價必須介於「你的均價 ${a}」與「目前股價 ${p}」之間（不含兩端），才算得出來。你設的 ${T} 超出範圍。`;
+    return;
+  }
+  set('oX',rnd(x,4),'up');set('oCost',rnd(x*p,2),'');set('oQ2',rnd(q+x,4),'');set('oA2',rnd(T,2),'');
+  if(note)note.innerHTML=`用現價 ${p} 加碼 <b>${rnd(x,4)} 股</b>（約 ${rnd(x*p,2)}），均價從 ${a} → <b>${T}</b>。`;
+}
 // ── 三大法人歷史趨勢（FinMind，近N日）──
 const INST_CACHE={};
 async function fetchInstHist(stockId){
@@ -690,6 +721,17 @@ async function renderInst(){
       <span class="up">紅=買超</span> <span class="dn">綠=賣超</span>。資料來源:FinMind(含上市櫃)。<br>
       💡 外資連續買超→國際資金看好;連續賣超→留意調節。投信買超常有作帳行情。
     </div>`;
+}
+// 手機縮放時以更高解析度重繪K線/KD/MACD，保持清晰（上限4倍）
+if(window.visualViewport){
+  let _zt;
+  window.visualViewport.addEventListener('resize',()=>{
+    clearTimeout(_zt);
+    _zt=setTimeout(()=>{
+      window._chartDpr=Math.min(4,(window.devicePixelRatio||1)*(window.visualViewport.scale||1));
+      if(curSym&&DB[curSym]&&document.getElementById('kC'))drawAll(curSym);
+    },150);
+  });
 }
 loadAll();
 </script>
