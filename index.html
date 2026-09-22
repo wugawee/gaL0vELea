@@ -372,7 +372,10 @@ function detectForms(data,piv){
   // 同一根確認K棒只留一個：頭肩 > 三重 > W/M
   const rank=f=>f.short.startsWith('頭肩')?3:f.short.startsWith('三')?2:1;
   const byI={};found.forEach(f=>{if(!byI[f.i]||rank(f)>rank(byI[f.i]))byI[f.i]=f;});
-  return Object.values(byI);
+  // 同方向的組合型態 10 根內只確認一次（避免連兩天都喊「頭肩底突破」）
+  const list=Object.values(byI).sort((a,b)=>a.i-b.i),kept=[];let lastB=-99,lastS=-99;
+  list.forEach(f=>{if(f.bull){if(f.i-lastB<10)return;lastB=f.i;}else{if(f.i-lastS<10)return;lastS=f.i;}kept.push(f);});
+  return kept;
 }
 
 // ── 果斷買賣訊號：K棒型態是「觸發」，均線/KD/MACD/突破前高低/量能只是「確認」──
@@ -392,7 +395,7 @@ function calcSignals(data,ma5,ma20,kd,macd,pats,piv){
     const form=here.find(p=>p.pts);
     if(form){
       const buy=form.bull===true;
-      out[i]={s:buy?'buy':'sell',txt:buy?'🔴買入(強)':'🟢賣出(強)',stop:buy?d.l:d.h,score:form.w,why:nm(form.type)};
+      out[i]={s:buy?'buy':'sell',txt:buy?'🔴買入(強)':'🟢賣出(強)',stop:buy?rnd(Math.min(d.l,form.neck*0.985)):rnd(Math.max(d.h,form.neck*1.015)),score:form.w,why:nm(form.type)+(buy?'（停損＝頸線下1.5%）':'')};
       continue;
     }
     // K棒型態分
@@ -423,7 +426,7 @@ function calcSignals(data,ma5,ma20,kd,macd,pats,piv){
     else if(kS>=1.5&&tS>=3&&tS-tB>=2)out[i]={s:'sell',txt:tS>=6?'🟢賣出(強)':'🟢賣出',stop:d.h,score:rnd(tS,1),why:why(ks,cs)};
     else if(kS>=1.5)out[i]={s:'bearpat',txt:'',stop:d.h,score:rnd(tS,1),why:why(ks,cs)};
   }
-  return applyPosition(data,ma20,out,pats);
+  return applyPosition(data,ma20,out,pats,piv);
 }
 
 // ── 持股狀態機：買進之後就是「持有」，不會因為一根看跌K棒就喊賣 ──
@@ -431,17 +434,20 @@ function calcSignals(data,ma5,ma20,kd,macd,pats,piv){
 //                                (2) M頭/頭肩頂/三重頂 跌破頸線
 //                                (3) 看跌K棒型態＋確認條件，而且收盤已經跌到 MA20 之下（趨勢壞掉）
 // 其餘看跌型態只標 ⚠️注意（續抱）。空手時的 🟢賣出 保留，代表「不要進場」。
-function applyPosition(data,ma20,raw,pats){
+function applyPosition(data,ma20,raw,pats,piv){
   const n=data.length,out=new Array(n).fill(null);
-  let hold=false,stop=null,since=null;
+  let hold=false,stop=null,since=null,sinceI=-1,lastFlatSell=-99;
   const formAt={};pats.forEach(p=>{if(p.pts)formAt[p.i]=p;});
+  const pivL=(piv&&piv.lo)||[];
   for(let i=0;i<n;i++){
     const d=data[i],r=raw[i];
     if(!hold){
-      if(r&&r.s==='buy'){hold=true;stop=d.l;since=d.date;out[i]={...r,stop};}
-      else if(r&&r.s!=='bearpat')out[i]=r;
+      if(r&&r.s==='buy'){hold=true;stop=r.stop;since=d.date;sinceI=i;out[i]={...r,stop};}
+      else if(r&&r.s==='sell'){if(formAt[i]||i-lastFlatSell>=5){out[i]=r;lastFlatSell=i;}}
       continue;
     }
+    // 停損隨「前波低點」上移：進場後每形成一個新的波段低點（左右各3根確認），停損就移到那裡；只升不降
+    for(const j of pivL){if(j>sinceI&&j+3<=i&&data[j].l>stop&&data[j].l<d.c)stop=rnd(data[j].l);}
     // 持有中
     if(d.c<stop){out[i]={s:'sell',txt:'🟢賣出',stop,score:0,why:'收盤跌破停損'+stop+(r&&r.s==='sell'?'（'+r.why+'）':'')};hold=false;stop=null;continue;}
     if(r&&(r.s==='sell'||r.s==='bearpat')){
@@ -450,7 +456,7 @@ function applyPosition(data,ma20,raw,pats){
       if(f||(belowMA&&hasConfirm)){out[i]={...r,txt:'🟢賣出'+(f?'(強)':''),stop,why:r.why+(f?'':'｜已跌破MA20')};hold=false;stop=null;continue;}
       out[i]={s:'warn',txt:'⚠️注意',stop,score:r.score,why:r.why+'｜未跌破停損'+stop+'，續抱'};continue;
     }
-    if(r&&r.s==='buy'){stop=Math.max(stop,d.l);out[i]={...r,txt:r.txt.replace('買入','加碼'),stop};continue;}
+    if(r&&r.s==='buy'){out[i]={...r,txt:r.txt.replace('買入','加碼'),stop,why:r.why+'｜停損維持'+stop};continue;} // 加碼不動原本的停損
   }
   out._pos={hold,stop,since};
   return out;
