@@ -235,8 +235,11 @@ function _trendCtx(data,m20,i){
 }
 function detectPatterns(data){
   const pats=[];
-  const closes=data.map(d=>d.c),m20=ma(closes,20);
+  const closes=data.map(d=>d.c),m20=ma(closes,20),m5=ma(closes,5);
   let _lastSoldier=-9,_lastCrow=-9;
+  // 反轉型態的位置條件：看漲反轉 → 型態第一根收盤要在 MA5 之下（先跌過才有得反轉）；看跌反轉 → 第一根在 MA5 之上
+  const fromDn=(k)=>m5[k]==null||data[k].c<=m5[k];
+  const fromUp=(k)=>m5[k]==null||data[k].c>=m5[k];
   for(let i=2;i<data.length;i++){
     const d=data[i],body=Math.abs(d.c-d.o),lower=Math.min(d.c,d.o)-d.l,upper=d.h-Math.max(d.c,d.o),range=d.h-d.l;
     if(!(range>0))continue;
@@ -261,21 +264,24 @@ function detectPatterns(data){
     if(dojiBody&&lower>range*0.6)pats.push({i,type:'蜻蜓十字(強止跌)',color:'#f85149',short:'蜻',bull:true,w:tr==='dn'?2.5:1});
     else if(dojiBody&&upper>range*0.6)pats.push({i,type:'⚠️墓碑十字(看跌)',color:'#26a641',short:'墓',bull:false,w:tr==='up'?2.5:1});
     else if(body<range*0.08)pats.push({i,type:'✛十字線(變盤)',color:'#e3b341',short:'十',bull:null,w:0});
-    // ============ 雙根 K 棒 ============
-    if(isRed&&p1Green&&d.c>p1.o&&d.o<p1.c)pats.push({i,type:'🔴看漲吞噬',color:'#f85149',short:'吞',bull:true,w:2.5});
-    if(isGreen&&p1Red&&d.o>p1.c&&d.c<p1.o)pats.push({i,type:'⚠️看跌吞噬',color:'#26a641',short:'空吞',bull:false,w:2.5});
-    if(p1Green&&isRed&&d.o<p1.c&&d.c>(p1.o+p1.c)/2&&d.c<p1.o)pats.push({i,type:'貫穿線(看漲)',color:'#f85149',short:'貫',bull:true,w:2.5});
-    if(p1Red&&isGreen&&d.o>p1.c&&d.c<(p1.o+p1.c)/2&&d.c>p1.o)pats.push({i,type:'⚠️烏雲蓋頂(看跌)',color:'#26a641',short:'雲',bull:false,w:2.5});
-    if(p1Green&&isRed&&d.o>p1.c&&d.c<p1.o)pats.push({i,type:'多頭孕線',color:'#f85149',short:'孕',bull:true,w:1.5});
-    if(p1Red&&isGreen&&d.o<p1.c&&d.c>p1.o)pats.push({i,type:'⚠️空頭孕線',color:'#26a641',short:'空孕',bull:false,w:1.5});
+    let _ab=0,_ac=0;for(let j=Math.max(0,i-12);j<i-2;j++){_ab+=Math.abs(data[j].c-data[j].o);_ac++;}
+    const avgBody=_ac?_ab/_ac:0;
+    // ============ 雙根 K 棒（反轉型態：看漲要出現在下跌之後、看跌要出現在上漲之後）============
+    const dn1=fromDn(i-1),up1=fromUp(i-1);
+    if(isRed&&p1Green&&d.c>p1.o&&d.o<p1.c&&dn1)pats.push({i,type:'🔴看漲吞噬',color:'#f85149',short:'吞',bull:true,w:2.5});
+    if(isGreen&&p1Red&&d.o>p1.c&&d.c<p1.o&&up1)pats.push({i,type:'⚠️看跌吞噬',color:'#26a641',short:'空吞',bull:false,w:2.5});
+    if(p1Green&&isRed&&d.o<p1.c&&d.c>(p1.o+p1.c)/2&&d.c<p1.o&&dn1)pats.push({i,type:'貫穿線(看漲)',color:'#f85149',short:'貫',bull:true,w:2.5});
+    if(p1Red&&isGreen&&d.o>p1.c&&d.c<(p1.o+p1.c)/2&&d.c>p1.o&&up1)pats.push({i,type:'⚠️烏雲蓋頂(看跌)',color:'#26a641',short:'雲',bull:false,w:2.5});
+    if(p1Green&&isRed&&d.o>p1.c&&d.c<p1.o&&dn1&&b1>=avgBody)pats.push({i,type:'多頭孕線',color:'#f85149',short:'孕',bull:true,w:1.5});
+    if(p1Red&&isGreen&&d.o<p1.c&&d.c>p1.o&&up1&&b1>=avgBody)pats.push({i,type:'⚠️空頭孕線',color:'#26a641',short:'空孕',bull:false,w:1.5});
     if(Math.abs(d.l-p1.l)<range*0.05&&lower>body&&tr!=='up')pats.push({i,type:'鑷子底(看漲)',color:'#f85149',short:'底',bull:true,w:1.5});
     if(Math.abs(d.h-p1.h)<range*0.05&&upper>body&&tr!=='dn')pats.push({i,type:'⚠️鑷子頂(看跌)',color:'#26a641',short:'頂',bull:false,w:1.5});
     // ============ 三根 K 棒 ============
-    if(p2Green&&b1<b2*0.35&&isRed&&d.c>(p2.o+p2.c)/2)pats.push({i,type:'⭐晨星(看漲)',color:'#f85149',short:'晨',bull:true,w:3});
-    if(p2Red&&b1<b2*0.35&&isGreen&&d.c<(p2.o+p2.c)/2)pats.push({i,type:'⚠️黃昏星(看跌)',color:'#26a641',short:'昏',bull:false,w:3});
+    // 晨星/黃昏星：第一根要是長K（≥平均實體0.8倍）、中間小實體、第三根收過第一根中點；且要在下跌(上漲)之後
+    const bigFirst=avgBody>0&&b2>=avgBody*0.8;
+    if(p2Green&&bigFirst&&b1<b2*0.35&&isRed&&d.c>(p2.o+p2.c)/2&&fromDn(i-2))pats.push({i,type:'⭐晨星(看漲)',color:'#f85149',short:'晨',bull:true,w:3});
+    if(p2Red&&bigFirst&&b1<b2*0.35&&isGreen&&d.c<(p2.o+p2.c)/2&&fromUp(i-2))pats.push({i,type:'⚠️黃昏星(看跌)',color:'#26a641',short:'昏',bull:false,w:3});
     // 三白兵/三烏鴉：三根同色、收盤逐步墊高(降低)、每根實體都要夠長（≥近10根平均實體的0.8倍）、開盤落在前一根實體內或附近
-    let _ab=0,_ac=0;for(let j=Math.max(0,i-12);j<i-2;j++){_ab+=Math.abs(data[j].c-data[j].o);_ac++;}
-    const avgBody=_ac?_ab/_ac:0;
     const bigBodies=avgBody>0&&body>=avgBody*0.8&&b1>=avgBody*0.8&&b2>=avgBody*0.8;
     // 三白兵要出現在「下跌之後」（起漲前一根在MA20下方或持平）、三烏鴉在「上漲之後」；連漲第4、5天不重複標
     const trS=i>=3?_trendCtx(data,m20,i-2):null;
@@ -288,7 +294,7 @@ function detectPatterns(data){
     // ============ 五根 K 棒：上升三法 / 下降三法（持續型態）============
     if(i>=4){
       const f=data[i-4],fb=Math.abs(f.c-f.o),mids=[data[i-3],data[i-2],data[i-1]];
-      const inside=fb>0&&mids.every(x=>Math.abs(x.c-x.o)<fb*0.6&&x.h<=f.h*1.003&&x.l>=f.l*0.997);
+      const inside=fb>0&&fb>=avgBody&&mids.every(x=>Math.abs(x.c-x.o)<fb*0.6&&x.h<=f.h*1.003&&x.l>=f.l*0.997);
       if(inside&&f.c>f.o&&isRed&&d.c>f.c)pats.push({i,type:'上升三法(續漲)',color:'#f85149',short:'升三',bull:true,w:2.5});
       if(inside&&f.c<f.o&&isGreen&&d.c<f.c)pats.push({i,type:'⚠️下降三法(續跌)',color:'#26a641',short:'降三',bull:false,w:2.5});
     }
@@ -301,7 +307,7 @@ function findPivots(data,k=3){
   const hi=[],lo=[];
   for(let i=k;i<data.length-k;i++){
     let isH=true,isL=true;
-    for(let j=i-k;j<=i+k;j++){if(j===i)continue;if(data[j].h>=data[i].h)isH=false;if(data[j].l<=data[i].l)isL=false;if(!isH&&!isL)break;}
+    for(let j=i-k;j<=i+k;j++){if(j===i)continue;if(j<i?data[j].h>=data[i].h:data[j].h>data[i].h)isH=false;if(j<i?data[j].l<=data[i].l:data[j].l<data[i].l)isL=false;if(!isH&&!isL)break;}
     if(isH)hi.push(i);if(isL)lo.push(i);
   }
   return{hi,lo};
@@ -323,7 +329,7 @@ function detectForms(data,piv){
   const n=data.length,st=Math.max(0,n-150);
   const lo=piv.lo.filter(i=>i>=st),hi=piv.hi.filter(i=>i>=st);
   const between=(arr,a,b)=>arr.filter(j=>j>a&&j<b);
-  const confirm=(from,neck,dir)=>{for(let i=from+1;i<Math.min(n,from+25);i++){const ok=dir>0?(data[i].c>neck*1.005&&data[i-1].c<=neck*1.005):(data[i].c<neck*0.995&&data[i-1].c>=neck*0.995);if(ok)return i;}return -1;};
+  const confirm=(from,neck,dir,lim)=>{for(let i=from+1;i<Math.min(n,from+25);i++){if(dir>0?data[i].c<lim:data[i].c>lim)return -1;const ok=dir>0?(data[i].c>neck*1.005&&data[i-1].c<=neck*1.005):(data[i].c<neck*0.995&&data[i-1].c>=neck*0.995);if(ok)return i;}return -1;};
   const found=[];
   // 底部
   for(let x=0;x<lo.length;x++)for(let y=x+1;y<lo.length;y++){
@@ -333,14 +339,14 @@ function detectForms(data,piv){
     if(neck<Math.max(la,lb)*1.03)continue;
     const heads=between(lo,a,b).filter(j=>data[j].l<Math.min(la,lb)*0.97);
     if(heads.length&&Math.abs(la-lb)/la<0.05){
-      const c=confirm(b,neck,1);if(c>0)found.push({i:c,type:'頭肩底突破(買)',color:'#f85149',short:'頭肩底',bull:true,w:4,pts:[{i:a,p:la},{i:heads[0],p:data[heads[0]].l},{i:b,p:lb}],neck,from:a});
+      const c=confirm(b,neck,1,data[heads[0]].l);if(c>0)found.push({i:c,type:'頭肩底突破(買)',color:'#f85149',short:'頭肩底',bull:true,w:4,pts:[{i:a,p:la},{i:heads[0],p:data[heads[0]].l},{i:b,p:lb}],neck,from:a});
     }else if(Math.abs(la-lb)/la<0.03){
       const z=lo.filter(j=>j<a&&a-j>=5&&a-j<=60&&Math.abs(data[j].l-la)/la<0.03&&between(hi,j,a).length);
       if(z.length){
         const z0=z[z.length-1],m2=between(hi,z0,a);const neck2=Math.max(neck,...m2.map(j=>data[j].h));
-        const c=confirm(b,neck2,1);if(c>0)found.push({i:c,type:'三重底突破(買)',color:'#f85149',short:'三底',bull:true,w:4,pts:[{i:z0,p:data[z0].l},{i:a,p:la},{i:b,p:lb}],neck:neck2,from:z0});
+        const c=confirm(b,neck2,1,Math.min(data[z0].l,la,lb));if(c>0)found.push({i:c,type:'三重底突破(買)',color:'#f85149',short:'三底',bull:true,w:4,pts:[{i:z0,p:data[z0].l},{i:a,p:la},{i:b,p:lb}],neck:neck2,from:z0});
       }else{
-        const c=confirm(b,neck,1);if(c>0)found.push({i:c,type:'W底突破(買)',color:'#f85149',short:'W底',bull:true,w:4,pts:[{i:a,p:la},{i:mi,p:neck},{i:b,p:lb}],neck,from:a});
+        const c=confirm(b,neck,1,Math.min(la,lb));if(c>0)found.push({i:c,type:'W底突破(買)',color:'#f85149',short:'W底',bull:true,w:4,pts:[{i:a,p:la},{i:mi,p:neck},{i:b,p:lb}],neck,from:a});
       }
     }
   }
@@ -352,19 +358,20 @@ function detectForms(data,piv){
     if(neck>Math.min(ha,hb)*0.97)continue;
     const heads=between(hi,a,b).filter(j=>data[j].h>Math.max(ha,hb)*1.03);
     if(heads.length&&Math.abs(ha-hb)/ha<0.05){
-      const c=confirm(b,neck,-1);if(c>0)found.push({i:c,type:'⚠️頭肩頂跌破(賣)',color:'#26a641',short:'頭肩頂',bull:false,w:4,pts:[{i:a,p:ha},{i:heads[0],p:data[heads[0]].h},{i:b,p:hb}],neck,from:a});
+      const c=confirm(b,neck,-1,data[heads[0]].h);if(c>0)found.push({i:c,type:'⚠️頭肩頂跌破(賣)',color:'#26a641',short:'頭肩頂',bull:false,w:4,pts:[{i:a,p:ha},{i:heads[0],p:data[heads[0]].h},{i:b,p:hb}],neck,from:a});
     }else if(Math.abs(ha-hb)/ha<0.03){
       const z=hi.filter(j=>j<a&&a-j>=5&&a-j<=60&&Math.abs(data[j].h-ha)/ha<0.03&&between(lo,j,a).length);
       if(z.length){
         const z0=z[z.length-1],m2=between(lo,z0,a);const neck2=Math.min(neck,...m2.map(j=>data[j].l));
-        const c=confirm(b,neck2,-1);if(c>0)found.push({i:c,type:'⚠️三重頂跌破(賣)',color:'#26a641',short:'三頂',bull:false,w:4,pts:[{i:z0,p:data[z0].h},{i:a,p:ha},{i:b,p:hb}],neck:neck2,from:z0});
+        const c=confirm(b,neck2,-1,Math.max(data[z0].h,ha,hb));if(c>0)found.push({i:c,type:'⚠️三重頂跌破(賣)',color:'#26a641',short:'三頂',bull:false,w:4,pts:[{i:z0,p:data[z0].h},{i:a,p:ha},{i:b,p:hb}],neck:neck2,from:z0});
       }else{
-        const c=confirm(b,neck,-1);if(c>0)found.push({i:c,type:'⚠️M頭跌破(賣)',color:'#26a641',short:'M頭',bull:false,w:4,pts:[{i:a,p:ha},{i:mi,p:neck},{i:b,p:hb}],neck,from:a});
+        const c=confirm(b,neck,-1,Math.max(ha,hb));if(c>0)found.push({i:c,type:'⚠️M頭跌破(賣)',color:'#26a641',short:'M頭',bull:false,w:4,pts:[{i:a,p:ha},{i:mi,p:neck},{i:b,p:hb}],neck,from:a});
       }
     }
   }
-  // 同一根確認K棒只留一個（腳最多的優先）
-  const byI={};found.forEach(f=>{if(!byI[f.i]||f.pts.length>byI[f.i].pts.length)byI[f.i]=f;});
+  // 同一根確認K棒只留一個：頭肩 > 三重 > W/M
+  const rank=f=>f.short.startsWith('頭肩')?3:f.short.startsWith('三')?2:1;
+  const byI={};found.forEach(f=>{if(!byI[f.i]||rank(f)>rank(byI[f.i]))byI[f.i]=f;});
   return Object.values(byI);
 }
 
@@ -414,7 +421,38 @@ function calcSignals(data,ma5,ma20,kd,macd,pats,piv){
     const why=(kk,cc)=>kk.join('+')+(cc.length?'｜確認:'+cc.join('+'):'');
     if(kB>=1.5&&tB>=3&&tB-tS>=2)out[i]={s:'buy',txt:tB>=6?'🔴買入(強)':'🔴買入',stop:d.l,score:rnd(tB,1),why:why(kb,cb)};
     else if(kS>=1.5&&tS>=3&&tS-tB>=2)out[i]={s:'sell',txt:tS>=6?'🟢賣出(強)':'🟢賣出',stop:d.h,score:rnd(tS,1),why:why(ks,cs)};
+    else if(kS>=1.5)out[i]={s:'bearpat',txt:'',stop:d.h,score:rnd(tS,1),why:why(ks,cs)};
   }
+  return applyPosition(data,ma20,out,pats);
+}
+
+// ── 持股狀態機：買進之後就是「持有」，不會因為一根看跌K棒就喊賣 ──
+// 持有中只有三種情況會出 🟢賣出：(1) 收盤跌破停損（進場當日最低）
+//                                (2) M頭/頭肩頂/三重頂 跌破頸線
+//                                (3) 看跌K棒型態＋確認條件，而且收盤已經跌到 MA20 之下（趨勢壞掉）
+// 其餘看跌型態只標 ⚠️注意（續抱）。空手時的 🟢賣出 保留，代表「不要進場」。
+function applyPosition(data,ma20,raw,pats){
+  const n=data.length,out=new Array(n).fill(null);
+  let hold=false,stop=null,since=null;
+  const formAt={};pats.forEach(p=>{if(p.pts)formAt[p.i]=p;});
+  for(let i=0;i<n;i++){
+    const d=data[i],r=raw[i];
+    if(!hold){
+      if(r&&r.s==='buy'){hold=true;stop=d.l;since=d.date;out[i]={...r,stop};}
+      else if(r&&r.s!=='bearpat')out[i]=r;
+      continue;
+    }
+    // 持有中
+    if(d.c<stop){out[i]={s:'sell',txt:'🟢賣出',stop,score:0,why:'收盤跌破停損'+stop+(r&&r.s==='sell'?'（'+r.why+'）':'')};hold=false;stop=null;continue;}
+    if(r&&(r.s==='sell'||r.s==='bearpat')){
+      const f=formAt[i];const belowMA=ma20[i]!=null&&d.c<ma20[i];
+      const hasConfirm=r.s==='sell'&&r.why.includes('確認:');
+      if(f||(belowMA&&hasConfirm)){out[i]={...r,txt:'🟢賣出'+(f?'(強)':''),stop,why:r.why+(f?'':'｜已跌破MA20')};hold=false;stop=null;continue;}
+      out[i]={s:'warn',txt:'⚠️注意',stop,score:r.score,why:r.why+'｜未跌破停損'+stop+'，續抱'};continue;
+    }
+    if(r&&r.s==='buy'){stop=Math.max(stop,d.l);out[i]={...r,txt:r.txt.replace('買入','加碼'),stop};continue;}
+  }
+  out._pos={hold,stop,since};
   return out;
 }
 
@@ -481,7 +519,9 @@ function sumRow(s){
   const cls=chg>0?'up':chg<0?'dn':'fl';
   const al=[];
   const _sg=(db.sigs||[]).slice(-3).filter(Boolean).pop();
-  if(_sg)al.push(`<span class="badge ${_sg.s==='buy'?'s-warn':'s-grn'}" title="${_sg.why}">${_sg.txt} ${_sg.s==='buy'?'停損':'停損'}${_sg.stop}</span>`);
+  const _pos=(db.sigs||{})._pos;
+  if(_sg)al.push(`<span class="badge ${_sg.s==='buy'?'s-warn':_sg.s==='warn'?'s-gold':'s-grn'}" title="${_sg.why}">${_sg.txt} 停損${_sg.stop}</span>`);
+  else if(_pos&&_pos.hold)al.push(`<span class="badge s-warn" title="自 ${_pos.since} 買入後持有中">🔴持有中 停損${_pos.stop}</span>`);
   if(kP&&kP.K<kP.D&&kL.K>kL.D)al.push(`<span class="badge s-gold">KD金叉</span>`);
   if(m20&&last.c>m20&&prev.c<=m20p)al.push(`<span class="badge s-blue">突破20MA</span>`);
   else if(m20&&Math.abs(last.c-m20)/m20<=0.03)al.push(`<span class="badge s-blue">近20MA</span>`);
@@ -522,7 +562,7 @@ function renderSummary(){
     ${catBlock(usG.idx,'📈 指數')}${catBlock(usG.etf,'📊 ETF')}${catBlock(usG.ai,'🤖 AI股')}${catBlock(usG.min,'🏠 民生股')}
   </tbody></table>
   <div style="margin-top:10px;font-size:10px;color:#8b949e;line-height:1.8">
-    <span class="badge s-warn">🔴買入</span><span class="badge s-grn">🟢賣出</span>＝近3日的果斷訊號（紅＝買、綠＝賣）。以 K棒型態為觸發（W底/三重底/頭肩底突破、M頭/三重頂/頭肩頂跌破 直接出訊號；單根/雙根/三根型態需加確認：均線/KD交叉、MACD翻轉、突破前高低、放量）；沒有K棒型態的日子不出訊號。滑鼠停在徽章上看理由<br>
+    <span class="badge s-warn">🔴買入</span><span class="badge s-grn">🟢賣出</span>＝近3日的果斷訊號（紅＝買、綠＝賣）。以 K棒型態為觸發（W底/三重底/頭肩底突破、M頭/三重頂/頭肩頂跌破 直接出訊號；單根/雙根/三根型態需加確認：均線/KD交叉、MACD翻轉、突破前高低、放量）；沒有K棒型態的日子不出訊號。買入後進入「持有」：只有 收盤跌破停損 / M頭類跌破 / 看跌型態＋確認且跌破MA20 才會喊賣，其餘看跌型態只標 <span class="badge s-gold">⚠️注意</span> 續抱。滑鼠停在徽章上看理由<br>
     其他提醒：<span class="badge s-gold">KD金叉</span><span class="badge s-blue">突破/近20MA</span><span class="badge s-grn">MACD翻正</span>
     看漲型態：<span class="badge s-warn">⭐晨星</span><span class="badge s-warn">🔨錘子線</span><span class="badge s-warn">倒錘線</span><span class="badge s-warn">蜻蜓十字</span><span class="badge s-warn">🔴看漲吞噬</span><span class="badge s-warn">貫穿線</span><span class="badge s-warn">多頭孕線</span><span class="badge s-warn">鑷子底</span><span class="badge s-warn">三白兵</span><span class="badge s-warn">上升三法</span><span class="badge s-warn">W底/三重底/頭肩底突破</span>
     看跌型態：<span class="badge s-grn">黃昏星</span><span class="badge s-grn">上吊線</span><span class="badge s-grn">射擊之星</span><span class="badge s-grn">墓碑十字</span><span class="badge s-grn">看跌吞噬</span><span class="badge s-grn">烏雲蓋頂</span><span class="badge s-grn">空頭孕線</span><span class="badge s-grn">鑷子頂</span><span class="badge s-grn">三烏鴉</span><span class="badge s-grn">下降三法</span><span class="badge s-grn">M頭/三重頂/頭肩頂跌破</span>
@@ -633,7 +673,7 @@ function dataTableHTML(sym){
     const pat=patOf(offset+i);
     // 果斷買賣訊號（K棒型態觸發＋確認條件，見 calcSignals）
     const _s=(db.sigs||[])[offset+i];
-    const sig=_s?{txt:_s.txt+' 停損'+_s.stop+`<div style="font-size:10px;color:#8b949e;font-weight:400">${_s.why}</div>`,color:_s.s==='buy'?'#f85149':'#26a641'}:{txt:'—',color:'#8b949e'};
+    const sig=_s?{txt:_s.txt+' 停損'+_s.stop+`<div style="font-size:10px;color:#8b949e;font-weight:400">${_s.why}</div>`,color:_s.s==='buy'?'#f85149':_s.s==='warn'?'#e3b341':'#26a641'}:{txt:'—',color:'#8b949e'};
     const prev=i>0?data[i-1].c:d.c;
     const chg=rnd(d.c-prev),chgP=rnd(chg/prev*100);
     const cls=chg>0?'up':chg<0?'dn':'fl';
@@ -693,13 +733,13 @@ function drawCandle(id,data,m5,m10,m20,m60,pats,ex){ex=ex||{sigs:[],levels:[]};
   // 組合型態（W/M/三重/頭肩）：腳與腳連線＋頸線虛線，到確認K棒為止
   pats.filter(p=>p.spts&&p.spts.every(q=>q.i>=0)).forEach(p=>{ctx.strokeStyle=p.color;ctx.lineWidth=1.5;ctx.beginPath();p.spts.forEach((q,k)=>{k===0?ctx.moveTo(xS(q.i),yS(q.p)):ctx.lineTo(xS(q.i),yS(q.p));});ctx.stroke();ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(xS(p.spts[0].i),yS(p.neck));ctx.lineTo(xS(p.si),yS(p.neck));ctx.stroke();ctx.setLineDash([]);p.spts.forEach(q=>{ctx.beginPath();ctx.arc(xS(q.i),yS(q.p),3,0,Math.PI*2);ctx.fillStyle=p.color;ctx.fill();});});
   // 買賣箭頭：🟢買入 ▲ 在最低價下方、🔴賣出 ▼ 在最高價上方
-  ex.sigs.forEach((s,i)=>{if(!s||!data[i])return;const x=xS(i);ctx.font='bold 13px Arial';ctx.textAlign='center';if(s.s==='buy'){ctx.fillStyle='#f85149';ctx.fillText('▲',x,yS(data[i].l)+14);}else{ctx.fillStyle='#26a641';ctx.fillText('▼',x,yS(data[i].h)-4);}});
+  ex.sigs.forEach((s,i)=>{if(!s||!data[i])return;const x=xS(i);ctx.font='bold 13px Arial';ctx.textAlign='center';if(s.s==='buy'){ctx.fillStyle='#f85149';ctx.fillText('▲',x,yS(data[i].l)+14);}else if(s.s==='warn'){ctx.fillStyle='#e3b341';ctx.font='bold 10px Arial';ctx.fillText('▽',x,yS(data[i].h)-4);}else{ctx.fillStyle='#26a641';ctx.fillText('▼',x,yS(data[i].h)-4);}});
   // 型態標籤：同一根有多個型態就往上疊；多字標籤（W底/M頭/頭肩…）用圓角框
   const _stk={};
   pats.forEach(p=>{const k=_stk[p.si]||0;_stk[p.si]=k+1;const x=xS(p.si),yt=Math.max(14,yS(data[p.si].h)-(ex.sigs[p.si]&&ex.sigs[p.si].s==='sell'?28:16)-k*15);ctx.font='bold 11px Arial';ctx.textAlign='center';const tw=ctx.measureText(p.short).width;ctx.fillStyle=p.color+'44';ctx.strokeStyle=p.color;ctx.lineWidth=1;if(p.short.length>1){ctx.beginPath();ctx.roundRect?ctx.roundRect(x-tw/2-3,yt-11,tw+6,14,3):ctx.rect(x-tw/2-3,yt-11,tw+6,14);ctx.fill();ctx.stroke();}else{ctx.beginPath();ctx.arc(x,yt-4,7,0,Math.PI*2);ctx.fill();ctx.stroke();}ctx.fillStyle=p.color;ctx.fillText(p.short,x,yt);});
   ctx.fillStyle='#8b949e';ctx.font='9px Arial';ctx.textAlign='center';const st=Math.ceil(n/8);data.forEach((d,i)=>{if(i%st===0||i===n-1)ctx.fillText(d.date,xS(i),H-6);});
   const lg=[['#e3b341','MA5'],['#58a6ff','MA10'],['#bc8cff','MA20'],['#26a641','MA60']];let lx=P.l+4;ctx.font='10px Arial';ctx.textAlign='left';lg.forEach(([cl,l])=>{ctx.fillStyle=cl;ctx.fillRect(lx,5,14,3);ctx.fillStyle='#8b949e';ctx.fillText(l,lx+17,11);lx+=46;});
-  c.onmousemove=e=>{const r=c.getBoundingClientRect(),mx2=(e.clientX-r.left)*(W/r.width);let cl=-1,md=9999;data.forEach((_,i)=>{const dd=Math.abs(xS(i)-mx2);if(dd<md){md=dd;cl=i;}});if(cl<0||md>30)return;const d=data[cl];const ch2=cl>0?rnd(d.c-data[cl-1].c):0,chp2=cl>0?rnd(ch2/data[cl-1].c*100):0;const pat=pats.find(p=>p.si===cl);const tt=document.getElementById('tt');tt.style.display='block';tt.style.left=(e.clientX+14)+'px';tt.style.top=(e.clientY-10)+'px';tt.innerHTML=`<b>${d.date}</b><br>開 ${d.o} | 高 ${d.h}<br>低 ${d.l} | 收 <b>${d.c}</b><br>漲跌 <span style="color:${ch2>=0?'#f85149':'#26a641'}">${ch2>=0?'+':''}${ch2} (${chp2}%)</span><br>MA5:${m5[cl]??'—'} MA10:${m10[cl]??'—'}<br>MA20:${m20[cl]??'—'} MA60:${m60[cl]??'—'}${pat?`<br><span style="color:${pat.color}">${pat.type}</span>`:''}${ex.sigs[cl]?`<br><span style="color:${ex.sigs[cl].s==='buy'?'#f85149':'#26a641'}">${ex.sigs[cl].txt} 停損${ex.sigs[cl].stop}<br>理由：${ex.sigs[cl].why}</span>`:''}`;};
+  c.onmousemove=e=>{const r=c.getBoundingClientRect(),mx2=(e.clientX-r.left)*(W/r.width);let cl=-1,md=9999;data.forEach((_,i)=>{const dd=Math.abs(xS(i)-mx2);if(dd<md){md=dd;cl=i;}});if(cl<0||md>30)return;const d=data[cl];const ch2=cl>0?rnd(d.c-data[cl-1].c):0,chp2=cl>0?rnd(ch2/data[cl-1].c*100):0;const pat=pats.find(p=>p.si===cl);const tt=document.getElementById('tt');tt.style.display='block';tt.style.left=(e.clientX+14)+'px';tt.style.top=(e.clientY-10)+'px';tt.innerHTML=`<b>${d.date}</b><br>開 ${d.o} | 高 ${d.h}<br>低 ${d.l} | 收 <b>${d.c}</b><br>漲跌 <span style="color:${ch2>=0?'#f85149':'#26a641'}">${ch2>=0?'+':''}${ch2} (${chp2}%)</span><br>MA5:${m5[cl]??'—'} MA10:${m10[cl]??'—'}<br>MA20:${m20[cl]??'—'} MA60:${m60[cl]??'—'}${pat?`<br><span style="color:${pat.color}">${pat.type}</span>`:''}${ex.sigs[cl]?`<br><span style="color:${ex.sigs[cl].s==='buy'?'#f85149':ex.sigs[cl].s==='warn'?'#e3b341':'#26a641'}">${ex.sigs[cl].txt} 停損${ex.sigs[cl].stop}<br>理由：${ex.sigs[cl].why}</span>`:''}`;};
   c.onmouseleave=()=>{document.getElementById('tt').style.display='none';};
 }
 function drawKD(id,kd){const c=document.getElementById(id);if(!c)return;const W=c.offsetWidth||640,H=90;const _dpr=window._chartDpr||(window.devicePixelRatio||1);c.width=Math.round(W*_dpr);c.height=Math.round(H*_dpr);c.style.height=H+'px';const ctx=c.getContext('2d');ctx.scale(_dpr,_dpr);const n=kd.length,P={t:8,b:8,l:8,r:50},cw=W-P.l-P.r,ch=H-P.t-P.b;const xS=i=>P.l+i*(cw/(n-1||1)),yS=v=>(1-v/100)*ch+P.t;ctx.strokeStyle='#21262d';ctx.lineWidth=0.5;[0,20,50,80,100].forEach(v=>{ctx.beginPath();ctx.moveTo(P.l,yS(v));ctx.lineTo(W-P.r,yS(v));ctx.stroke();ctx.fillStyle='#8b949e';ctx.font='9px Arial';ctx.textAlign='left';ctx.fillText(v,W-P.r+4,yS(v)+3);});[[kd.map(k=>k.K),'#58a6ff'],[kd.map(k=>k.D),'#f85149']].forEach(([arr,col])=>{ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.beginPath();arr.forEach((v,i)=>{i===0?ctx.moveTo(xS(i),yS(v)):ctx.lineTo(xS(i),yS(v));});ctx.stroke();});}
