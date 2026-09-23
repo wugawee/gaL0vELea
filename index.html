@@ -162,10 +162,11 @@ function parseChart(json){
       if(lo==null)lo=meta.regularMarketDayLow??close;
     }
     // 收盤null但當天有其他價格 → 用高低中值/開盤/前一日收盤補，避免整根消失（如00403A等主動式ETF偶爾缺值）
+    let gap=false;
     if(close==null){
       if(hi!=null&&lo!=null)close=(hi+lo)/2;
       else if(open!=null)close=open;
-      else if(data.length)close=data[data.length-1].c;
+      else if(data.length){close=data[data.length-1].c;gap=true;} // Yahoo 該日整根還沒回填：先用前一日收盤佔位，標記 gap
     }
     if(close==null)continue; // 真的完全無資料才跳過
     open=open??close; hi=hi??close; lo=lo??close;
@@ -173,7 +174,7 @@ function parseChart(json){
     const d=new Date((ts+_off)*1000);
     const mo=(d.getUTCMonth()+1).toString().padStart(2,'0');
     const dy=d.getUTCDate().toString().padStart(2,'0');
-    data.push({date:`${mo}/${dy}`,o:rnd(open),h:rnd(hi),l:rnd(lo),c:rnd(close),vol:q.volume[i]||0,ts:ts});
+    data.push({date:`${mo}/${dy}`,o:rnd(open),h:rnd(hi),l:rnd(lo),c:rnd(close),vol:q.volume[i]||0,ts:ts,gap});
   }
   // 若 meta 的即時時間比最後一筆還新（代表盤中當天K棒根本沒進timestamp），補一筆
   if(meta.regularMarketPrice!=null && meta.regularMarketTime!=null){
@@ -195,11 +196,9 @@ function parseChart(json){
         vol:meta.regularMarketVolume||0,ts:mt});
     }
   }
-  // 濾掉補洞產生的假K棒（量0且開高低收四價完全相同，多為ETF前一日資料延遲），保留最後一根
-  for(let _k=data.length-2;_k>=0;_k--){
-    const _d=data[_k];
-    if(_d.vol===0 && _d.o===_d.h && _d.h===_d.l && _d.l===_d.c) data.splice(_k,1);
-  }
+  // Yahoo 有列出該交易日但整根還沒回填（常見：美股開盤後前一日暫時為 null、台股ETF延遲）：
+  // 不刪除（刪了那天就從表格消失、均線也少一天），保留佔位棒並標記 gap，畫面上用灰色顯示「資料延遲」，下次自動更新抓到就會補正
+
   if(data.length>0){
     data._marketState=meta.marketState||'CLOSED';
     data._isLive=isLive;
@@ -679,7 +678,7 @@ function dataTableHTML(sym){
   const idxArr=[...Array(data.length).keys()].reverse();
   const rows=idxArr.map(i=>{
     const d=data[i];
-    const pat=patOf(offset+i);
+    const pat=d.gap?{txt:'⏳Yahoo尚未回填',color:'#8b949e'}:patOf(offset+i);
     // 果斷買賣訊號（K棒型態觸發＋確認條件，見 calcSignals）
     const _s=(db.sigs||[])[offset+i];
     const sig=_s?{txt:_s.txt+' 停損'+_s.stop+`<div style="font-size:10px;color:#8b949e;font-weight:400">${_s.why}</div>`,color:_s.s==='buy'?'#f85149':_s.s==='warn'?'#e3b341':'#26a641'}:{txt:'—',color:'#8b949e'};
@@ -734,7 +733,7 @@ function drawCandle(id,data,m5,m10,m20,m60,pats,ex){ex=ex||{sigs:[],levels:[]};
   const yS=v=>(1-(v-mn)/(mx-mn))*ch+P.t,xS=i=>P.l+i*(cw/(n-1||1));
   ctx.strokeStyle='#21262d';ctx.lineWidth=0.5;
   for(let i=0;i<=4;i++){const y=P.t+ch*i/4;ctx.beginPath();ctx.moveTo(P.l,y);ctx.lineTo(W-P.r,y);ctx.stroke();ctx.fillStyle='#8b949e';ctx.font='10px Arial';ctx.textAlign='left';ctx.fillText(rnd(mx-(mx-mn)*i/4),W-P.r+4,y+4);}
-  data.forEach((d,i)=>{const x=xS(i),up=d.c>=d.o,col=up?'#f85149':'#26a641';const bt=Math.min(yS(d.o),yS(d.c)),bh=Math.max(1,Math.abs(yS(d.o)-yS(d.c)));ctx.strokeStyle=col;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,yS(d.h));ctx.lineTo(x,bt);ctx.stroke();ctx.beginPath();ctx.moveTo(x,bt+bh);ctx.lineTo(x,yS(d.l));ctx.stroke();ctx.fillStyle=col;ctx.fillRect(x-bw/2,bt,bw,bh);});
+  data.forEach((d,i)=>{const x=xS(i);if(d.gap){ctx.strokeStyle='#8b949e';ctx.lineWidth=1;ctx.setLineDash([2,2]);ctx.strokeRect(x-bw/2,yS(d.c)-3,bw,6);ctx.setLineDash([]);return;}const up=d.c>=d.o,col=up?'#f85149':'#26a641';const bt=Math.min(yS(d.o),yS(d.c)),bh=Math.max(1,Math.abs(yS(d.o)-yS(d.c)));ctx.strokeStyle=col;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,yS(d.h));ctx.lineTo(x,bt);ctx.stroke();ctx.beginPath();ctx.moveTo(x,bt+bh);ctx.lineTo(x,yS(d.l));ctx.stroke();ctx.fillStyle=col;ctx.fillRect(x-bw/2,bt,bw,bh);});
   function dMA(arr,col,dash=[]){ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.setLineDash(dash);ctx.beginPath();let s=false;arr.forEach((v,i)=>{if(v==null)return;const x=xS(i),y=yS(v);if(!s){ctx.moveTo(x,y);s=true;}else ctx.lineTo(x,y);});ctx.stroke();ctx.setLineDash([]);}
   dMA(m5,'#e3b341');dMA(m10,'#58a6ff');dMA(m20,'#bc8cff');dMA(m60,'#26a641',[4,3]);
   // 水平支撐(綠)/壓力(紅)線：從第一次碰到的那根畫到最右邊，右側標價位
