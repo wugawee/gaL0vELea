@@ -205,6 +205,23 @@ function parseChart(json){
   }
   return data;
 }
+// Yahoo 日線偶爾整天 null（2026/09/22 美股全部缺）：用小時線把那天的開高低收量算出來補上
+async function fillGapsFromIntraday(sym,data){
+  const gaps=data.slice(-15).filter(d=>d.gap);
+  if(!gaps.length)return data;
+  try{
+    const ctrl=new AbortController();const timer=setTimeout(()=>ctrl.abort(),12000);
+    const res=await fetch(`${WORKER_URL}/?symbol=${encodeURIComponent(sym)}&interval=1h&range=1mo&_t=${Date.now()}`,{signal:ctrl.signal,cache:'no-store'});
+    clearTimeout(timer);
+    const j=await res.json();const R=j.chart.result[0];const q=R.indicators.quote[0];
+    if((R.meta.dataGranularity||'')!=='1h')return data; // Worker 還是舊版（不認 interval）→ 放棄
+    const off=(R.meta.gmtoffset??R.meta.gmtOffset??28800);
+    const days={};
+    R.timestamp.forEach((t,i)=>{if(q.close[i]==null)return;const dd=new Date((t+off)*1000);const key=(dd.getUTCMonth()+1).toString().padStart(2,'0')+'/'+dd.getUTCDate().toString().padStart(2,'0');const x=days[key]||(days[key]={o:q.open[i],h:-Infinity,l:Infinity,c:null,v:0});x.h=Math.max(x.h,q.high[i]);x.l=Math.min(x.l,q.low[i]);x.c=q.close[i];x.v+=q.volume[i]||0;});
+    data.forEach(d=>{const x=d.gap&&days[d.date];if(x&&x.c!=null){d.o=rnd(x.o);d.h=rnd(x.h);d.l=rnd(x.l);d.c=rnd(x.c);d.vol=x.v;d.gap=false;d.est=true;}});
+  }catch(e){}
+  return data;
+}
 async function fetchStock(sym,tries=0){
   const cacheBuster=Date.now();
   const url=`${WORKER_URL}/?symbol=${encodeURIComponent(sym)}&_t=${cacheBuster}`;
@@ -214,8 +231,8 @@ async function fetchStock(sym,tries=0){
     const res=await fetch(url,{signal:ctrl.signal,cache:'no-store'});
     clearTimeout(timer);
     const json=await res.json();
-    const data=parseChart(json);
-    if(data.length>=1)return data;
+    let data=parseChart(json);
+    if(data.length>=1){data=await fillGapsFromIntraday(sym,data);return data;}
   }catch(e){}
   // 失敗重試（最多3次）
   if(tries<3){await new Promise(r=>setTimeout(r,1200));return fetchStock(sym,tries+1);}
@@ -655,7 +672,7 @@ function chartHTML(sym){
     <canvas id="mC" style="width:100%"></canvas>
   </div>
   <div class="panel" style="overflow-x:auto">
-    <div style="font-size:13px;font-weight:700;margin-bottom:8px;color:#e3b341">📋 近60日數據（可回顧）</div>
+    <div style="font-size:13px;font-weight:700;margin-bottom:8px;color:#e3b341">📋 近60日數據（可回顧）<span style="font-size:10px;color:#8b949e;font-weight:400">　日期旁 <span style="color:#e3b341">*</span>＝Yahoo日線缺漏、以小時線補齊（成交量會偏少）</span></div>
     ${dataTableHTML(sym)}
   </div>`;
 }
@@ -689,7 +706,7 @@ function dataTableHTML(sym){
     const kdState=k?(k.K>k.D?'<span class="up">▲K&gt;D</span>':'<span class="dn">▼K&lt;D</span>'):'—';
     const hv=hist[i];
     return`<tr>
-      <td>${d.date}</td>
+      <td>${d.date}${d.est?'<span style="color:#e3b341" title="Yahoo日線缺漏，用小時線補齊">*</span>':''}</td>
       <td>${d.o}</td><td>${d.h}</td><td>${d.l}</td>
       <td class="${cls}"><b>${d.c}</b></td>
       <td style="color:${pat.color};font-weight:600;text-align:left;white-space:nowrap">${pat.txt}</td>
