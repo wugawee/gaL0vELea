@@ -74,75 +74,81 @@ body{background:#0d1117;color:#e6edf3;font-family:-apple-system,"Microsoft Jheng
 <script>
 const STOCKS=[
   {sym:"^TWII",name:"台股加權指數",mkt:"TW",cur:"TWD"},
-  {sym:"0050.TW",name:"元大台灣50",mkt:"TW",cur:"TWD"},
-  {sym:"009816.TW",name:"凱基台灣TOP50",mkt:"TW",cur:"TWD"},
-  {sym:"00403A.TW",name:"統一升級50",mkt:"TW",cur:"TWD"},
-  {sym:"00981A.TW",name:"統一台股增長",mkt:"TW",cur:"TWD"},
-  {sym:"0056.TW",name:"元大高股息",mkt:"TW",cur:"TWD"},
-  {sym:"00984A.TW",name:"安聯台灣高息",mkt:"TW",cur:"TWD"},
-  {sym:"2330.TW",name:"台積電",mkt:"TW",cur:"TWD"},
-  {sym:"2303.TW",name:"聯電",mkt:"TW",cur:"TWD"},
-  {sym:"2454.TW",name:"聯發科",mkt:"TW",cur:"TWD"},
-  {sym:"3017.TW",name:"奇鋐",mkt:"TW",cur:"TWD"},
-  {sym:"3324.TWO",name:"雙鴻",mkt:"TW",cur:"TWD"},
-  {sym:"2421.TW",name:"建準",mkt:"TW",cur:"TWD"},
-  {sym:"3105.TWO",name:"穩懋",mkt:"TW",cur:"TWD"},
-  {sym:"6873.TW",name:"泓德能源",mkt:"TW",cur:"TWD"},
-  {sym:"3711.TW",name:"日月光投控",mkt:"TW",cur:"TWD"},
-  {sym:"3680.TWO",name:"家登精密",mkt:"TW",cur:"TWD"},
-  {sym:"2408.TW",name:"南亞科",mkt:"TW",cur:"TWD"},
-  {sym:"2344.TW",name:"華邦電",mkt:"TW",cur:"TWD"},
-  {sym:"2337.TW",name:"旺宏",mkt:"TW",cur:"TWD"},
-  {sym:"6770.TW",name:"力積電",mkt:"TW",cur:"TWD"},
-  {sym:"2409.TW",name:"友達",mkt:"TW",cur:"TWD"},
-  {sym:"3037.TW",name:"欣興",mkt:"TW",cur:"TWD"},
-  {sym:"2455.TW",name:"全新光電",mkt:"TW",cur:"TWD"},
-  {sym:"3081.TWO",name:"聯亞光電",mkt:"TW",cur:"TWD"},
-  {sym:"6116.TW",name:"彩晶",mkt:"TW",cur:"TWD"},
-  {sym:"3481.TW",name:"群創",mkt:"TW",cur:"TWD"},
-  {sym:"6902.TW",name:"Gogolook走著瞧",mkt:"TW",cur:"TWD"},
-  {sym:"3443.TW",name:"創意",mkt:"TW",cur:"TWD"},
-  {sym:"7769.TW",name:"鴻勁",mkt:"TW",cur:"TWD"},
-  {sym:"3665.TW",name:"貿聯-KY",mkt:"TW",cur:"TWD"},
-  {sym:"6239.TW",name:"力成",mkt:"TW",cur:"TWD"},
-  {sym:"2308.TW",name:"台達電",mkt:"TW",cur:"TWD"},
-  {sym:"8227.TWO",name:"巨有",mkt:"TW",cur:"TWD"},
-  {sym:"3653.TW",name:"健策",mkt:"TW",cur:"TWD"},
-  {sym:"3231.TW",name:"緯創",mkt:"TW",cur:"TWD"},
-  {sym:"6274.TWO",name:"台燿",mkt:"TW",cur:"TWD"},
-  {sym:"5904.TWO",name:"寶雅",mkt:"TW",cur:"TWD"},
-  {sym:"5314.TWO",name:"世紀民生",mkt:"TW",cur:"TWD"},
-  {sym:"009826.TW",name:"貝萊德世界股票",mkt:"TW",cur:"TWD"},
+  {sym:"0050.TW",name:"元大台灣50",mkt:"TW",cur:"TWD",tag:"市值型"},
+  {sym:"009816.TW",name:"凱基台灣TOP50",mkt:"TW",cur:"TWD",tag:"市值型"},
+  {sym:"00403A.TW",name:"統一升級50",mkt:"TW",cur:"TWD",tag:"主動式"},
+  {sym:"00981A.TW",name:"統一台股增長",mkt:"TW",cur:"TWD",tag:"主動式"},
+  {sym:"0056.TW",name:"元大高股息",mkt:"TW",cur:"TWD",tag:"高股息"},
+  {sym:"00984A.TW",name:"安聯台灣高息",mkt:"TW",cur:"TWD",tag:"高股息"},
+  {sym:"2330.TW",name:"台積電",mkt:"TW",cur:"TWD",tag:"晶圓代工"},
+  {sym:"2303.TW",name:"聯電",mkt:"TW",cur:"TWD",tag:"晶圓代工"},
+  {sym:"2454.TW",name:"聯發科",mkt:"TW",cur:"TWD",tag:"IC設計"},
+  {sym:"3017.TW",name:"奇鋐",mkt:"TW",cur:"TWD",tag:"散熱"},
+  {sym:"3324.TWO",name:"雙鴻",mkt:"TW",cur:"TWD",tag:"散熱"},
+  {sym:"2421.TW",name:"建準",mkt:"TW",cur:"TWD",tag:"散熱"},
+  {sym:"3105.TWO",name:"穩懋",mkt:"TW",cur:"TWD",tag:"光通訊"},
+  {sym:"6873.TW",name:"泓德能源",mkt:"TW",cur:"TWD",tag:"綠能"},
+  {sym:"3711.TW",name:"日月光投控",mkt:"TW",cur:"TWD",tag:"封測"},
+  {sym:"3680.TWO",name:"家登精密",mkt:"TW",cur:"TWD",tag:"設備"},
+  {sym:"2408.TW",name:"南亞科",mkt:"TW",cur:"TWD",tag:"記憶體"},
+  {sym:"2344.TW",name:"華邦電",mkt:"TW",cur:"TWD",tag:"記憶體"},
+  {sym:"2337.TW",name:"旺宏",mkt:"TW",cur:"TWD",tag:"記憶體"},
+  {sym:"6770.TW",name:"力積電",mkt:"TW",cur:"TWD",tag:"晶圓代工"},
+  {sym:"2409.TW",name:"友達",mkt:"TW",cur:"TWD",tag:"面板"},
+  {sym:"3037.TW",name:"欣興",mkt:"TW",cur:"TWD",tag:"PCB"},
+  {sym:"2455.TW",name:"全新光電",mkt:"TW",cur:"TWD",tag:"光通訊"},
+  {sym:"3081.TWO",name:"聯亞光電",mkt:"TW",cur:"TWD",tag:"光通訊"},
+  {sym:"6116.TW",name:"彩晶",mkt:"TW",cur:"TWD",tag:"面板"},
+  {sym:"3481.TW",name:"群創",mkt:"TW",cur:"TWD",tag:"面板"},
+  {sym:"6902.TW",name:"Gogolook走著瞧",mkt:"TW",cur:"TWD",tag:"AI軟體"},
+  {sym:"3443.TW",name:"創意",mkt:"TW",cur:"TWD",tag:"IC設計"},
+  {sym:"7769.TW",name:"鴻勁",mkt:"TW",cur:"TWD",tag:"設備"},
+  {sym:"3665.TW",name:"貿聯-KY",mkt:"TW",cur:"TWD",tag:"連接線"},
+  {sym:"6239.TW",name:"力成",mkt:"TW",cur:"TWD",tag:"封測"},
+  {sym:"2308.TW",name:"台達電",mkt:"TW",cur:"TWD",tag:"電源"},
+  {sym:"8227.TWO",name:"巨有",mkt:"TW",cur:"TWD",tag:"IC設計"},
+  {sym:"3653.TW",name:"健策",mkt:"TW",cur:"TWD",tag:"散熱"},
+  {sym:"3231.TW",name:"緯創",mkt:"TW",cur:"TWD",tag:"伺服器"},
+  {sym:"6274.TWO",name:"台燿",mkt:"TW",cur:"TWD",tag:"PCB"},
+  {sym:"5904.TWO",name:"寶雅",mkt:"TW",cur:"TWD",tag:"零售"},
+  {sym:"5314.TWO",name:"世紀民生",mkt:"TW",cur:"TWD",tag:"保健"},
+  {sym:"009826.TW",name:"貝萊德世界股票",mkt:"TW",cur:"TWD",tag:"全球股"},
   {sym:"^SOX",name:"費城半導體指數",mkt:"US",cur:"USD"},
   {sym:"^IXIC",name:"那斯達克指數",mkt:"US",cur:"USD"},
   {sym:"^GSPC",name:"標普500指數",mkt:"US",cur:"USD"},
-  {sym:"VOO",name:"VOO標普500ETF",mkt:"US",cur:"USD"},
-  {sym:"TSM",name:"台積電ADR",mkt:"US",cur:"USD"},
-  {sym:"GOOGL",name:"Google",mkt:"US",cur:"USD"},
-  {sym:"NVDA",name:"輝達",mkt:"US",cur:"USD"},
-  {sym:"INTC",name:"英特爾",mkt:"US",cur:"USD"},
-  {sym:"AAPL",name:"蘋果",mkt:"US",cur:"USD"},
-  {sym:"AMZN",name:"亞馬遜",mkt:"US",cur:"USD"},
-  {sym:"GRAB",name:"Grab外送叫車",mkt:"US",cur:"USD"},
-  {sym:"TSLA",name:"特斯拉",mkt:"US",cur:"USD"},
-  {sym:"SPCX",name:"SpaceX",mkt:"US",cur:"USD"},
-  {sym:"ENPH",name:"ENPH",mkt:"US",cur:"USD"},
-  {sym:"MRVL",name:"MRVL",mkt:"US",cur:"USD"},
-  {sym:"MU",name:"美光Micron",mkt:"US",cur:"USD"},
-  {sym:"SKHY",name:"SK海力士ADR",mkt:"US",cur:"USD"},
-  {sym:"ASX",name:"日月光ADR",mkt:"US",cur:"USD"},
-  {sym:"BE",name:"BE能源",mkt:"US",cur:"USD"},
-  {sym:"QQQ",name:"QQQ",mkt:"US",cur:"USD"},
-  {sym:"GLD",name:"GLD黃金",mkt:"US",cur:"USD"},
-  {sym:"IAU",name:"IAU黃金",mkt:"US",cur:"USD"},
-  {sym:"CRWV",name:"CoreWeave",mkt:"US",cur:"USD"},
-  {sym:"SNPS",name:"Synopsys",mkt:"US",cur:"USD"},
-  {sym:"CDNS",name:"Cadence",mkt:"US",cur:"USD"},
-  {sym:"AXTI",name:"AXT磷化銦",mkt:"US",cur:"USD"},
-  {sym:"AAOI",name:"祥茂光電",mkt:"US",cur:"USD"},
-  {sym:"SIVE.ST",name:"Sivers矽光子(瑞典)",mkt:"US",cur:"SEK"},
-  {sym:"GSHD",name:"Goosehead保險",mkt:"US",cur:"USD"}
+  {sym:"VOO",name:"VOO標普500ETF",mkt:"US",cur:"USD",tag:"市值型"},
+  {sym:"TSM",name:"台積電ADR",mkt:"US",cur:"USD",tag:"晶圓代工"},
+  {sym:"GOOGL",name:"Google",mkt:"US",cur:"USD",tag:"雲端"},
+  {sym:"NVDA",name:"輝達",mkt:"US",cur:"USD",tag:"晶片"},
+  {sym:"INTC",name:"英特爾",mkt:"US",cur:"USD",tag:"晶片"},
+  {sym:"AAPL",name:"蘋果",mkt:"US",cur:"USD",tag:"消費電子"},
+  {sym:"AMZN",name:"亞馬遜",mkt:"US",cur:"USD",tag:"電商"},
+  {sym:"GRAB",name:"Grab外送叫車",mkt:"US",cur:"USD",tag:"平台"},
+  {sym:"TSLA",name:"特斯拉",mkt:"US",cur:"USD",tag:"電動車"},
+  {sym:"SPCX",name:"SpaceX",mkt:"US",cur:"USD",tag:"太空"},
+  {sym:"ENPH",name:"ENPH",mkt:"US",cur:"USD",tag:"綠能"},
+  {sym:"MRVL",name:"MRVL",mkt:"US",cur:"USD",tag:"晶片"},
+  {sym:"MU",name:"美光Micron",mkt:"US",cur:"USD",tag:"記憶體"},
+  {sym:"SKHY",name:"SK海力士ADR",mkt:"US",cur:"USD",tag:"記憶體"},
+  {sym:"ASX",name:"日月光ADR",mkt:"US",cur:"USD",tag:"封測"},
+  {sym:"BE",name:"BE能源",mkt:"US",cur:"USD",tag:"綠能"},
+  {sym:"QQQ",name:"QQQ",mkt:"US",cur:"USD",tag:"科技型"},
+  {sym:"GLD",name:"GLD黃金",mkt:"US",cur:"USD",tag:"黃金"},
+  {sym:"IAU",name:"IAU黃金",mkt:"US",cur:"USD",tag:"黃金"},
+  {sym:"CRWV",name:"CoreWeave",mkt:"US",cur:"USD",tag:"雲端"},
+  {sym:"SNPS",name:"Synopsys",mkt:"US",cur:"USD",tag:"EDA"},
+  {sym:"CDNS",name:"Cadence",mkt:"US",cur:"USD",tag:"EDA"},
+  {sym:"AXTI",name:"AXT磷化銦",mkt:"US",cur:"USD",tag:"光通訊"},
+  {sym:"AAOI",name:"祥茂光電",mkt:"US",cur:"USD",tag:"光通訊"},
+  {sym:"SIVE.ST",name:"Sivers矽光子(瑞典)",mkt:"US",cur:"SEK",tag:"光通訊"},
+  {sym:"GSHD",name:"Goosehead保險",mkt:"US",cur:"USD",tag:"保險"}
 ];
+
+// 股名後小字標籤＋同標籤排在一起
+const TAG_ORDER=["市值型","主動式","高股息","全球股","科技型","黃金","晶圓代工","IC設計","晶片","EDA","記憶體","封測","設備","PCB","散熱","光通訊","連接線","電源","伺服器","面板","雲端","AI軟體","綠能","零售","保健","消費電子","電商","平台","電動車","太空","保險"];
+const tagIdx=s=>{const i=TAG_ORDER.indexOf(s.tag||'');return i<0?999:i;};
+const sortTag=arr=>arr.map((s,i)=>[s,i]).sort((x,y)=>tagIdx(x[0])-tagIdx(y[0])||x[1]-y[1]).map(x=>x[0]);
+const nmTag=s=>s.tag?`${s.name}<span style="font-size:.8em;color:#8b949e;font-weight:400">-${s.tag}</span>`:s.name;
 
 const DB={};
 let curView='summary',curSym=STOCKS[0].sym,calcSym=STOCKS[0].sym;
@@ -545,7 +551,7 @@ function render(){
 // ── 總覽（首頁）──
 function sumRow(s){
   const db=DB[s.sym];
-  if(!db)return`<tr><td class="nm">${s.name}</td><td>${s.sym}</td><td colspan="9" style="color:#f85149">無資料</td></tr>`;
+  if(!db)return`<tr><td class="nm">${nmTag(s)}</td><td>${s.sym}</td><td colspan="9" style="color:#f85149">無資料</td></tr>`;
   const last=db.last,prev=db.prev,chg=rnd(last.c-prev.c),chgP=rnd(chg/prev.c*100);
   const kL=db.kd[db.kd.length-1],kP=db.kd[db.kd.length-2];
   const hL=db.macd.hist[db.macd.hist.length-1],hP=db.macd.hist[db.macd.hist.length-2];
@@ -568,7 +574,7 @@ function sumRow(s){
   });
   if(!al.length)al.push(`<span class="badge s-gray">—</span>`);
   return`<tr style="cursor:pointer" onclick="selectSym('${s.sym}','${s.mkt==='TW'?'tw':'us'}')">
-    <td class="nm">${s.name}</td><td style="color:#8b949e">${s.sym}</td>
+    <td class="nm">${nmTag(s)}</td><td style="color:#8b949e">${s.sym}</td>
     <td class="${cls}">${last.c}</td>
     <td style="color:#e3b341">${db.ma5[db.ma5.length-1]??'—'}</td>
     <td style="color:#bc8cff">${m20??'—'}</td>
@@ -582,7 +588,7 @@ function renderSummary(){
   const tw=STOCKS.filter(s=>s.mkt==='TW'),us=STOCKS.filter(s=>s.mkt==='US');
   const CAT_ETF=new Set(['0050.TW','009816.TW','00403A.TW','00981A.TW','0056.TW','00984A.TW','009826.TW','VOO','QQQ','GLD','IAU']);
   const CAT_AI=new Set(['2330.TW','2303.TW','2454.TW','3017.TW','3324.TWO','2421.TW','3105.TWO','3711.TW','3680.TWO','2408.TW','2344.TW','2337.TW','6770.TW','2409.TW','3037.TW','2455.TW','3081.TWO','6116.TW','3481.TW','6902.TW','3443.TW','7769.TW','3665.TW','6239.TW','2308.TW','8227.TWO','3653.TW','3231.TW','6274.TWO','TSM','NVDA','INTC','SKHY','ASX','GOOGL','MRVL','MU','CRWV','SNPS','CDNS','AXTI','AAOI','SIVE.ST']);
-  const catBlock=(arr,label)=>arr.length?`<tr><td colspan="11" style="background:#1a1f26;color:#e3b341;font-weight:700;text-align:left;font-size:12px;padding:6px 16px">${label}</td></tr>`+arr.map(sumRow).join(''):'';
+  const catBlock=(arr,label)=>arr.length?`<tr><td colspan="11" style="background:#1a1f26;color:#e3b341;font-weight:700;text-align:left;font-size:12px;padding:6px 16px">${label}</td></tr>`+sortTag(arr).map(sumRow).join(''):'';
   const grp=list=>({idx:list.filter(s=>s.sym.startsWith('^')),etf:list.filter(s=>CAT_ETF.has(s.sym)),ai:list.filter(s=>CAT_AI.has(s.sym)),min:list.filter(s=>!s.sym.startsWith('^')&&!CAT_ETF.has(s.sym)&&!CAT_AI.has(s.sym))});
   const twG=grp(tw),usG=grp(us);
   const head=`<tr><th>名稱</th><th>代號</th><th>收盤</th><th style="color:#e3b341">MA5</th><th style="color:#bc8cff">MA20</th><th style="color:#26a641">MA60</th><th>K值</th><th>D值</th><th>KD比</th><th>MACD</th><th style="text-align:left">⚠️ 入場提醒</th></tr>`;
@@ -627,14 +633,15 @@ function renderSummary(){
 // ── 台股/美股列表（卡片）──
 function cardHTML(s){
   const db=DB[s.sym];
-  if(!db)return`<div class="sc"><div class="sc-nm">${s.name}</div><div style="color:#f85149;font-size:11px">無資料</div></div>`;
+  if(!db)return`<div class="sc"><div class="sc-nm">${nmTag(s)}</div><div style="color:#f85149;font-size:11px">無資料</div></div>`;
   const chg=rnd(db.last.c-db.prev.c),chgP=rnd(chg/db.prev.c*100),cls=chg>0?'up':chg<0?'dn':'fl';
   return`<div class="sc${s.sym===curSym?' on':''}" onclick="curSym='${s.sym}';renderChartInline('${s.sym}','${s.mkt}')">
-    <div class="sc-nm">${s.name}</div><div class="sc-pr ${cls}">${db.last.c}</div>
+    <div class="sc-nm">${nmTag(s)}</div><div class="sc-pr ${cls}">${db.last.c}</div>
     <div class="sc-ch ${cls}">${chg>0?'+':''}${chg} (${chgP>0?'+':''}${chgP}%)</div></div>`;
 }
 function renderList(mkt){
-  const list=STOCKS.filter(s=>s.mkt===mkt);
+  const _l=STOCKS.filter(s=>s.mkt===mkt);
+  const list=[..._l.filter(s=>s.sym.startsWith('^')),...sortTag(_l.filter(s=>!s.sym.startsWith('^')))];
   if(!list.find(s=>s.sym===curSym))curSym=list[0].sym;
   document.getElementById('mainView').innerHTML=`
   <div class="mkt-label">${mkt==='TW'?'📌 台股':'🌐 美股'}</div>
