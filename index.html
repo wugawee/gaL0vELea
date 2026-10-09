@@ -114,6 +114,7 @@ const STOCKS=[
   {sym:"6213.TW",name:"聯茂",mkt:"TW",cur:"TWD",tag:"PCB"},
   {sym:"6214.TW",name:"精誠",mkt:"TW",cur:"TWD",tag:"資訊服務"},
   {sym:"3029.TW",name:"零壹",mkt:"TW",cur:"TWD",tag:"資訊服務"},
+  {sym:"3450.TW",name:"聯鈞",mkt:"TW",cur:"TWD",tag:"光通訊"},
   {sym:"5904.TWO",name:"寶雅",mkt:"TW",cur:"TWD",tag:"零售"},
   {sym:"5314.TWO",name:"世紀民生",mkt:"TW",cur:"TWD",tag:"保健"},
   {sym:"009826.TW",name:"貝萊德世界股票",mkt:"TW",cur:"TWD",tag:"全球股"},
@@ -591,7 +592,7 @@ function sumRow(s){
 function renderSummary(){
   const tw=STOCKS.filter(s=>s.mkt==='TW'),us=STOCKS.filter(s=>s.mkt==='US');
   const CAT_ETF=new Set(['0050.TW','009816.TW','00403A.TW','00981A.TW','0056.TW','00984A.TW','009826.TW','VOO','QQQ','GLD','IAU']);
-  const CAT_AI=new Set(['2330.TW','2303.TW','2454.TW','3017.TW','3324.TWO','2421.TW','3105.TWO','3711.TW','3680.TWO','2408.TW','2344.TW','2337.TW','6770.TW','2409.TW','3037.TW','2455.TW','3081.TWO','6116.TW','3481.TW','6902.TW','3443.TW','7769.TW','3665.TW','6239.TW','2308.TW','8227.TWO','3653.TW','3231.TW','6274.TWO','2383.TW','6213.TW','6214.TW','3029.TW','TSM','NVDA','INTC','SKHY','ASX','GOOGL','MRVL','MU','CRWV','SNPS','CDNS','AXTI','AAOI','SIVE.ST']);
+  const CAT_AI=new Set(['2330.TW','2303.TW','2454.TW','3017.TW','3324.TWO','2421.TW','3105.TWO','3711.TW','3680.TWO','2408.TW','2344.TW','2337.TW','6770.TW','2409.TW','3037.TW','2455.TW','3081.TWO','6116.TW','3481.TW','6902.TW','3443.TW','7769.TW','3665.TW','6239.TW','2308.TW','8227.TWO','3653.TW','3231.TW','6274.TWO','2383.TW','6213.TW','6214.TW','3029.TW','3450.TW','TSM','NVDA','INTC','SKHY','ASX','GOOGL','MRVL','MU','CRWV','SNPS','CDNS','AXTI','AAOI','SIVE.ST']);
   const catBlock=(arr,label)=>arr.length?`<tr><td colspan="11" style="background:#1a1f26;color:#e3b341;font-weight:700;text-align:left;font-size:12px;padding:6px 16px">${label}</td></tr>`+sortTag(arr).map(sumRow).join(''):'';
   const grp=list=>({idx:list.filter(s=>s.sym.startsWith('^')),etf:list.filter(s=>CAT_ETF.has(s.sym)),ai:list.filter(s=>CAT_AI.has(s.sym)),min:list.filter(s=>!s.sym.startsWith('^')&&!CAT_ETF.has(s.sym)&&!CAT_AI.has(s.sym))});
   const twG=grp(tw),usG=grp(us);
