@@ -115,6 +115,7 @@ const STOCKS=[
   {sym:"6214.TW",name:"精誠",mkt:"TW",cur:"TWD",tag:"資訊服務"},
   {sym:"3029.TW",name:"零壹",mkt:"TW",cur:"TWD",tag:"資訊服務"},
   {sym:"3450.TW",name:"聯鈞",mkt:"TW",cur:"TWD",tag:"光通訊"},
+  {sym:"3008.TW",name:"大立光",mkt:"TW",cur:"TWD",tag:"光學鏡頭"},
   {sym:"5904.TWO",name:"寶雅",mkt:"TW",cur:"TWD",tag:"零售"},
   {sym:"5314.TWO",name:"世紀民生",mkt:"TW",cur:"TWD",tag:"保健"},
   {sym:"009826.TW",name:"貝萊德世界股票",mkt:"TW",cur:"TWD",tag:"全球股"},
@@ -150,7 +151,7 @@ const STOCKS=[
 ];
 
 // 股名後小字標籤＋同標籤排在一起
-const TAG_ORDER=["市值型","主動式","高股息","全球股","科技型","黃金","晶圓代工","IC設計","晶片","EDA","記憶體","封測","設備","PCB","散熱","光通訊","連接線","電源","伺服器","面板","雲端","AI軟體","資訊服務","綠能","零售","保健","消費電子","電商","平台","電動車","太空","保險"];
+const TAG_ORDER=["市值型","主動式","高股息","全球股","科技型","黃金","晶圓代工","IC設計","晶片","EDA","記憶體","封測","設備","PCB","散熱","光通訊","連接線","電源","伺服器","面板","雲端","AI軟體","資訊服務","綠能","零售","保健","消費電子","光學鏡頭","電商","平台","電動車","太空","保險"];
 const tagIdx=s=>{const i=TAG_ORDER.indexOf(s.tag||'');return i<0?999:i;};
 const sortTag=arr=>arr.map((s,i)=>[s,i]).sort((x,y)=>tagIdx(x[0])-tagIdx(y[0])||x[1]-y[1]).map(x=>x[0]);
 const nmTag=s=>s.tag?`${s.name}<span style="font-size:.8em;color:#8b949e;font-weight:400">-${s.tag}</span>`:s.name;
