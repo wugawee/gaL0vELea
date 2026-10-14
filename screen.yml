@@ -1,0 +1,37 @@
+name: 收盤技術篩選
+
+on:
+  schedule:
+    # 台北 18:05 與 19:30（週一～週五）；GitHub 用 UTC，台北 = UTC+8
+    - cron: "5 10 * * 1-5"
+    - cron: "30 11 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: screen
+  cancel-in-progress: false
+
+jobs:
+  screen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: 抓資料並篩選
+        run: node scripts/screen.js
+      - name: 提交結果
+        run: |
+          git config user.name "screen-bot"
+          git config user.email "screen-bot@users.noreply.github.com"
+          git add data
+          if git diff --cached --quiet; then echo "no change"; else
+            git commit -m "screen $(TZ=Asia/Taipei date +%F' '%H:%M)"
+            git pull --rebase origin ${{ github.ref_name }}
+            git push
+          fi
