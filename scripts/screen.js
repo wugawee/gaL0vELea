@@ -1,7 +1,7 @@
 // ============================================================
-// 收盤技術篩選 v2（GitHub Actions 每日自動執行）
+// 收盤技術篩選 v3（GitHub Actions 每日自動執行）
 // 讀 index.html 的 STOCKS 清單 → Worker 抓 1 年日線 + 法人
-// → 用證交所／櫃買中心官方資料補 Yahoo 缺的日線（最新一天常是空的）
+// → 用證交所／櫃買中心官方資料補 Yahoo 缺的日線（最新一天常是空的）；櫃買被擋就改走 Worker 或 FinMind
 // → 算指標、跑篩選 → 寫 data/latest.json、data/bars.json、data/history/YYYY-MM-DD.json
 // 不需要任何密鑰：FinMind token 在 Worker 裡。
 // ============================================================
@@ -37,7 +37,7 @@ async function getJSON(url, tries = 3, check = null) {
       const j = await r.json();
       if (check && !check(j)) throw new Error('格式不符');
       return j;
-    } catch (e) { last = e; await sleep(2000 * (i + 1)); }
+    } catch (e) { last = e; if (i < tries - 1) await sleep(2000 * (i + 1)); }
   }
   throw last;
 }
@@ -109,17 +109,35 @@ async function fetchTWSEDay(dateYMD) {
     return Object.keys(out).length ? out : null;
   } catch (e) { return null; }
 }
+function parseTPExQuotes(j) {
+  const tables = j && (j.tables || (j.fields ? [j] : [])) || [];
+  const t = tables.find(x => x.fields && pickCol(x.fields, '代號') >= 0 && pickCol(x.fields, '收盤') >= 0);
+  if (!t || !t.data || !t.data.length) return null;
+  const f = t.fields, iId = pickCol(f, '代號'), iV = pickCol(f, '成交股數'), iO = pickCol(f, '開盤'), iH = pickCol(f, '最高'), iL = pickCol(f, '最低'), iC = pickCol(f, '收盤');
+  const out = {};
+  for (const row of t.data) { const c = num(row[iC]); if (c == null) continue; out[String(row[iId]).trim()] = { o: num(row[iO]) ?? c, h: num(row[iH]) ?? c, l: num(row[iL]) ?? c, c, v: num(row[iV]) ?? 0 }; }
+  return Object.keys(out).length ? out : null;
+}
+// 櫃買中心常擋 GitHub 的 IP：先直連，失敗改經 Worker 轉接
+async function tpexJSON(p, dateYMD, extra) {
+  const ds = dateYMD.replace(/-/g, '/');
+  const direct = `https://www.tpex.org.tw/www/zh-tw/${p}?date=${ds}&${extra}&response=json`;
+  const viaWorker = `${WORKER}/?type=tpex&path=${encodeURIComponent(p)}&date=${ds}&extra=${encodeURIComponent(extra)}&_t=${Date.now()}`;
+  for (const [u, tries] of [[direct, 1], [viaWorker, 2]]) { try { const j = await getJSON(u, tries); if (j && (j.tables || j.fields)) return j; } catch (e) { } }
+  return null;
+}
 async function fetchTPExDay(dateYMD) {
-  try {
-    const j = await getJSON(`https://www.tpex.org.tw/www/zh-tw/afterTrading/otc?date=${dateYMD.replace(/-/g, '/')}&response=json`, 2);
-    const tables = j.tables || (j.fields ? [j] : []);
-    const t = tables.find(x => x.fields && pickCol(x.fields, '代號') >= 0 && pickCol(x.fields, '收盤') >= 0);
-    if (!t || !t.data || !t.data.length) return null;
-    const f = t.fields, iId = pickCol(f, '代號'), iV = pickCol(f, '成交股數'), iO = pickCol(f, '開盤'), iH = pickCol(f, '最高'), iL = pickCol(f, '最低'), iC = pickCol(f, '收盤');
-    const out = {};
-    for (const row of t.data) { const c = num(row[iC]); if (c == null) continue; out[String(row[iId]).trim()] = { o: num(row[iO]) ?? c, h: num(row[iH]) ?? c, l: num(row[iL]) ?? c, c, v: num(row[iV]) ?? 0 }; }
-    return Object.keys(out).length ? out : null;
-  } catch (e) { return null; }
+  for (const [p, extra] of [['afterTrading/dailyQuotes', 'type=EW'], ['afterTrading/otc', 'type=EW']]) {
+    const o = parseTPExQuotes(await tpexJSON(p, dateYMD, extra)); if (o) return o;
+  }
+  return null;
+}
+// FinMind 日線（經 Worker）：{date:{o,h,l,c,v}}，官方抓不到時用
+async function fetchFinMindPrice(id, start) {
+  const j = await getJSON(`${WORKER}/?type=fm&dataset=TaiwanStockPrice&id=${id}&start=${start}&_t=${Date.now()}`, 2, x => x && Array.isArray(x.data));
+  const m = {};
+  for (const x of j.data) { if (x.close == null) continue; m[x.date] = { o: x.open ?? x.close, h: x.max ?? x.close, l: x.min ?? x.close, c: x.close, v: x.Trading_Volume ?? 0 }; }
+  return m;
 }
 // 官方當日法人：證交所 T86／櫃買 insti
 async function fetchTWSEInst(dateYMD) {
@@ -135,8 +153,8 @@ async function fetchTWSEInst(dateYMD) {
 }
 async function fetchTPExInst(dateYMD) {
   try {
-    const j = await getJSON(`https://www.tpex.org.tw/www/zh-tw/insti/dailyTrade?type=Daily&sect=EW&date=${dateYMD.replace(/-/g, '/')}&response=json`, 2);
-    const t = j && j.tables && j.tables[0]; if (!t || !t.fields || !t.data || !t.data.length) return null;
+    const j = await tpexJSON('insti/dailyTrade', dateYMD, 'type=Daily&sect=EW');
+    const t = j && j.tables && j.tables.find(x => x.fields && pickCol(x.fields, '代號') >= 0 && pickCol(x.fields, '投信', '買賣超') >= 0); if (!t || !t.data || !t.data.length) return null;
     const f = t.fields, iId = pickCol(f, '代號'), iF = pickCol(f, '外資', '買賣超'), iFD = pickCol(f, '外資自營', '買賣超'), iT = pickCol(f, '投信', '買賣超');
     if (iId < 0 || iF < 0 || iT < 0) return null;
     const out = {};
@@ -212,7 +230,7 @@ function analyze(s, bars, inst) {
   const results = [], errors = [], bars = {};
   const dates = recentTradeDates(12);
   const official = { twse: {}, tpex: {} }, offInst = { twse: null, tpex: null };
-  const srcLog = { twseDays: [], tpexDays: [], twseInst: false, tpexInst: false, estBars: [] };
+  const srcLog = { twseDays: [], tpexDays: [], twseInst: false, tpexInst: false, fmBars: [], estBars: [] };
 
   // 6a. 先抓所有台股的 Yahoo 日線 + FinMind 法人
   const raw = {};
@@ -257,15 +275,21 @@ function analyze(s, bars, inst) {
       if (!MOCK && s.mkt === 'TW' && !s.sym.startsWith('^')) {
         const id = s.sym.replace(/\.TWO?$/, ''), isOTC = s.sym.endsWith('.TWO');
         const pool = isOTC ? official.tpex : official.twse;
-        for (const d of Object.keys(pool)) {
-          if (b.some(x => x.d === d)) continue;
-          const o = pool[d][id]; if (!o) continue;
-          b.push({ d, ...o, src: isOTC ? 'tpex' : 'twse' });
+        const has = d => b.some(x => x.d === d);
+        // 1) 官方日線
+        for (const d of dates) { if (has(d)) continue; const o = pool[d] && pool[d][id]; if (o) b.push({ d, ...o, src: isOTC ? 'tpex' : 'twse' }); }
+        // 2) 還缺的交易日（以官方行事曆判斷；官方全掛就不判斷）→ FinMind 日線
+        const calendarKnown = srcLog.twseDays.length > 0 || srcLog.tpexDays.length > 0;
+        const isTradeDay = d => !calendarKnown || !!(official.twse[d] || official.tpex[d]);
+        let fmDays = [];
+        if (dates.some(d => !has(d) && isTradeDay(d))) {
+          let fm = null; try { fm = await fetchFinMindPrice(id, dates[dates.length - 1]); } catch (e) { fm = null; }
+          if (fm) for (const d of dates) if (!has(d) && fm[d]) { b.push({ d, ...fm[d], src: 'finmind' }); fmDays.push(d); srcLog.fmBars.push(s.sym + '@' + d); }
         }
         b.sort((x, y) => (x.d < y.d ? -1 : 1));
-        // 官方也沒補到最新交易日（例如櫃買格式變了）→ 用小時線估一根
-        const want = dates.find(d => official.twse[d] || official.tpex[d]);
-        if (want && !b.some(x => x.d === want)) { const e = await fetchEstBar(s.sym, want); if (e) { b.push(e); b.sort((x, y) => (x.d < y.d ? -1 : 1)); srcLog.estBars.push(s.sym); } }
+        // 3) 最新交易日還是沒有 → 小時線估一根（成交量標不可靠）
+        const want = dates.find(d => official.twse[d] || official.tpex[d]) || fmDays.sort().pop() || null;
+        if (want && !has(want)) { const e = await fetchEstBar(s.sym, want); if (e) { b.push(e); b.sort((x, y) => (x.d < y.d ? -1 : 1)); srcLog.estBars.push(s.sym); } }
         // 官方當日法人覆蓋
         const oi = isOTC ? offInst.tpex : offInst.twse, od = isOTC ? srcLog.tpexDays[0] : srcLog.twseDays[0];
         if (oi && od && oi[id]) { inst = inst || {}; inst[od] = oi[id]; }
