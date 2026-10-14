@@ -1,0 +1,3496 @@
+{
+ "generatedAt": "2026-10-14T16:05:03.460Z",
+ "asOfTW": "2026-10-13",
+ "instCoverage": {
+  "twStocks": 46,
+  "withTodayInst": 36,
+  "source": {
+   "twse": false,
+   "tpex": false
+  }
+ },
+ "lists": {
+  "short": [],
+  "shortNoInst": [],
+  "swingCandidate": [
+   "0050.TW",
+   "009816.TW",
+   "2330.TW",
+   "3324.TWO",
+   "3680.TWO",
+   "2409.TW",
+   "3481.TW",
+   "3665.TW",
+   "6239.TW",
+   "6214.TW"
+  ]
+ },
+ "groups": {
+  "市值型": {
+   "total": 3,
+   "strong": 0
+  },
+  "主動式": {
+   "total": 2,
+   "strong": 0
+  },
+  "高股息": {
+   "total": 2,
+   "strong": 1
+  },
+  "晶圓代工": {
+   "total": 4,
+   "strong": 1
+  },
+  "IC設計": {
+   "total": 3,
+   "strong": 0
+  },
+  "散熱": {
+   "total": 4,
+   "strong": 0
+  },
+  "光通訊": {
+   "total": 8,
+   "strong": 0
+  },
+  "綠能": {
+   "total": 3,
+   "strong": 0
+  },
+  "封測": {
+   "total": 3,
+   "strong": 0
+  },
+  "設備": {
+   "total": 2,
+   "strong": 0
+  },
+  "記憶體": {
+   "total": 4,
+   "strong": 0
+  },
+  "面板": {
+   "total": 3,
+   "strong": 0
+  },
+  "PCB": {
+   "total": 4,
+   "strong": 1
+  },
+  "AI軟體": {
+   "total": 1,
+   "strong": 0
+  },
+  "連接線": {
+   "total": 1,
+   "strong": 0
+  },
+  "電源": {
+   "total": 1,
+   "strong": 0
+  },
+  "伺服器": {
+   "total": 1,
+   "strong": 0
+  },
+  "資訊服務": {
+   "total": 2,
+   "strong": 0
+  },
+  "光學鏡頭": {
+   "total": 1,
+   "strong": 1
+  },
+  "零售": {
+   "total": 1,
+   "strong": 0
+  },
+  "保健": {
+   "total": 1,
+   "strong": 0
+  },
+  "雲端": {
+   "total": 2,
+   "strong": 0
+  },
+  "晶片": {
+   "total": 3,
+   "strong": 0
+  },
+  "消費電子": {
+   "total": 1,
+   "strong": 0
+  },
+  "電商": {
+   "total": 1,
+   "strong": 0
+  },
+  "平台": {
+   "total": 1,
+   "strong": 0
+  },
+  "電動車": {
+   "total": 1,
+   "strong": 0
+  },
+  "太空": {
+   "total": 1,
+   "strong": 0
+  },
+  "科技型": {
+   "total": 1,
+   "strong": 0
+  },
+  "黃金": {
+   "total": 2,
+   "strong": 0
+  },
+  "EDA": {
+   "total": 2,
+   "strong": 0
+  },
+  "保險": {
+   "total": 1,
+   "strong": 0
+  }
+ },
+ "ok": 74,
+ "failed": 2,
+ "errors": [
+  {
+   "sym": "00984A.TW",
+   "stage": "inst",
+   "msg": "inst 格式錯誤"
+  },
+  {
+   "sym": "3008.TW",
+   "stage": "inst",
+   "msg": "inst 格式錯誤"
+  },
+  {
+   "sym": "5904.TWO",
+   "stage": "inst",
+   "msg": "inst 格式錯誤"
+  },
+  {
+   "sym": "5314.TWO",
+   "stage": "inst",
+   "msg": "inst 格式錯誤"
+  },
+  {
+   "sym": "009826.TW",
+   "stage": "chart",
+   "msg": "bars 不足 56"
+  },
+  {
+   "sym": "SKHY",
+   "stage": "chart",
+   "msg": "bars 不足 68"
+  }
+ ],
+ "stocks": [
+  {
+   "sym": "^TWII",
+   "name": "台股加權指數",
+   "mkt": "TW",
+   "status": "ok",
+   "index": true,
+   "asOf": "2026-10-13",
+   "close": 48341.30859375,
+   "chgPct": -1.95
+  },
+  {
+   "sym": "0050.TW",
+   "name": "元大台灣50",
+   "tag": "市值型",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-12",
+   "close": 114.80000305175781,
+   "chgPct": -0.13,
+   "vol": 95616,
+   "volRatio": 1.36,
+   "ret20Pct": 4.7,
+   "distHi60Pct": -1.54,
+   "hi20": 116.5,
+   "hi60": 116.6,
+   "ma5": 115.65,
+   "ma20": 111.51,
+   "ma60": 106.52,
+   "aboveMa20": true,
+   "low": 113.4000015258789,
+   "inst": {
+    "date": "2026-10-12",
+    "f": -23022,
+    "t": 3650,
+    "f10": -257465,
+    "t10": 15340,
+    "tStreak": 1,
+    "fStreak": 0,
+    "fPct": -24.08
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": true,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 112.5,
+    "limitHigh": 115.95,
+    "gapSkipAbove": 118.24,
+    "invalidBelow": 113.4000015258789
+   },
+   "group": {
+    "total": 3,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "009816.TW",
+   "name": "凱基台灣TOP50",
+   "tag": "市值型",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-12",
+   "close": 16.889999389648438,
+   "chgPct": 0.12,
+   "vol": 127260,
+   "volRatio": 1.35,
+   "ret20Pct": 4.84,
+   "distHi60Pct": -1.17,
+   "hi20": 17.06,
+   "hi60": 17.09,
+   "ma5": 16.97,
+   "ma20": 16.44,
+   "ma60": 15.55,
+   "aboveMa20": true,
+   "low": 16.709999084472656,
+   "inst": {
+    "date": "2026-10-12",
+    "f": -943,
+    "t": 0,
+    "f10": -49902,
+    "t10": 2500,
+    "tStreak": 0,
+    "fStreak": 0,
+    "fPct": -0.74
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": true,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 16.55,
+    "limitHigh": 17.06,
+    "gapSkipAbove": 17.4,
+    "invalidBelow": 16.709999084472656
+   },
+   "group": {
+    "total": 3,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "00403A.TW",
+   "name": "統一升級50",
+   "tag": "主動式",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-12",
+   "close": 11.289999961853027,
+   "chgPct": 0,
+   "vol": 114634,
+   "volRatio": 0.51,
+   "ret20Pct": 9.08,
+   "distHi60Pct": -2.08,
+   "hi20": 11.44,
+   "hi60": 11.53,
+   "ma5": 11.36,
+   "ma20": 10.7,
+   "ma60": 10.16,
+   "aboveMa20": true,
+   "low": 11.130000114440918,
+   "inst": {
+    "date": "2026-10-12",
+    "f": 17013,
+    "t": 0,
+    "f10": 482800,
+    "t10": 0,
+    "tStreak": 0,
+    "fStreak": 16,
+    "fPct": 14.84
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 11.06,
+    "limitHigh": 11.4,
+    "gapSkipAbove": 11.63,
+    "invalidBelow": 11.130000114440918
+   },
+   "group": {
+    "total": 2,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "00981A.TW",
+   "name": "統一台股增長",
+   "tag": "主動式",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-12",
+   "close": 32.29999923706055,
+   "chgPct": 0.19,
+   "vol": 104943,
+   "volRatio": 0.7,
+   "ret20Pct": 7.95,
+   "distHi60Pct": -1.76,
+   "hi20": 32.65,
+   "hi60": 32.88,
+   "ma5": 32.41,
+   "ma20": 30.48,
+   "ma60": 29.14,
+   "aboveMa20": true,
+   "low": 31.75,
+   "inst": {
+    "date": "2026-10-12",
+    "f": -7950,
+    "t": 0,
+    "f10": 265299,
+    "t10": 550,
+    "tStreak": 0,
+    "fStreak": 0,
+    "fPct": -7.58
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 31.65,
+    "limitHigh": 32.62,
+    "gapSkipAbove": 33.27,
+    "invalidBelow": 31.75
+   },
+   "group": {
+    "total": 2,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "0056.TW",
+   "name": "元大高股息",
+   "tag": "高股息",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-12",
+   "close": 58.599998474121094,
+   "chgPct": 0.51,
+   "vol": 36524,
+   "volRatio": 1.28,
+   "ret20Pct": 5.11,
+   "distHi60Pct": -0.09,
+   "hi20": 58.45,
+   "hi60": 58.65,
+   "ma5": 58.26,
+   "ma20": 56.8,
+   "ma60": 53.65,
+   "aboveMa20": true,
+   "low": 57.95000076293945,
+   "inst": {
+    "date": "2026-10-12",
+    "f": -5993,
+    "t": -2038,
+    "f10": -49561,
+    "t10": -1056,
+    "tStreak": 0,
+    "fStreak": 0,
+    "fPct": -16.41
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": true,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 57.43,
+    "limitHigh": 59.19,
+    "gapSkipAbove": 60.36,
+    "invalidBelow": 57.95000076293945
+   },
+   "group": {
+    "total": 2,
+    "strong": 1
+   }
+  },
+  {
+   "sym": "00984A.TW",
+   "name": "安聯台灣高息",
+   "tag": "高股息",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-12",
+   "close": 16.360000610351562,
+   "chgPct": 0.99,
+   "vol": 7423,
+   "volRatio": 1.56,
+   "ret20Pct": 4.74,
+   "distHi60Pct": 0,
+   "hi20": 16.32,
+   "hi60": 16.36,
+   "ma5": 16.25,
+   "ma20": 15.68,
+   "ma60": 15.28,
+   "aboveMa20": true,
+   "low": 16.1299991607666,
+   "inst": {
+    "date": null,
+    "pending": true,
+    "f10": 0,
+    "t10": 0
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": true,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 16.03,
+    "limitHigh": 16.52,
+    "gapSkipAbove": 16.85,
+    "invalidBelow": 16.1299991607666
+   },
+   "group": {
+    "total": 2,
+    "strong": 1
+   }
+  },
+  {
+   "sym": "2330.TW",
+   "name": "台積電",
+   "tag": "晶圓代工",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-13",
+   "close": 2490,
+   "chgPct": -1.97,
+   "vol": 34572,
+   "volRatio": 1.78,
+   "ret20Pct": 1.63,
+   "distHi60Pct": -3.86,
+   "hi20": 2585,
+   "hi60": 2590,
+   "ma5": 2550,
+   "ma20": 2482.25,
+   "ma60": 2415.67,
+   "aboveMa20": true,
+   "low": 2490,
+   "inst": {
+    "date": "2026-10-13",
+    "f": -25641,
+    "t": 3005,
+    "f10": -46289,
+    "t10": 7437,
+    "tStreak": 10,
+    "fStreak": 0,
+    "fPct": -74.17
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": true,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 2440.2,
+    "limitHigh": 2514.9,
+    "gapSkipAbove": 2564.7,
+    "invalidBelow": 2490
+   },
+   "group": {
+    "total": 4,
+    "strong": 1
+   }
+  },
+  {
+   "sym": "2303.TW",
+   "name": "聯電",
+   "tag": "晶圓代工",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-13",
+   "close": 141.5,
+   "chgPct": -2.75,
+   "vol": 132667,
+   "volRatio": 0.8,
+   "ret20Pct": -0.7,
+   "distHi60Pct": -16.02,
+   "hi20": 161.5,
+   "hi60": 168.5,
+   "ma5": 146.1,
+   "ma20": 150.6,
+   "ma60": 133.74,
+   "aboveMa20": false,
+   "low": 138.5,
+   "inst": {
+    "date": "2026-10-13",
+    "f": -3005,
+    "t": 1577,
+    "f10": -112752,
+    "t10": -101325,
+    "tStreak": 3,
+    "fStreak": 0,
+    "fPct": -2.26
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 138.67,
+    "limitHigh": 142.92,
+    "gapSkipAbove": 145.75,
+    "invalidBelow": 138.5
+   },
+   "group": {
+    "total": 4,
+    "strong": 1
+   }
+  },
+  {
+   "sym": "2454.TW",
+   "name": "聯發科",
+   "tag": "IC設計",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-13",
+   "close": 4525,
+   "chgPct": -2.16,
+   "vol": 6591,
+   "volRatio": 0.95,
+   "ret20Pct": -4.13,
+   "distHi60Pct": -17.43,
+   "hi20": 5285,
+   "hi60": 5480,
+   "ma5": 4719,
+   "ma20": 4824.75,
+   "ma60": 4232.67,
+   "aboveMa20": false,
+   "low": 4460,
+   "inst": {
+    "date": "2026-10-13",
+    "f": -3009,
+    "t": 227,
+    "f10": -21221,
+    "t10": -771,
+    "tStreak": 2,
+    "fStreak": 0,
+    "fPct": -45.66
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 4434.5,
+    "limitHigh": 4570.25,
+    "gapSkipAbove": 4660.75,
+    "invalidBelow": 4460
+   },
+   "group": {
+    "total": 3,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "3017.TW",
+   "name": "奇鋐",
+   "tag": "散熱",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-13",
+   "close": 3280,
+   "chgPct": -3.1,
+   "vol": 2574,
+   "volRatio": 0.93,
+   "ret20Pct": -5.2,
+   "distHi60Pct": -11.35,
+   "hi20": 3685,
+   "hi60": 3700,
+   "ma5": 3467,
+   "ma20": 3406,
+   "ma60": 3047.5,
+   "aboveMa20": false,
+   "low": 3275,
+   "inst": {
+    "date": "2026-10-13",
+    "f": -570,
+    "t": 235,
+    "f10": -1586,
+    "t10": -279,
+    "tStreak": 1,
+    "fStreak": 0,
+    "fPct": -22.16
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 3214.4,
+    "limitHigh": 3312.8,
+    "gapSkipAbove": 3378.4,
+    "invalidBelow": 3275
+   },
+   "group": {
+    "total": 4,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "3324.TWO",
+   "name": "雙鴻",
+   "tag": "散熱",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-13",
+   "close": 1475,
+   "chgPct": -4.22,
+   "vol": 2487,
+   "volRatio": 0.65,
+   "ret20Pct": 2.43,
+   "distHi60Pct": -15.71,
+   "hi20": 1710,
+   "hi60": 1750,
+   "ma5": 1518,
+   "ma20": 1495.25,
+   "ma60": 1210.33,
+   "aboveMa20": false,
+   "low": 1460,
+   "inst": {
+    "date": "2026-10-13",
+    "f": -386,
+    "t": 0,
+    "f10": -4292,
+    "t10": 158,
+    "tStreak": 1,
+    "fStreak": 0,
+    "fPct": -15.53
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": true,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 1445.5,
+    "limitHigh": 1489.75,
+    "gapSkipAbove": 1519.25,
+    "invalidBelow": 1460
+   },
+   "group": {
+    "total": 4,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "2421.TW",
+   "name": "建準",
+   "tag": "散熱",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-13",
+   "close": 168,
+   "chgPct": -0.3,
+   "vol": 1141,
+   "volRatio": 0.55,
+   "ret20Pct": 1.82,
+   "distHi60Pct": -8.7,
+   "hi20": 173,
+   "hi60": 184,
+   "ma5": 169.8,
+   "ma20": 165.55,
+   "ma60": 153.55,
+   "aboveMa20": true,
+   "low": 166,
+   "inst": {
+    "date": "2026-10-13",
+    "f": 101,
+    "t": 32,
+    "f10": 1719,
+    "t10": 102,
+    "tStreak": 7,
+    "fStreak": 1,
+    "fPct": 8.85
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 164.64,
+    "limitHigh": 169.68,
+    "gapSkipAbove": 173.04,
+    "invalidBelow": 166
+   },
+   "group": {
+    "total": 4,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "3105.TWO",
+   "name": "穩懋",
+   "tag": "光通訊",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-13",
+   "close": 556,
+   "chgPct": -4.14,
+   "vol": 25083,
+   "volRatio": 0.94,
+   "ret20Pct": 20.48,
+   "distHi60Pct": -11.75,
+   "hi20": 615,
+   "hi60": 630,
+   "ma5": 579.4,
+   "ma20": 522.28,
+   "ma60": 429.33,
+   "aboveMa20": true,
+   "low": 522,
+   "inst": {
+    "date": "2026-10-13",
+    "f": 1283,
+    "t": 203,
+    "f10": 33251,
+    "t10": -8505,
+    "tStreak": 1,
+    "fStreak": 1,
+    "fPct": 5.12
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 544.88,
+    "limitHigh": 561.56,
+    "gapSkipAbove": 572.68,
+    "invalidBelow": 522
+   },
+   "group": {
+    "total": 8,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "6873.TW",
+   "name": "泓德能源",
+   "tag": "綠能",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-13",
+   "close": 65.0999984741211,
+   "chgPct": -0.91,
+   "vol": 226,
+   "volRatio": 0.88,
+   "ret20Pct": -5.79,
+   "distHi60Pct": -27.59,
+   "hi20": 70.1,
+   "hi60": 89.9,
+   "ma5": 65.22,
+   "ma20": 67.47,
+   "ma60": 72.08,
+   "aboveMa20": false,
+   "low": 64.9000015258789,
+   "inst": {
+    "date": "2026-10-13",
+    "f": 55,
+    "t": 0,
+    "f10": -265,
+    "t10": 0,
+    "tStreak": 0,
+    "fStreak": 4,
+    "fPct": 24.46
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 63.8,
+    "limitHigh": 65.75,
+    "gapSkipAbove": 67.05,
+    "invalidBelow": 64.9000015258789
+   },
+   "group": {
+    "total": 3,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "3711.TW",
+   "name": "日月光投控",
+   "tag": "封測",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-13",
+   "close": 740,
+   "chgPct": -2.89,
+   "vol": 15536,
+   "volRatio": 1.11,
+   "ret20Pct": 13.85,
+   "distHi60Pct": -3.27,
+   "hi20": 762,
+   "hi60": 765,
+   "ma5": 744.4,
+   "ma20": 685.2,
+   "ma60": 629.1,
+   "aboveMa20": true,
+   "low": 731,
+   "inst": {
+    "date": "2026-10-13",
+    "f": -4265,
+    "t": 1884,
+    "f10": 8141,
+    "t10": -3515,
+    "tStreak": 2,
+    "fStreak": 0,
+    "fPct": -27.45
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 725.2,
+    "limitHigh": 747.4,
+    "gapSkipAbove": 762.2,
+    "invalidBelow": 731
+   },
+   "group": {
+    "total": 3,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "3680.TWO",
+   "name": "家登精密",
+   "tag": "設備",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-13",
+   "close": 553,
+   "chgPct": -2.81,
+   "vol": 935,
+   "volRatio": 0.62,
+   "ret20Pct": 3.36,
+   "distHi60Pct": -6.9,
+   "hi20": 571,
+   "hi60": 594,
+   "ma5": 564.6,
+   "ma20": 541.13,
+   "ma60": 493.44,
+   "aboveMa20": true,
+   "low": 549,
+   "inst": {
+    "date": "2026-10-13",
+    "f": -21,
+    "t": 0,
+    "f10": 1658,
+    "t10": 0,
+    "tStreak": 0,
+    "fStreak": 0,
+    "fPct": -2.26
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": true,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 541.94,
+    "limitHigh": 558.53,
+    "gapSkipAbove": 569.59,
+    "invalidBelow": 549
+   },
+   "group": {
+    "total": 2,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "2408.TW",
+   "name": "南亞科",
+   "tag": "記憶體",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-13",
+   "close": 488,
+   "chgPct": -7.4,
+   "vol": 91004,
+   "volRatio": 2.21,
+   "ret20Pct": -5.24,
+   "distHi60Pct": -14.24,
+   "hi20": 532,
+   "hi60": 569,
+   "ma5": 517.2,
+   "ma20": 507.7,
+   "ma60": 483.07,
+   "aboveMa20": false,
+   "low": 481.5,
+   "inst": {
+    "date": "2026-10-13",
+    "f": -41446,
+    "t": -2008,
+    "f10": -3904,
+    "t10": -4975,
+    "tStreak": 0,
+    "fStreak": 0,
+    "fPct": -45.54
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 478.24,
+    "limitHigh": 492.88,
+    "gapSkipAbove": 502.64,
+    "invalidBelow": 481.5
+   },
+   "group": {
+    "total": 4,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "2344.TW",
+   "name": "華邦電",
+   "tag": "記憶體",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-13",
+   "close": 161.5,
+   "chgPct": -7.18,
+   "vol": 119858,
+   "volRatio": 1.55,
+   "ret20Pct": -10.03,
+   "distHi60Pct": -16.32,
+   "hi20": 181,
+   "hi60": 193,
+   "ma5": 173.9,
+   "ma20": 173.08,
+   "ma60": 169.83,
+   "aboveMa20": false,
+   "low": 159.5,
+   "inst": {
+    "date": "2026-10-13",
+    "f": -37021,
+    "t": -3289,
+    "f10": 59321,
+    "t10": -35827,
+    "tStreak": 0,
+    "fStreak": 0,
+    "fPct": -30.89
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 158.27,
+    "limitHigh": 163.12,
+    "gapSkipAbove": 166.35,
+    "invalidBelow": 159.5
+   },
+   "group": {
+    "total": 4,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "2337.TW",
+   "name": "旺宏",
+   "tag": "記憶體",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-13",
+   "close": 106.5,
+   "chgPct": -7.79,
+   "vol": 53919,
+   "volRatio": 2.28,
+   "ret20Pct": -13.06,
+   "distHi60Pct": -26.3,
+   "hi20": 122.5,
+   "hi60": 144.5,
+   "ma5": 115.1,
+   "ma20": 118.05,
+   "ma60": 121.21,
+   "aboveMa20": false,
+   "low": 105,
+   "inst": {
+    "date": "2026-10-13",
+    "f": -19680,
+    "t": 417,
+    "f10": -27304,
+    "t10": 430,
+    "tStreak": 3,
+    "fStreak": 0,
+    "fPct": -36.5
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 104.37,
+    "limitHigh": 107.57,
+    "gapSkipAbove": 109.7,
+    "invalidBelow": 105
+   },
+   "group": {
+    "total": 4,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "6770.TW",
+   "name": "力積電",
+   "tag": "晶圓代工",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-13",
+   "close": 67.5,
+   "chgPct": -5.46,
+   "vol": 172909,
+   "volRatio": 1.56,
+   "ret20Pct": -8.16,
+   "distHi60Pct": -17.48,
+   "hi20": 76.5,
+   "hi60": 81.8,
+   "ma5": 71.6,
+   "ma20": 72.27,
+   "ma60": 68.71,
+   "aboveMa20": false,
+   "low": 66.80000305175781,
+   "inst": {
+    "date": "2026-10-13",
+    "f": -97829,
+    "t": -470,
+    "f10": -104083,
+    "t10": -417,
+    "tStreak": 0,
+    "fStreak": 0,
+    "fPct": -56.58
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 66.15,
+    "limitHigh": 68.18,
+    "gapSkipAbove": 69.53,
+    "invalidBelow": 66.80000305175781
+   },
+   "group": {
+    "total": 4,
+    "strong": 1
+   }
+  },
+  {
+   "sym": "2409.TW",
+   "name": "友達",
+   "tag": "面板",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-13",
+   "close": 34.150001525878906,
+   "chgPct": -3.94,
+   "vol": 406175,
+   "volRatio": 0.74,
+   "ret20Pct": 9.46,
+   "distHi60Pct": -21.58,
+   "hi20": 40.45,
+   "hi60": 43.55,
+   "ma5": 36.34,
+   "ma20": 34.43,
+   "ma60": 28.75,
+   "aboveMa20": false,
+   "low": 33.75,
+   "inst": {
+    "date": "2026-10-13",
+    "f": -43175,
+    "t": 171,
+    "f10": -375722,
+    "t10": 7239,
+    "tStreak": 1,
+    "fStreak": 0,
+    "fPct": -10.63
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": true,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 33.47,
+    "limitHigh": 34.49,
+    "gapSkipAbove": 35.17,
+    "invalidBelow": 33.75
+   },
+   "group": {
+    "total": 3,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "3037.TW",
+   "name": "欣興",
+   "tag": "PCB",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-13",
+   "close": 1180,
+   "chgPct": -5.98,
+   "vol": 15090,
+   "volRatio": 1.1,
+   "ret20Pct": 18.71,
+   "distHi60Pct": -16.9,
+   "hi20": 1325,
+   "hi60": 1420,
+   "ma5": 1264,
+   "ma20": 1138.5,
+   "ma60": 1019.53,
+   "aboveMa20": true,
+   "low": 1165,
+   "inst": {
+    "date": "2026-10-13",
+    "f": -1726,
+    "t": -727,
+    "f10": 15187,
+    "t10": -3906,
+    "tStreak": 0,
+    "fStreak": 0,
+    "fPct": -11.44
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 1156.4,
+    "limitHigh": 1191.8,
+    "gapSkipAbove": 1215.4,
+    "invalidBelow": 1165
+   },
+   "group": {
+    "total": 4,
+    "strong": 1
+   }
+  },
+  {
+   "sym": "2455.TW",
+   "name": "全新光電",
+   "tag": "光通訊",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-13",
+   "close": 508,
+   "chgPct": -9.93,
+   "vol": 10555,
+   "volRatio": 1.27,
+   "ret20Pct": -4.51,
+   "distHi60Pct": -17.13,
+   "hi20": 606,
+   "hi60": 613,
+   "ma5": 551.2,
+   "ma20": 549.15,
+   "ma60": 446.96,
+   "aboveMa20": false,
+   "low": 508,
+   "inst": {
+    "date": "2026-10-13",
+    "f": 187,
+    "t": -665,
+    "f10": 4886,
+    "t10": -7411,
+    "tStreak": 0,
+    "fStreak": 4,
+    "fPct": 1.78
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 497.84,
+    "limitHigh": 513.08,
+    "gapSkipAbove": 523.24,
+    "invalidBelow": 508
+   },
+   "group": {
+    "total": 8,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "3081.TWO",
+   "name": "聯亞光電",
+   "tag": "光通訊",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-13",
+   "close": 2725,
+   "chgPct": -9.92,
+   "vol": 4138,
+   "volRatio": 1.35,
+   "ret20Pct": -3.71,
+   "distHi60Pct": -24.31,
+   "hi20": 3140,
+   "hi60": 3600,
+   "ma5": 2954,
+   "ma20": 2820.75,
+   "ma60": 2596.92,
+   "aboveMa20": false,
+   "low": 2725,
+   "inst": {
+    "date": "2026-10-13",
+    "f": -1103,
+    "t": -96,
+    "f10": -3291,
+    "t10": 310,
+    "tStreak": 0,
+    "fStreak": 0,
+    "fPct": -26.65
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 2670.5,
+    "limitHigh": 2752.25,
+    "gapSkipAbove": 2806.75,
+    "invalidBelow": 2725
+   },
+   "group": {
+    "total": 8,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "6116.TW",
+   "name": "彩晶",
+   "tag": "面板",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-13",
+   "close": 14.699999809265137,
+   "chgPct": -3.29,
+   "vol": 23655,
+   "volRatio": 0.4,
+   "ret20Pct": 0,
+   "distHi60Pct": -16,
+   "hi20": 16.35,
+   "hi60": 17.5,
+   "ma5": 15.19,
+   "ma20": 14.93,
+   "ma60": 14.27,
+   "aboveMa20": false,
+   "low": 14.699999809265137,
+   "inst": {
+    "date": "2026-10-13",
+    "f": -1215,
+    "t": 0,
+    "f10": -28279,
+    "t10": 0,
+    "tStreak": 0,
+    "fStreak": 0,
+    "fPct": -5.14
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 14.41,
+    "limitHigh": 14.85,
+    "gapSkipAbove": 15.14,
+    "invalidBelow": 14.699999809265137
+   },
+   "group": {
+    "total": 3,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "3481.TW",
+   "name": "群創",
+   "tag": "面板",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-13",
+   "close": 50,
+   "chgPct": -2.53,
+   "vol": 109940,
+   "volRatio": 0.56,
+   "ret20Pct": 1.32,
+   "distHi60Pct": -11.03,
+   "hi20": 54.7,
+   "hi60": 56.2,
+   "ma5": 51.18,
+   "ma20": 50.27,
+   "ma60": 49.02,
+   "aboveMa20": false,
+   "low": 49.95000076293945,
+   "inst": {
+    "date": "2026-10-13",
+    "f": 4189,
+    "t": 221,
+    "f10": 11204,
+    "t10": 847,
+    "tStreak": 1,
+    "fStreak": 2,
+    "fPct": 3.81
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": true,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 49,
+    "limitHigh": 50.5,
+    "gapSkipAbove": 51.5,
+    "invalidBelow": 49.95000076293945
+   },
+   "group": {
+    "total": 3,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "6902.TW",
+   "name": "Gogolook走著瞧",
+   "tag": "AI軟體",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-13",
+   "close": 137.5,
+   "chgPct": 1.1,
+   "vol": 501,
+   "volRatio": 0.92,
+   "ret20Pct": 8.7,
+   "distHi60Pct": -24.86,
+   "hi20": 176.5,
+   "hi60": 183,
+   "ma5": 138.2,
+   "ma20": 144.95,
+   "ma60": 131.54,
+   "aboveMa20": false,
+   "low": 135.5,
+   "inst": {
+    "date": "2026-10-13",
+    "f": -167,
+    "t": 0,
+    "f10": -558,
+    "t10": 0,
+    "tStreak": 0,
+    "fStreak": 0,
+    "fPct": -33.43
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 134.75,
+    "limitHigh": 138.88,
+    "gapSkipAbove": 141.63,
+    "invalidBelow": 135.5
+   },
+   "group": {
+    "total": 1,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "3443.TW",
+   "name": "創意",
+   "tag": "IC設計",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-13",
+   "close": 8095,
+   "chgPct": -0.06,
+   "vol": 1267,
+   "volRatio": 0.84,
+   "ret20Pct": 30.04,
+   "distHi60Pct": -7.49,
+   "hi20": 8600,
+   "hi60": 8750,
+   "ma5": 8278,
+   "ma20": 7651.5,
+   "ma60": 5895.5,
+   "aboveMa20": true,
+   "low": 7700,
+   "inst": {
+    "date": "2026-10-13",
+    "f": 53,
+    "t": 98,
+    "f10": 533,
+    "t10": -64,
+    "tStreak": 1,
+    "fStreak": 2,
+    "fPct": 4.22
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 7933.1,
+    "limitHigh": 8175.95,
+    "gapSkipAbove": 8337.85,
+    "invalidBelow": 7700
+   },
+   "group": {
+    "total": 3,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "7769.TW",
+   "name": "鴻勁",
+   "tag": "設備",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-13",
+   "close": 6070,
+   "chgPct": -6.47,
+   "vol": 692,
+   "volRatio": 0.81,
+   "ret20Pct": -6.25,
+   "distHi60Pct": -15.22,
+   "hi20": 6540,
+   "hi60": 7160,
+   "ma5": 6055,
+   "ma20": 5980,
+   "ma60": 6176.33,
+   "aboveMa20": true,
+   "low": 6000,
+   "inst": {
+    "date": "2026-10-13",
+    "f": -159,
+    "t": 19,
+    "f10": 288,
+    "t10": -175,
+    "tStreak": 5,
+    "fStreak": 0,
+    "fPct": -23
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 5948.6,
+    "limitHigh": 6130.7,
+    "gapSkipAbove": 6252.1,
+    "invalidBelow": 6000
+   },
+   "group": {
+    "total": 2,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "3665.TW",
+   "name": "貿聯-KY",
+   "tag": "連接線",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-13",
+   "close": 2260,
+   "chgPct": -4.03,
+   "vol": 2458,
+   "volRatio": 0.69,
+   "ret20Pct": 17.1,
+   "distHi60Pct": -15.83,
+   "hi20": 2595,
+   "hi60": 2685,
+   "ma5": 2323,
+   "ma20": 2274.25,
+   "ma60": 2179.42,
+   "aboveMa20": false,
+   "low": 2215,
+   "inst": {
+    "date": "2026-10-13",
+    "f": -15,
+    "t": 106,
+    "f10": 3954,
+    "t10": -3190,
+    "tStreak": 1,
+    "fStreak": 0,
+    "fPct": -0.6
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": true,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 2214.8,
+    "limitHigh": 2282.6,
+    "gapSkipAbove": 2327.8,
+    "invalidBelow": 2215
+   },
+   "group": {
+    "total": 1,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "6239.TW",
+   "name": "力成",
+   "tag": "封測",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-13",
+   "close": 296,
+   "chgPct": -2.79,
+   "vol": 11575,
+   "volRatio": 0.8,
+   "ret20Pct": 4.41,
+   "distHi60Pct": -8.92,
+   "hi20": 310.5,
+   "hi60": 325,
+   "ma5": 305.3,
+   "ma20": 289.93,
+   "ma60": 277.48,
+   "aboveMa20": true,
+   "low": 291,
+   "inst": {
+    "date": "2026-10-13",
+    "f": -554,
+    "t": 588,
+    "f10": -10048,
+    "t10": 1089,
+    "tStreak": 1,
+    "fStreak": 0,
+    "fPct": -4.78
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": true,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 290.08,
+    "limitHigh": 298.96,
+    "gapSkipAbove": 304.88,
+    "invalidBelow": 291
+   },
+   "group": {
+    "total": 3,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "2308.TW",
+   "name": "台達電",
+   "tag": "電源",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-13",
+   "close": 1775,
+   "chgPct": -6.58,
+   "vol": 12336,
+   "volRatio": 1.11,
+   "ret20Pct": 5.97,
+   "distHi60Pct": -16.08,
+   "hi20": 2050,
+   "hi60": 2115,
+   "ma5": 1936,
+   "ma20": 1841.25,
+   "ma60": 1781.92,
+   "aboveMa20": false,
+   "low": 1770,
+   "inst": {
+    "date": "2026-10-13",
+    "f": -5829,
+    "t": -1457,
+    "f10": -7113,
+    "t10": 15,
+    "tStreak": 0,
+    "fStreak": 0,
+    "fPct": -47.26
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 1739.5,
+    "limitHigh": 1792.75,
+    "gapSkipAbove": 1828.25,
+    "invalidBelow": 1770
+   },
+   "group": {
+    "total": 1,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "8227.TWO",
+   "name": "巨有",
+   "tag": "IC設計",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-13",
+   "close": 292,
+   "chgPct": -5.04,
+   "vol": 3640,
+   "volRatio": 1.04,
+   "ret20Pct": 34.25,
+   "distHi60Pct": -24.06,
+   "hi20": 372,
+   "hi60": 384.5,
+   "ma5": 335.3,
+   "ma20": 311.55,
+   "ma60": 207.28,
+   "aboveMa20": false,
+   "low": 281.5,
+   "inst": {
+    "date": "2026-10-13",
+    "f": 437,
+    "t": 0,
+    "f10": 1385,
+    "t10": 0,
+    "tStreak": 0,
+    "fStreak": 2,
+    "fPct": 11.99
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 286.16,
+    "limitHigh": 294.92,
+    "gapSkipAbove": 300.76,
+    "invalidBelow": 281.5
+   },
+   "group": {
+    "total": 3,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "3653.TW",
+   "name": "健策",
+   "tag": "散熱",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-13",
+   "close": 6990,
+   "chgPct": -2.37,
+   "vol": 927,
+   "volRatio": 0.8,
+   "ret20Pct": 20.73,
+   "distHi60Pct": -6.05,
+   "hi20": 7205,
+   "hi60": 7440,
+   "ma5": 7040,
+   "ma20": 6387,
+   "ma60": 5244.83,
+   "aboveMa20": true,
+   "low": 6940,
+   "inst": {
+    "date": "2026-10-13",
+    "f": 82,
+    "t": -43,
+    "f10": -530,
+    "t10": 74,
+    "tStreak": 0,
+    "fStreak": 1,
+    "fPct": 8.87
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 6850.2,
+    "limitHigh": 7059.9,
+    "gapSkipAbove": 7199.7,
+    "invalidBelow": 6940
+   },
+   "group": {
+    "total": 4,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "3231.TW",
+   "name": "緯創",
+   "tag": "伺服器",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-13",
+   "close": 187,
+   "chgPct": -1.32,
+   "vol": 39262,
+   "volRatio": 1.05,
+   "ret20Pct": 1.08,
+   "distHi60Pct": -9.22,
+   "hi20": 190.5,
+   "hi60": 206,
+   "ma5": 187.9,
+   "ma20": 185.63,
+   "ma60": 181.95,
+   "aboveMa20": true,
+   "low": 185.5,
+   "inst": {
+    "date": "2026-10-13",
+    "f": -2945,
+    "t": 3298,
+    "f10": 42920,
+    "t10": 504,
+    "tStreak": 3,
+    "fStreak": 0,
+    "fPct": -7.5
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 183.26,
+    "limitHigh": 188.87,
+    "gapSkipAbove": 192.61,
+    "invalidBelow": 185.5
+   },
+   "group": {
+    "total": 1,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "6274.TWO",
+   "name": "台燿",
+   "tag": "PCB",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-13",
+   "close": 1655,
+   "chgPct": -4.61,
+   "vol": 9355,
+   "volRatio": 1.05,
+   "ret20Pct": 18.64,
+   "distHi60Pct": -9.81,
+   "hi20": 1780,
+   "hi60": 1835,
+   "ma5": 1721,
+   "ma20": 1531.25,
+   "ma60": 1435.67,
+   "aboveMa20": true,
+   "low": 1595,
+   "inst": {
+    "date": "2026-10-13",
+    "f": -202,
+    "t": 318,
+    "f10": -1944,
+    "t10": 2824,
+    "tStreak": 7,
+    "fStreak": 0,
+    "fPct": -2.16
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 1621.9,
+    "limitHigh": 1671.55,
+    "gapSkipAbove": 1704.65,
+    "invalidBelow": 1595
+   },
+   "group": {
+    "total": 4,
+    "strong": 1
+   }
+  },
+  {
+   "sym": "2383.TW",
+   "name": "台光電",
+   "tag": "PCB",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-13",
+   "close": 5545,
+   "chgPct": -9.84,
+   "vol": 4132,
+   "volRatio": 1.98,
+   "ret20Pct": 3.16,
+   "distHi60Pct": -14.3,
+   "hi20": 6150,
+   "hi60": 6470,
+   "ma5": 5928,
+   "ma20": 5283.75,
+   "ma60": 5299.08,
+   "aboveMa20": true,
+   "low": 5535,
+   "inst": {
+    "date": "2026-10-13",
+    "f": -927,
+    "t": -169,
+    "f10": -650,
+    "t10": 686,
+    "tStreak": 0,
+    "fStreak": 0,
+    "fPct": -22.42
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 5434.1,
+    "limitHigh": 5600.45,
+    "gapSkipAbove": 5711.35,
+    "invalidBelow": 5535
+   },
+   "group": {
+    "total": 4,
+    "strong": 1
+   }
+  },
+  {
+   "sym": "6213.TW",
+   "name": "聯茂",
+   "tag": "PCB",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-13",
+   "close": 795,
+   "chgPct": -2.09,
+   "vol": 7148,
+   "volRatio": 0.4,
+   "ret20Pct": 53.18,
+   "distHi60Pct": -3.64,
+   "hi20": 812,
+   "hi60": 825,
+   "ma5": 799.2,
+   "ma20": 631.45,
+   "ma60": 498.68,
+   "aboveMa20": true,
+   "low": 731,
+   "inst": {
+    "date": "2026-10-13",
+    "f": -588,
+    "t": 245,
+    "f10": 2199,
+    "t10": 2623,
+    "tStreak": 1,
+    "fStreak": 0,
+    "fPct": -8.23
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 779.1,
+    "limitHigh": 802.95,
+    "gapSkipAbove": 818.85,
+    "invalidBelow": 731
+   },
+   "group": {
+    "total": 4,
+    "strong": 1
+   }
+  },
+  {
+   "sym": "6214.TW",
+   "name": "精誠",
+   "tag": "資訊服務",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-13",
+   "close": 193.5,
+   "chgPct": 0.26,
+   "vol": 651,
+   "volRatio": 0.42,
+   "ret20Pct": 3.2,
+   "distHi60Pct": -0.77,
+   "hi20": 194.5,
+   "hi60": 195,
+   "ma5": 191.3,
+   "ma20": 190.33,
+   "ma60": 172.23,
+   "aboveMa20": true,
+   "low": 190.5,
+   "inst": {
+    "date": "2026-10-13",
+    "f": 178,
+    "t": 137,
+    "f10": 1085,
+    "t10": 211,
+    "tStreak": 7,
+    "fStreak": 1,
+    "fPct": 27.37
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": true,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 189.63,
+    "limitHigh": 195.44,
+    "gapSkipAbove": 199.31,
+    "invalidBelow": 190.5
+   },
+   "group": {
+    "total": 2,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "3029.TW",
+   "name": "零壹",
+   "tag": "資訊服務",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-13",
+   "close": 120,
+   "chgPct": 0.42,
+   "vol": 2063,
+   "volRatio": 0.53,
+   "ret20Pct": 6.19,
+   "distHi60Pct": -4.76,
+   "hi20": 125,
+   "hi60": 126,
+   "ma5": 117.4,
+   "ma20": 118.58,
+   "ma60": 111.81,
+   "aboveMa20": true,
+   "low": 117.5,
+   "inst": {
+    "date": "2026-10-13",
+    "f": 700,
+    "t": 184,
+    "f10": 1956,
+    "t10": 195,
+    "tStreak": 2,
+    "fStreak": 3,
+    "fPct": 33.93
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 117.6,
+    "limitHigh": 121.2,
+    "gapSkipAbove": 123.6,
+    "invalidBelow": 117.5
+   },
+   "group": {
+    "total": 2,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "3450.TW",
+   "name": "聯鈞",
+   "tag": "光通訊",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-13",
+   "close": 473,
+   "chgPct": -8.86,
+   "vol": 10368,
+   "volRatio": 1.3,
+   "ret20Pct": -9.56,
+   "distHi60Pct": -27.57,
+   "hi20": 548,
+   "hi60": 653,
+   "ma5": 516,
+   "ma20": 522.78,
+   "ma60": 509.94,
+   "aboveMa20": false,
+   "low": 470,
+   "inst": {
+    "date": "2026-10-13",
+    "f": -895,
+    "t": -1553,
+    "f10": -9394,
+    "t10": -920,
+    "tStreak": 0,
+    "fStreak": 0,
+    "fPct": -8.63
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 463.54,
+    "limitHigh": 477.73,
+    "gapSkipAbove": 487.19,
+    "invalidBelow": 470
+   },
+   "group": {
+    "total": 8,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "3008.TW",
+   "name": "大立光",
+   "tag": "光學鏡頭",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-13",
+   "close": 7275,
+   "chgPct": -0.68,
+   "vol": 5105,
+   "volRatio": 2.41,
+   "ret20Pct": 8.26,
+   "distHi60Pct": -9.01,
+   "hi20": 7325,
+   "hi60": 7995,
+   "ma5": 6992,
+   "ma20": 6438.75,
+   "ma60": 5659.25,
+   "aboveMa20": true,
+   "low": 7065,
+   "inst": {
+    "date": null,
+    "pending": true,
+    "f10": 0,
+    "t10": 0
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 7129.5,
+    "limitHigh": 7347.75,
+    "gapSkipAbove": 7493.25,
+    "invalidBelow": 7065
+   },
+   "group": {
+    "total": 1,
+    "strong": 1
+   }
+  },
+  {
+   "sym": "6442.TW",
+   "name": "光聖",
+   "tag": "光通訊",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-13",
+   "close": 1630,
+   "chgPct": -5.51,
+   "vol": 3013,
+   "volRatio": 1.41,
+   "ret20Pct": -9.44,
+   "distHi60Pct": -15.1,
+   "hi20": 1815,
+   "hi60": 1920,
+   "ma5": 1721,
+   "ma20": 1595.75,
+   "ma60": 1520,
+   "aboveMa20": true,
+   "low": 1555,
+   "inst": {
+    "date": "2026-10-13",
+    "f": 584,
+    "t": 0,
+    "f10": -145,
+    "t10": -257,
+    "tStreak": 0,
+    "fStreak": 1,
+    "fPct": 19.38
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 1597.4,
+    "limitHigh": 1646.3,
+    "gapSkipAbove": 1678.9,
+    "invalidBelow": 1555
+   },
+   "group": {
+    "total": 8,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "5904.TWO",
+   "name": "寶雅",
+   "tag": "零售",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-13",
+   "close": 71.4000015258789,
+   "chgPct": -1.24,
+   "vol": 3491,
+   "volRatio": 0.72,
+   "ret20Pct": -0.14,
+   "distHi60Pct": -22.64,
+   "hi20": 73.6,
+   "hi60": 92.3,
+   "ma5": 70.4,
+   "ma20": 70.77,
+   "ma60": 72.05,
+   "aboveMa20": true,
+   "low": 70.9000015258789,
+   "inst": {
+    "date": null,
+    "pending": true,
+    "f10": 0,
+    "t10": 0
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 69.97,
+    "limitHigh": 72.11,
+    "gapSkipAbove": 73.54,
+    "invalidBelow": 70.9000015258789
+   },
+   "group": {
+    "total": 1,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "5314.TWO",
+   "name": "世紀民生",
+   "tag": "保健",
+   "mkt": "TW",
+   "status": "ok",
+   "asOf": "2026-10-13",
+   "close": 26.350000381469727,
+   "chgPct": -1.31,
+   "vol": 30028,
+   "volRatio": 0.9,
+   "ret20Pct": -43.7,
+   "distHi60Pct": -43.7,
+   "hi20": 46.8,
+   "hi60": 46.8,
+   "ma5": 27.27,
+   "ma20": 29.64,
+   "ma60": 24.85,
+   "aboveMa20": false,
+   "low": 26.200000762939453,
+   "inst": {
+    "date": null,
+    "pending": true,
+    "f10": 0,
+    "t10": 0
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 25.82,
+    "limitHigh": 26.61,
+    "gapSkipAbove": 27.14,
+    "invalidBelow": 26.200000762939453
+   },
+   "group": {
+    "total": 1,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "009826.TW",
+   "name": "貝萊德世界股票",
+   "tag": "全球股",
+   "mkt": "TW",
+   "status": "fail"
+  },
+  {
+   "sym": "^SOX",
+   "name": "費城半導體指數",
+   "mkt": "US",
+   "status": "ok",
+   "index": true,
+   "asOf": "2026-10-14",
+   "close": 11791.6533203125,
+   "chgPct": -3.42
+  },
+  {
+   "sym": "^IXIC",
+   "name": "那斯達克指數",
+   "mkt": "US",
+   "status": "ok",
+   "index": true,
+   "asOf": "2026-10-14",
+   "close": 26817.130859375,
+   "chgPct": -1.42
+  },
+  {
+   "sym": "^GSPC",
+   "name": "標普500指數",
+   "mkt": "US",
+   "status": "ok",
+   "index": true,
+   "asOf": "2026-10-14",
+   "close": 7731.0498046875,
+   "chgPct": -0.95
+  },
+  {
+   "sym": "VOO",
+   "name": "VOO標普500ETF",
+   "tag": "市值型",
+   "mkt": "US",
+   "status": "ok",
+   "asOf": "2026-10-14",
+   "close": 708.260009765625,
+   "chgPct": -0.97,
+   "vol": 2912,
+   "volRatio": 0.35,
+   "ret20Pct": 2.17,
+   "distHi60Pct": -1.42,
+   "hi20": 716.2,
+   "hi60": 718.47,
+   "ma5": 713.09,
+   "ma20": 708.94,
+   "ma60": 703.07,
+   "aboveMa20": false,
+   "low": 708.1500244140625,
+   "inst": {
+    "date": null,
+    "pending": true,
+    "f10": 0,
+    "t10": 0
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 694.09,
+    "limitHigh": 715.34,
+    "gapSkipAbove": 729.51,
+    "invalidBelow": 708.1500244140625
+   },
+   "group": {
+    "total": 3,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "TSM",
+   "name": "台積電ADR",
+   "tag": "晶圓代工",
+   "mkt": "US",
+   "status": "ok",
+   "asOf": "2026-10-14",
+   "close": 433.2900085449219,
+   "chgPct": -2.66,
+   "vol": 5784,
+   "volRatio": 0.6,
+   "ret20Pct": 3.73,
+   "distHi60Pct": -11.11,
+   "hi20": 485.8,
+   "hi60": 487.47,
+   "ma5": 446.81,
+   "ma20": 454.14,
+   "ma60": 429.27,
+   "aboveMa20": false,
+   "low": 433.0400085449219,
+   "inst": {
+    "date": null,
+    "pending": true,
+    "f10": 0,
+    "t10": 0
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 424.62,
+    "limitHigh": 437.62,
+    "gapSkipAbove": 446.29,
+    "invalidBelow": 433.0400085449219
+   },
+   "group": {
+    "total": 4,
+    "strong": 1
+   }
+  },
+  {
+   "sym": "GOOGL",
+   "name": "Google",
+   "tag": "雲端",
+   "mkt": "US",
+   "status": "ok",
+   "asOf": "2026-10-14",
+   "close": 352.7799987792969,
+   "chgPct": -0.28,
+   "vol": 10106,
+   "volRatio": 0.4,
+   "ret20Pct": 2.89,
+   "distHi60Pct": -8.24,
+   "hi20": 354.97,
+   "hi60": 384.48,
+   "ma5": 351.85,
+   "ma20": 347.02,
+   "ma60": 344.7,
+   "aboveMa20": true,
+   "low": 352.5,
+   "inst": {
+    "date": null,
+    "pending": true,
+    "f10": 0,
+    "t10": 0
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 345.72,
+    "limitHigh": 356.31,
+    "gapSkipAbove": 363.36,
+    "invalidBelow": 352.5
+   },
+   "group": {
+    "total": 2,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "NVDA",
+   "name": "輝達",
+   "tag": "晶片",
+   "mkt": "US",
+   "status": "ok",
+   "asOf": "2026-10-14",
+   "close": 222.47999572753906,
+   "chgPct": -2.64,
+   "vol": 40225,
+   "volRatio": 0.38,
+   "ret20Pct": 4.01,
+   "distHi60Pct": -8.58,
+   "hi20": 239.24,
+   "hi60": 243.37,
+   "ma5": 227.42,
+   "ma20": 228.75,
+   "ma60": 219.79,
+   "aboveMa20": false,
+   "low": 222.2100067138672,
+   "inst": {
+    "date": null,
+    "pending": true,
+    "f10": 0,
+    "t10": 0
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 218.03,
+    "limitHigh": 224.7,
+    "gapSkipAbove": 229.15,
+    "invalidBelow": 222.2100067138672
+   },
+   "group": {
+    "total": 3,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "INTC",
+   "name": "英特爾",
+   "tag": "晶片",
+   "mkt": "US",
+   "status": "ok",
+   "asOf": "2026-10-14",
+   "close": 98.92389678955078,
+   "chgPct": -3.78,
+   "vol": 40136,
+   "volRatio": 0.37,
+   "ret20Pct": -2.1,
+   "distHi60Pct": -22.38,
+   "hi20": 127.39,
+   "hi60": 127.44,
+   "ma5": 102.97,
+   "ma20": 114.21,
+   "ma60": 101.72,
+   "aboveMa20": false,
+   "low": 98.87300109863281,
+   "inst": {
+    "date": null,
+    "pending": true,
+    "f10": 0,
+    "t10": 0
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 96.95,
+    "limitHigh": 99.91,
+    "gapSkipAbove": 101.89,
+    "invalidBelow": 98.87300109863281
+   },
+   "group": {
+    "total": 3,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "AAPL",
+   "name": "蘋果",
+   "tag": "消費電子",
+   "mkt": "US",
+   "status": "ok",
+   "asOf": "2026-10-14",
+   "close": 344.44500732421875,
+   "chgPct": 0.93,
+   "vol": 17500,
+   "volRatio": 0.47,
+   "ret20Pct": 3.62,
+   "distHi60Pct": -1.06,
+   "hi20": 341.27,
+   "hi60": 348.15,
+   "ma5": 340.75,
+   "ma20": 336.88,
+   "ma60": 324.59,
+   "aboveMa20": true,
+   "low": 343.6499938964844,
+   "inst": {
+    "date": null,
+    "pending": true,
+    "f10": 0,
+    "t10": 0
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": true,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 337.56,
+    "limitHigh": 347.89,
+    "gapSkipAbove": 354.78,
+    "invalidBelow": 343.6499938964844
+   },
+   "group": {
+    "total": 1,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "AMZN",
+   "name": "亞馬遜",
+   "tag": "電商",
+   "mkt": "US",
+   "status": "ok",
+   "asOf": "2026-10-14",
+   "close": 255.1199951171875,
+   "chgPct": -1.34,
+   "vol": 11679,
+   "volRatio": 0.32,
+   "ret20Pct": 3.72,
+   "distHi60Pct": -11.17,
+   "hi20": 262.43,
+   "hi60": 287.2,
+   "ma5": 257.94,
+   "ma20": 253.28,
+   "ma60": 256.05,
+   "aboveMa20": true,
+   "low": 254.9499969482422,
+   "inst": {
+    "date": null,
+    "pending": true,
+    "f10": 0,
+    "t10": 0
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 250.02,
+    "limitHigh": 257.67,
+    "gapSkipAbove": 262.77,
+    "invalidBelow": 254.9499969482422
+   },
+   "group": {
+    "total": 1,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "GRAB",
+   "name": "Grab外送叫車",
+   "tag": "平台",
+   "mkt": "US",
+   "status": "ok",
+   "asOf": "2026-10-14",
+   "close": 2.869999885559082,
+   "chgPct": -3.69,
+   "vol": 28641,
+   "volRatio": 0.35,
+   "ret20Pct": 0,
+   "distHi60Pct": -27.71,
+   "hi20": 3.2,
+   "hi60": 3.97,
+   "ma5": 3.06,
+   "ma20": 3.06,
+   "ma60": 3.32,
+   "aboveMa20": false,
+   "low": 2.859999895095825,
+   "inst": {
+    "date": null,
+    "pending": true,
+    "f10": 0,
+    "t10": 0
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 2.81,
+    "limitHigh": 2.9,
+    "gapSkipAbove": 2.96,
+    "invalidBelow": 2.859999895095825
+   },
+   "group": {
+    "total": 1,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "TSLA",
+   "name": "特斯拉",
+   "tag": "電動車",
+   "mkt": "US",
+   "status": "ok",
+   "asOf": "2026-10-14",
+   "close": 365.6400146484375,
+   "chgPct": -2.56,
+   "vol": 14141,
+   "volRatio": 0.41,
+   "ret20Pct": 2.11,
+   "distHi60Pct": -5.9,
+   "hi20": 382.7,
+   "hi60": 388.56,
+   "ma5": 375.32,
+   "ma20": 370.92,
+   "ma60": 351.45,
+   "aboveMa20": false,
+   "low": 364.4400939941406,
+   "inst": {
+    "date": null,
+    "pending": true,
+    "f10": 0,
+    "t10": 0
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 358.33,
+    "limitHigh": 369.3,
+    "gapSkipAbove": 376.61,
+    "invalidBelow": 364.4400939941406
+   },
+   "group": {
+    "total": 1,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "SPCX",
+   "name": "SpaceX",
+   "tag": "太空",
+   "mkt": "US",
+   "status": "ok",
+   "asOf": "2026-10-14",
+   "close": 153.52000427246094,
+   "chgPct": -1.93,
+   "vol": 34109,
+   "volRatio": 0.36,
+   "ret20Pct": 1.75,
+   "distHi60Pct": -12.98,
+   "hi20": 171.92,
+   "hi60": 176.42,
+   "ma5": 159.32,
+   "ma20": 155.95,
+   "ma60": 141.48,
+   "aboveMa20": false,
+   "low": 151.9949951171875,
+   "inst": {
+    "date": null,
+    "pending": true,
+    "f10": 0,
+    "t10": 0
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 150.45,
+    "limitHigh": 155.06,
+    "gapSkipAbove": 158.13,
+    "invalidBelow": 151.9949951171875
+   },
+   "group": {
+    "total": 1,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "ENPH",
+   "name": "ENPH",
+   "tag": "綠能",
+   "mkt": "US",
+   "status": "ok",
+   "asOf": "2026-10-14",
+   "close": 29.600000381469727,
+   "chgPct": -7.59,
+   "vol": 3388,
+   "volRatio": 0.7,
+   "ret20Pct": -16.76,
+   "distHi60Pct": -31.61,
+   "hi20": 36.02,
+   "hi60": 43.28,
+   "ma5": 31.77,
+   "ma20": 32.99,
+   "ma60": 36.43,
+   "aboveMa20": false,
+   "low": 29.350000381469727,
+   "inst": {
+    "date": null,
+    "pending": true,
+    "f10": 0,
+    "t10": 0
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 29.01,
+    "limitHigh": 29.9,
+    "gapSkipAbove": 30.49,
+    "invalidBelow": 29.350000381469727
+   },
+   "group": {
+    "total": 3,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "MRVL",
+   "name": "MRVL",
+   "tag": "晶片",
+   "mkt": "US",
+   "status": "ok",
+   "asOf": "2026-10-14",
+   "close": 252.74000549316406,
+   "chgPct": -5.95,
+   "vol": 8405,
+   "volRatio": 0.43,
+   "ret20Pct": 10.03,
+   "distHi60Pct": -16.11,
+   "hi20": 287.01,
+   "hi60": 301.27,
+   "ma5": 267.45,
+   "ma20": 264.32,
+   "ma60": 232.28,
+   "aboveMa20": false,
+   "low": 251.27999877929688,
+   "inst": {
+    "date": null,
+    "pending": true,
+    "f10": 0,
+    "t10": 0
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 247.69,
+    "limitHigh": 255.27,
+    "gapSkipAbove": 260.32,
+    "invalidBelow": 251.27999877929688
+   },
+   "group": {
+    "total": 3,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "MU",
+   "name": "美光Micron",
+   "tag": "記憶體",
+   "mkt": "US",
+   "status": "ok",
+   "asOf": "2026-10-14",
+   "close": 927.219970703125,
+   "chgPct": -2.72,
+   "vol": 11334,
+   "volRatio": 0.44,
+   "ret20Pct": 0.07,
+   "distHi60Pct": -16.37,
+   "hi20": 1097.39,
+   "hi60": 1108.72,
+   "ma5": 986.86,
+   "ma20": 1042.82,
+   "ma60": 964.73,
+   "aboveMa20": false,
+   "low": 926.8300170898438,
+   "inst": {
+    "date": null,
+    "pending": true,
+    "f10": 0,
+    "t10": 0
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 908.68,
+    "limitHigh": 936.49,
+    "gapSkipAbove": 955.04,
+    "invalidBelow": 926.8300170898438
+   },
+   "group": {
+    "total": 4,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "SKHY",
+   "name": "SK海力士ADR",
+   "tag": "記憶體",
+   "mkt": "US",
+   "status": "fail",
+   "group": {
+    "total": 4,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "ASX",
+   "name": "日月光ADR",
+   "tag": "封測",
+   "mkt": "US",
+   "status": "ok",
+   "asOf": "2026-10-14",
+   "close": 44.690101623535156,
+   "chgPct": -6.11,
+   "vol": 3447,
+   "volRatio": 0.51,
+   "ret20Pct": 17.76,
+   "distHi60Pct": -6.76,
+   "hi20": 47.6,
+   "hi60": 47.93,
+   "ma5": 46.3,
+   "ma20": 44.98,
+   "ma60": 40.01,
+   "aboveMa20": false,
+   "low": 44.65999984741211,
+   "inst": {
+    "date": null,
+    "pending": true,
+    "f10": 0,
+    "t10": 0
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 43.8,
+    "limitHigh": 45.14,
+    "gapSkipAbove": 46.03,
+    "invalidBelow": 44.65999984741211
+   },
+   "group": {
+    "total": 3,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "BE",
+   "name": "BE能源",
+   "tag": "綠能",
+   "mkt": "US",
+   "status": "ok",
+   "asOf": "2026-10-14",
+   "close": 244.85000610351562,
+   "chgPct": -7.06,
+   "vol": 6337,
+   "volRatio": 0.38,
+   "ret20Pct": -9.32,
+   "distHi60Pct": -19.02,
+   "hi20": 295.78,
+   "hi60": 302.35,
+   "ma5": 264.78,
+   "ma20": 276.09,
+   "ma60": 240.68,
+   "aboveMa20": false,
+   "low": 244.42010498046875,
+   "inst": {
+    "date": null,
+    "pending": true,
+    "f10": 0,
+    "t10": 0
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 239.95,
+    "limitHigh": 247.3,
+    "gapSkipAbove": 252.2,
+    "invalidBelow": 244.42010498046875
+   },
+   "group": {
+    "total": 3,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "QQQ",
+   "name": "QQQ",
+   "tag": "科技型",
+   "mkt": "US",
+   "status": "ok",
+   "asOf": "2026-10-14",
+   "close": 731.97998046875,
+   "chgPct": -1.56,
+   "vol": 17909,
+   "volRatio": 0.53,
+   "ret20Pct": 3.87,
+   "distHi60Pct": -4.05,
+   "hi20": 759.66,
+   "hi60": 762.86,
+   "ma5": 744.09,
+   "ma20": 742.7,
+   "ma60": 720.54,
+   "aboveMa20": false,
+   "low": 731.8800048828125,
+   "inst": {
+    "date": null,
+    "pending": true,
+    "f10": 0,
+    "t10": 0
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 717.34,
+    "limitHigh": 739.3,
+    "gapSkipAbove": 753.94,
+    "invalidBelow": 731.8800048828125
+   },
+   "group": {
+    "total": 1,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "GLD",
+   "name": "GLD黃金",
+   "tag": "黃金",
+   "mkt": "US",
+   "status": "ok",
+   "asOf": "2026-10-14",
+   "close": 373.48199462890625,
+   "chgPct": -2.15,
+   "vol": 4761,
+   "volRatio": 0.59,
+   "ret20Pct": -4.66,
+   "distHi60Pct": -13.03,
+   "hi20": 401.17,
+   "hi60": 429.42,
+   "ma5": 380.1,
+   "ma20": 385.94,
+   "ma60": 393.39,
+   "aboveMa20": false,
+   "low": 373.3800048828125,
+   "inst": {
+    "date": null,
+    "pending": true,
+    "f10": 0,
+    "t10": 0
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 366.01,
+    "limitHigh": 377.22,
+    "gapSkipAbove": 384.69,
+    "invalidBelow": 373.3800048828125
+   },
+   "group": {
+    "total": 2,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "IAU",
+   "name": "IAU黃金",
+   "tag": "黃金",
+   "mkt": "US",
+   "status": "ok",
+   "asOf": "2026-10-14",
+   "close": 76.58000183105469,
+   "chgPct": -2.13,
+   "vol": 2252,
+   "volRatio": 0.53,
+   "ret20Pct": -4.66,
+   "distHi60Pct": -13,
+   "hi20": 82.23,
+   "hi60": 88.02,
+   "ma5": 77.94,
+   "ma20": 79.13,
+   "ma60": 80.64,
+   "aboveMa20": false,
+   "low": 76.55000305175781,
+   "inst": {
+    "date": null,
+    "pending": true,
+    "f10": 0,
+    "t10": 0
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 75.05,
+    "limitHigh": 77.35,
+    "gapSkipAbove": 78.88,
+    "invalidBelow": 76.55000305175781
+   },
+   "group": {
+    "total": 2,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "CRWV",
+   "name": "CoreWeave",
+   "tag": "雲端",
+   "mkt": "US",
+   "status": "ok",
+   "asOf": "2026-10-14",
+   "close": 65.16000366210938,
+   "chgPct": -16.26,
+   "vol": 58739,
+   "volRatio": 1.9,
+   "ret20Pct": -21.82,
+   "distHi60Pct": -44.54,
+   "hi20": 91.72,
+   "hi60": 117.49,
+   "ma5": 77.38,
+   "ma20": 84.44,
+   "ma60": 85.88,
+   "aboveMa20": false,
+   "low": 65.05500030517578,
+   "inst": {
+    "date": null,
+    "pending": true,
+    "f10": 0,
+    "t10": 0
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 63.86,
+    "limitHigh": 65.81,
+    "gapSkipAbove": 67.11,
+    "invalidBelow": 65.05500030517578
+   },
+   "group": {
+    "total": 2,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "SNPS",
+   "name": "Synopsys",
+   "tag": "EDA",
+   "mkt": "US",
+   "status": "ok",
+   "asOf": "2026-10-14",
+   "close": 483.94000244140625,
+   "chgPct": -2.14,
+   "vol": 955,
+   "volRatio": 0.38,
+   "ret20Pct": 27.87,
+   "distHi60Pct": -5.57,
+   "hi20": 509.99,
+   "hi60": 512.49,
+   "ma5": 497.74,
+   "ma20": 453.7,
+   "ma60": 418.61,
+   "aboveMa20": true,
+   "low": 478.8800048828125,
+   "inst": {
+    "date": null,
+    "pending": true,
+    "f10": 0,
+    "t10": 0
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 474.26,
+    "limitHigh": 488.78,
+    "gapSkipAbove": 498.46,
+    "invalidBelow": 478.8800048828125
+   },
+   "group": {
+    "total": 2,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "CDNS",
+   "name": "Cadence",
+   "tag": "EDA",
+   "mkt": "US",
+   "status": "ok",
+   "asOf": "2026-10-14",
+   "close": 331.989990234375,
+   "chgPct": -0.66,
+   "vol": 695,
+   "volRatio": 0.29,
+   "ret20Pct": 18.61,
+   "distHi60Pct": -8.27,
+   "hi20": 359.55,
+   "hi60": 361.91,
+   "ma5": 343.26,
+   "ma20": 329.37,
+   "ma60": 323.04,
+   "aboveMa20": true,
+   "low": 329.17999267578125,
+   "inst": {
+    "date": null,
+    "pending": true,
+    "f10": 0,
+    "t10": 0
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 325.35,
+    "limitHigh": 335.31,
+    "gapSkipAbove": 341.95,
+    "invalidBelow": 329.17999267578125
+   },
+   "group": {
+    "total": 2,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "AXTI",
+   "name": "AXT磷化銦",
+   "tag": "光通訊",
+   "mkt": "US",
+   "status": "ok",
+   "asOf": "2026-10-14",
+   "close": 62.45000076293945,
+   "chgPct": -3.37,
+   "vol": 4246,
+   "volRatio": 0.49,
+   "ret20Pct": -2.88,
+   "distHi60Pct": -36.14,
+   "hi20": 86.66,
+   "hi60": 97.79,
+   "ma5": 65.84,
+   "ma20": 75,
+   "ma60": 68.29,
+   "aboveMa20": false,
+   "low": 61.52000045776367,
+   "inst": {
+    "date": null,
+    "pending": true,
+    "f10": 0,
+    "t10": 0
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 61.2,
+    "limitHigh": 63.07,
+    "gapSkipAbove": 64.32,
+    "invalidBelow": 61.52000045776367
+   },
+   "group": {
+    "total": 8,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "AAOI",
+   "name": "祥茂光電",
+   "tag": "光通訊",
+   "mkt": "US",
+   "status": "ok",
+   "asOf": "2026-10-14",
+   "close": 88.69999694824219,
+   "chgPct": -9.29,
+   "vol": 6999,
+   "volRatio": 0.74,
+   "ret20Pct": -8.31,
+   "distHi60Pct": -44.9,
+   "hi20": 130.16,
+   "hi60": 160.99,
+   "ma5": 100.54,
+   "ma20": 105.95,
+   "ma60": 110.95,
+   "aboveMa20": false,
+   "low": 88.3772964477539,
+   "inst": {
+    "date": null,
+    "pending": true,
+    "f10": 0,
+    "t10": 0
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 86.93,
+    "limitHigh": 89.59,
+    "gapSkipAbove": 91.36,
+    "invalidBelow": 88.3772964477539
+   },
+   "group": {
+    "total": 8,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "SIVE.ST",
+   "name": "Sivers矽光子(瑞典)",
+   "tag": "光通訊",
+   "mkt": "US",
+   "status": "ok",
+   "asOf": "2026-10-14",
+   "close": 26.1200008392334,
+   "chgPct": -2.61,
+   "vol": 3760,
+   "volRatio": 0.75,
+   "ret20Pct": -8.61,
+   "distHi60Pct": -44.59,
+   "hi20": 35.78,
+   "hi60": 47.14,
+   "ma5": 28.44,
+   "ma20": 31.75,
+   "ma60": 32.44,
+   "aboveMa20": false,
+   "low": 25.799999237060547,
+   "inst": {
+    "date": null,
+    "pending": true,
+    "f10": 0,
+    "t10": 0
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 25.6,
+    "limitHigh": 26.38,
+    "gapSkipAbove": 26.9,
+    "invalidBelow": 25.799999237060547
+   },
+   "group": {
+    "total": 8,
+    "strong": 0
+   }
+  },
+  {
+   "sym": "GSHD",
+   "name": "Goosehead保險",
+   "tag": "保險",
+   "mkt": "US",
+   "status": "ok",
+   "asOf": "2026-10-14",
+   "close": 44.61009979248047,
+   "chgPct": 0.38,
+   "vol": 85,
+   "volRatio": 0.15,
+   "ret20Pct": -21,
+   "distHi60Pct": -40.06,
+   "hi20": 56.47,
+   "hi60": 74.42,
+   "ma5": 44.38,
+   "ma20": 45.97,
+   "ma60": 58.64,
+   "aboveMa20": false,
+   "low": 43.02000045776367,
+   "inst": {
+    "date": null,
+    "pending": true,
+    "f10": 0,
+    "t10": 0
+   },
+   "signals": {
+    "S1": false,
+    "S1v": false,
+    "W1": false,
+    "breakout": false,
+    "volSpike": false
+   },
+   "entry": {
+    "limitLow": 43.72,
+    "limitHigh": 45.06,
+    "gapSkipAbove": 45.95,
+    "invalidBelow": 43.02000045776367
+   },
+   "group": {
+    "total": 1,
+    "strong": 0
+   }
+  }
+ ]
+}
