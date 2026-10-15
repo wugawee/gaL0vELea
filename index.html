@@ -117,6 +117,8 @@ const STOCKS=[
   {sym:"3450.TW",name:"聯鈞",mkt:"TW",cur:"TWD",tag:"光通訊"},
   {sym:"3008.TW",name:"大立光",mkt:"TW",cur:"TWD",tag:"光學鏡頭"},
   {sym:"6442.TW",name:"光聖",mkt:"TW",cur:"TWD",tag:"光通訊"},
+  {sym:"2882.TW",name:"國泰金",mkt:"TW",cur:"TWD",tag:"金控"},
+  {sym:"6021.TWO",name:"美好證",mkt:"TW",cur:"TWD",tag:"證券"},
   {sym:"5904.TWO",name:"寶雅",mkt:"TW",cur:"TWD",tag:"零售"},
   {sym:"5314.TWO",name:"世紀民生",mkt:"TW",cur:"TWD",tag:"保健"},
   {sym:"009826.TW",name:"貝萊德世界股票",mkt:"TW",cur:"TWD",tag:"全球股"},
@@ -152,7 +154,7 @@ const STOCKS=[
 ];
 
 // 股名後小字標籤＋同標籤排在一起
-const TAG_ORDER=["市值型","主動式","高股息","全球股","科技型","黃金","晶圓代工","IC設計","晶片","EDA","記憶體","封測","設備","PCB","散熱","光通訊","連接線","電源","伺服器","面板","雲端","AI軟體","資訊服務","綠能","零售","保健","消費電子","光學鏡頭","電商","平台","電動車","太空","保險"];
+const TAG_ORDER=["市值型","主動式","高股息","全球股","科技型","黃金","晶圓代工","IC設計","晶片","EDA","記憶體","封測","設備","PCB","散熱","光通訊","連接線","電源","伺服器","面板","雲端","AI軟體","資訊服務","綠能","零售","保健","消費電子","光學鏡頭","電商","平台","電動車","太空","保險","金控","證券"];
 const tagIdx=s=>{const i=TAG_ORDER.indexOf(s.tag||'');return i<0?999:i;};
 const sortTag=arr=>arr.map((s,i)=>[s,i]).sort((x,y)=>tagIdx(x[0])-tagIdx(y[0])||x[1]-y[1]).map(x=>x[0]);
 const nmTag=s=>s.tag?`${s.name}<span style="font-size:.8em;color:#8b949e;font-weight:400">-${s.tag}</span>`:s.name;
@@ -521,9 +523,34 @@ function processStock(sym,data){
   DB[sym]={data,closes,ma5:_ma5,ma10:ma(closes,10),ma20:_ma20,ma60:ma(closes,60),kd:_kd,macd:_macd,pats:_pats,piv:_piv,levels:findLevels(data,_piv),sigs:calcSignals(data,_ma5,_ma20,_kd,_macd,_pats,_piv),last:data[data.length-1],prev:(data.length>=2?data[data.length-2]:data[data.length-1])};
 }
 
+// ── 風險徽章：月線/季線用本頁均線；外資大賣讀 GitHub 每日篩選結果 data/latest.json（官方法人資料）──
+let SCREEN={stocks:{},at:0,asOf:null};
+async function loadScreen(){
+  if(Date.now()-SCREEN.at<15*60*1000)return;
+  try{
+    const r=await fetch(`data/latest.json?_t=${Date.now()}`,{cache:'no-store'});
+    if(!r.ok)return;
+    const j=await r.json();const m={};(j.stocks||[]).forEach(x=>{if(x&&x.sym)m[x.sym]=x;});
+    SCREEN={stocks:m,at:Date.now(),asOf:j.asOfTW||null};
+  }catch(e){}
+}
+function riskBadges(s,db,compact){
+  const out=[];if(!db)return out;
+  const last=db.last,prev=db.prev;
+  const m20=db.ma20[db.ma20.length-1],m20p=db.ma20[db.ma20.length-2],m60=db.ma60[db.ma60.length-1];
+  const pc=(a,b)=>rnd((a/b-1)*100);
+  const st=compact?' style="font-size:9px;padding:1px 4px"':'';
+  if(m20!=null&&last.c<m20)out.push(`<span class="badge s-grn"${st} title="收盤 ${last.c} 低於月線 ${m20}（${pc(last.c,m20)}%）${(m20p!=null&&prev.c>=m20p)?'，今日跌破':''}">${compact?'月線↓':'跌破月線'}</span>`);
+  if(m60!=null&&last.c<m60)out.push(`<span class="badge s-grn"${st} title="收盤 ${last.c} 低於季線 ${m60}（${pc(last.c,m60)}%）">${compact?'季線↓':'跌破季線'}</span>`);
+  const sc=SCREEN.stocks[s.sym],ins=sc&&sc.inst;
+  if(ins&&ins.date&&ins.fPct!=null&&ins.fPct<=-10)out.push(`<span class="badge s-grn"${st} title="外資賣超 ${Math.abs(ins.f)} 張，占當日成交量 ${Math.abs(ins.fPct)}%（證交所/櫃買/FinMind 官方資料 ${ins.date}）">${compact?'外資↓':'外資大賣'}${Math.round(Math.abs(ins.fPct))}%</span>`);
+  return out;
+}
+
 // 分批並行（每批5支，避免代理塞車）
 async function loadAll(){
   document.getElementById('mainView').innerHTML='<div class="loading">🔄 載入即時股價中...</div>';
+  loadScreen();
   let done=0;
   const BATCH=5;
   for(let i=0;i<STOCKS.length;i+=BATCH){
@@ -579,6 +606,7 @@ function sumRow(s){
     const cls=p.bull===true?'s-warn':p.bull===false?'s-grn':'s-gold';
     al.push(`<span class="badge ${cls}">${p.type}</span>`);
   });
+  al.push(...riskBadges(s,db,false));
   if(!al.length)al.push(`<span class="badge s-gray">—</span>`);
   return`<tr style="cursor:pointer" onclick="selectSym('${s.sym}','${s.mkt==='TW'?'tw':'us'}')">
     <td class="nm">${nmTag(s)}</td><td style="color:#8b949e">${s.sym}</td>
@@ -598,7 +626,7 @@ function renderSummary(){
   const catBlock=(arr,label)=>arr.length?`<tr><td colspan="11" style="background:#1a1f26;color:#e3b341;font-weight:700;text-align:left;font-size:12px;padding:6px 16px">${label}</td></tr>`+sortTag(arr).map(sumRow).join(''):'';
   const grp=list=>({idx:list.filter(s=>s.sym.startsWith('^')),etf:list.filter(s=>CAT_ETF.has(s.sym)),ai:list.filter(s=>CAT_AI.has(s.sym)),min:list.filter(s=>!s.sym.startsWith('^')&&!CAT_ETF.has(s.sym)&&!CAT_AI.has(s.sym))});
   const twG=grp(tw),usG=grp(us);
-  const head=`<tr><th>名稱</th><th>代號</th><th>收盤</th><th style="color:#e3b341">MA5</th><th style="color:#bc8cff">MA20</th><th style="color:#26a641">MA60</th><th>K值</th><th>D值</th><th>KD比</th><th>MACD</th><th style="text-align:left">⚠️ 入場提醒</th></tr>`;
+  const head=`<tr><th>名稱</th><th>代號</th><th>收盤</th><th style="color:#e3b341">MA5</th><th style="color:#bc8cff">MA20</th><th style="color:#26a641">MA60</th><th>K值</th><th>D值</th><th>KD比</th><th>MACD</th><th style="text-align:left">⚠️ 入場／風險提醒</th></tr>`;
   document.getElementById('mainView').innerHTML=`
 <div class="panel">
   <div style="font-size:14px;font-weight:700;margin-bottom:8px;color:#e3b341">📊 總覽 ｜ 點任一列看K線　<span id="dataDate" style="font-size:11px;color:#8b949e;font-weight:400"></span></div>
@@ -610,7 +638,8 @@ function renderSummary(){
   </tbody></table>
   <div style="margin-top:10px;font-size:10px;color:#8b949e;line-height:1.8">
     <span class="badge s-warn">🔴買入</span><span class="badge s-grn">🟢賣出</span>＝近3日的果斷訊號（紅＝買、綠＝賣）。以 K棒型態為觸發（W底/三重底/頭肩底突破、M頭/三重頂/頭肩頂跌破 直接出訊號；單根/雙根/三根型態需加確認：均線/KD交叉、MACD翻轉、突破前高低、放量）；沒有K棒型態的日子不出訊號。買入後進入「持有」：只有 收盤跌破停損 / M頭類跌破 / 看跌型態＋確認且跌破MA20 才會喊賣，其餘看跌型態只標 <span class="badge s-gold">⚠️注意</span> 續抱。滑鼠停在徽章上看理由<br>
-    其他提醒：<span class="badge s-gold">KD金叉</span><span class="badge s-blue">突破/近20MA</span><span class="badge s-grn">MACD翻正</span>
+    其他提醒：<span class="badge s-gold">KD金叉</span><span class="badge s-blue">突破/近20MA</span><span class="badge s-grn">MACD翻正</span><br>
+    風險提醒：<span class="badge s-grn">跌破月線</span><span class="badge s-grn">跌破季線</span>＝收盤低於 MA20 / MA60；<span class="badge s-grn">外資大賣N%</span>＝外資當日賣超占成交量 ≥10%（官方法人資料，每個交易日 18:05 更新，滑鼠停上去看張數與日期）
     看漲型態：<span class="badge s-warn">⭐晨星</span><span class="badge s-warn">🔨錘子線</span><span class="badge s-warn">倒錘線</span><span class="badge s-warn">蜻蜓十字</span><span class="badge s-warn">🔴看漲吞噬</span><span class="badge s-warn">貫穿線</span><span class="badge s-warn">多頭孕線</span><span class="badge s-warn">鑷子底</span><span class="badge s-warn">三白兵</span><span class="badge s-warn">上升三法</span><span class="badge s-warn">W底/三重底/頭肩底突破</span>
     看跌型態：<span class="badge s-grn">黃昏星</span><span class="badge s-grn">上吊線</span><span class="badge s-grn">射擊之星</span><span class="badge s-grn">墓碑十字</span><span class="badge s-grn">看跌吞噬</span><span class="badge s-grn">烏雲蓋頂</span><span class="badge s-grn">空頭孕線</span><span class="badge s-grn">鑷子頂</span><span class="badge s-grn">三烏鴉</span><span class="badge s-grn">下降三法</span><span class="badge s-grn">M頭/三重頂/頭肩頂跌破</span>
     中性：<span class="badge s-gold">✛十字線</span>
@@ -644,7 +673,7 @@ function cardHTML(s){
   const chg=rnd(db.last.c-db.prev.c),chgP=rnd(chg/db.prev.c*100),cls=chg>0?'up':chg<0?'dn':'fl';
   return`<div class="sc${s.sym===curSym?' on':''}" onclick="curSym='${s.sym}';renderChartInline('${s.sym}','${s.mkt}')">
     <div class="sc-nm">${nmTag(s)}</div><div class="sc-pr ${cls}">${db.last.c}</div>
-    <div class="sc-ch ${cls}">${chg>0?'+':''}${chg} (${chgP>0?'+':''}${chgP}%)</div></div>`;
+    <div class="sc-ch ${cls}">${chg>0?'+':''}${chg} (${chgP>0?'+':''}${chgP}%)</div>${(()=>{const rb=riskBadges(s,db,true);return rb.length?`<div style="margin-top:3px;line-height:1.2">${rb.join('')}</div>`:'';})()}</div>`;
 }
 function renderList(mkt){
   const _l=STOCKS.filter(s=>s.mkt===mkt);
