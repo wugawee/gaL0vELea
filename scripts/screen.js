@@ -1,5 +1,5 @@
 // ============================================================
-// 收盤技術篩選 v3（GitHub Actions 每日自動執行）
+// 收盤技術篩選 v4（GitHub Actions 每日自動執行）
 // 讀 index.html 的 STOCKS 清單 → Worker 抓 1 年日線 + 法人
 // → 用證交所／櫃買中心官方資料補 Yahoo 缺的日線（最新一天常是空的）；櫃買被擋就改走 Worker 或 FinMind
 // → 算指標、跑篩選 → 寫 data/latest.json、data/bars.json、data/history/YYYY-MM-DD.json
@@ -58,10 +58,10 @@ function recentTradeDates(n) {
 }
 
 // ── 3. Yahoo 日線（經 Worker，備援直連）──
-async function fetchChart(sym) {
+async function fetchChart(sym, range = '1y') {
   const urls = [
-    `${WORKER}/?symbol=${encodeURIComponent(sym)}&range=1y&interval=1d&_t=${Date.now()}`,
-    `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?range=1y&interval=1d`,
+    `${WORKER}/?symbol=${encodeURIComponent(sym)}&range=${range}&interval=1d&_t=${Date.now()}`,
+    `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?range=${range}&interval=1d`,
   ];
   let last;
   for (const u of urls) {
@@ -176,12 +176,25 @@ async function fetchInstFinMind(id, start) {
 
 // ── 5. 指標與篩選 ──
 const ma = (bars, n, i) => (i + 1 >= n && i >= 0 ? avg(bars.slice(i - n + 1, i + 1).map(b => b.c)) : null);
-function analyze(s, bars, inst) {
+function analyze(s, bars, inst, idxBars) {
   const i = bars.length - 1, x = bars[i], p = bars[i - 1];
   const prev20 = bars.slice(Math.max(0, i - 20), i);
   const av20 = avg(prev20.map(b => b.v));
   const hi20 = Math.max(...prev20.map(b => b.c));
   const hi60 = Math.max(...bars.slice(Math.max(0, i - 59), i + 1).map(b => b.h));
+  const lo60 = Math.min(...bars.slice(Math.max(0, i - 59), i + 1).map(b => b.l));
+  const eq60 = (hi60 + lo60) / 2; // 60 日區間的 50%：收盤在下方＝折價區，上方＝溢價區
+  const zone = x.c < eq60 ? '折價' : '溢價';
+  // 掃低回升：盤中跌破前 5 日最低、收盤收回其上（掃高假突破則相反）
+  const prior5 = bars.slice(Math.max(0, i - 5), i);
+  const pl5 = prior5.length ? Math.min(...prior5.map(b => b.l)) : null, ph5 = prior5.length ? Math.max(...prior5.map(b => b.h)) : null;
+  const sweepLow5 = pl5 != null && x.l < pl5 && x.c > pl5, sweepHigh5 = ph5 != null && x.h > ph5 && x.c < ph5;
+  // 相對強勢（SMT 的台股版）：加權指數今天跌破前 5 日最低，這檔沒破
+  let rsIdx5 = null;
+  if (idxBars && idxBars.length > 6) {
+    const k = idxBars.findIndex(b => b.d === x.d);
+    if (k >= 5) { const ipl5 = Math.min(...idxBars.slice(k - 5, k).map(b => b.l)); rsIdx5 = idxBars[k].l < ipl5 && pl5 != null && x.l >= pl5; }
+  }
   const ma5 = ma(bars, 5, i), ma20 = ma(bars, 20, i), ma60 = ma(bars, 60, i);
   const ma20p5 = ma(bars, 20, i - 5), ma20p = ma(bars, 20, i - 1);
   const ret20 = i >= 20 ? x.c / bars[i - 20].c - 1 : null;
@@ -210,15 +223,22 @@ function analyze(s, bars, inst) {
   // 波段 W1（回測：20 日中位數 +7.3%，上漲機率 68%，n=42）：均線多頭且月線向上、今天剛站回月線、法人 10 日淨買為正、近 20 日漲幅 <20%
   const reclaim = !!(ma20 && ma20p && x.c > ma20 && p.c <= ma20p);
   const W1 = !!(s.mkt === 'TW' && ma5 && ma20 && ma60 && ma20p5 && ma5 > ma20 && ma20 > ma60 && ma20 > ma20p5 && reclaim && (f10 > 0 || t10 > 0) && ret20 != null && ret20 < 0.20);
+  // 拉回相對強勢 D（回測：20 日中位數 +10.5%、勝率 76%、n=21）：折價區 + 月線在季線上 + 指數破 5 日低而個股守住
+  const upTrend = !!(ma20 && ma60 && ma20 > ma60);
+  const D = !!(s.mkt === 'TW' && zone === '折價' && upTrend && rsIdx5);
+  // 拉回掃低 B（回測：持有 20 日中位數 +6.8%、勝率 71%、n=63；但在 10% 停損下勝率僅 49%）：折價區 + 月線在季線上 + 掃 5 日低回升
+  const Bsig = !!(s.mkt === 'TW' && zone === '折價' && upTrend && sweepLow5);
+  // 停損級距（依波動）：一天動 <2% → 10%，2~2.5% → 12%，≥2.5% → 15%
+  const stopTierPct = dailyVol < 2 ? 10 : dailyVol < 2.5 ? 12 : 15;
 
   return {
     sym: s.sym, name: s.name, tag: s.tag, mkt: s.mkt, status: 'ok', asOf: x.d, barSrc: x.src,
-    close: x.c, chgPct: r2(chg * 100), vol: Math.round(x.v / 1000), volRatio: r2(volRatio), volReliable,
+    close: r2(x.c), chgPct: r2(chg * 100), vol: Math.round(x.v / 1000), volRatio: r2(volRatio), volReliable,
     ret20Pct: r2(ret20 == null ? null : ret20 * 100), distHi60Pct: r2((x.c / hi60 - 1) * 100), hi20: r2(hi20), hi60: r2(hi60),
-    ma5: r2(ma5), ma20: r2(ma20), ma60: r2(ma60), aboveMa20: ma20 ? x.c > ma20 : null, dailyVolPct: r2(dailyVol),
-    low: x.l, inst: instOut,
-    signals: { S1, S1v, W1, breakout, volSpike: volRatio != null && volRatio >= 3, reclaimMa20: reclaim },
-    entry: { limitLow: r2(x.c * 0.98), limitHigh: r2(x.c * 1.01), gapSkipAbove: r2(x.c * 1.03), invalidBelow: x.l },
+    ma5: r2(ma5), ma20: r2(ma20), ma60: r2(ma60), aboveMa20: ma20 ? x.c > ma20 : null, dailyVolPct: r2(dailyVol), stopTierPct,
+    low: r2(x.l), lo60: r2(lo60), eq60: r2(eq60), zone, inst: instOut,
+    signals: { S1, S1v, W1, D, B: Bsig, breakout, volSpike: volRatio != null && volRatio >= 3, reclaimMa20: reclaim, sweepLow5, sweepHigh5, rsIdx5 },
+    entry: { limitLow: r2(x.c * 0.98), limitHigh: r2(x.c * 1.01), gapSkipAbove: r2(x.c * 1.03), invalidBelow: r2(x.l) },
   };
 }
 
@@ -253,13 +273,30 @@ function analyze(s, bars, inst) {
     await sleep(MOCK ? 0 : 300);
   }
 
-  // 6b. 找出 Yahoo 缺的日期（最新一天幾乎一定缺），用官方資料補；最多補最近 12 個平日
+  // 6a-2. 沿用上一次存檔裡的官方 K 線（證交所/櫃買/FinMind 來源），覆蓋 Yahoo 的同日資料：歷史成交量會逐漸都變成官方數字
+  let prevBars = {};
+  try { prevBars = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'bars.json'), 'utf8')); } catch (e) { prevBars = {}; }
+  let reused = 0;
+  if (!MOCK) for (const s of twIds) {
+    const pv = prevBars[s.sym] && prevBars[s.sym].bars; if (!pv || !raw[s.sym]) continue;
+    for (const ob of pv) {
+      if (!ob || !ob.src || ob.src === 'yahoo' || ob.src === 'est') continue;
+      const k = raw[s.sym].bars.findIndex(b => b.d === ob.d);
+      if (k >= 0) raw[s.sym].bars[k] = { ...ob }; else raw[s.sym].bars.push({ ...ob });
+      reused++;
+    }
+    raw[s.sym].bars.sort((x, y) => (x.d < y.d ? -1 : 1));
+  }
+  srcLog.reusedOfficialBars = reused;
+
+  // 6b. 用官方資料補 Yahoo 缺的日期，而且「最新一個平日」一律抓官方（Yahoo 就算有也覆蓋：Yahoo 成交量偏低、價格有浮點誤差）
   if (!MOCK) {
     for (const d of dates) {
       const missing = twIds.filter(s => raw[s.sym] && !raw[s.sym].bars.some(b => b.d === d));
-      if (!missing.length) continue;
-      if (missing.some(s => !s.sym.endsWith('.TWO'))) { const o = await fetchTWSEDay(d); if (o) { official.twse[d] = o; srcLog.twseDays.push(d); } }
-      if (missing.some(s => s.sym.endsWith('.TWO'))) { const o = await fetchTPExDay(d); if (o) { official.tpex[d] = o; srcLog.tpexDays.push(d); } }
+      const force = dates.indexOf(d) < 3; // 最近 3 個平日一律抓官方（涵蓋連假），其餘只補缺
+      if (!missing.length && !force) continue;
+      if (force || missing.some(s => !s.sym.endsWith('.TWO'))) { const o = await fetchTWSEDay(d); if (o) { official.twse[d] = o; srcLog.twseDays.push(d); } }
+      if (force || missing.some(s => s.sym.endsWith('.TWO'))) { const o = await fetchTPExDay(d); if (o) { official.tpex[d] = o; srcLog.tpexDays.push(d); } }
       await sleep(400);
     }
     // 當日法人（官方優先，覆蓋 FinMind）：只補最新一個有官方行情的交易日
@@ -277,7 +314,8 @@ function analyze(s, bars, inst) {
         const pool = isOTC ? official.tpex : official.twse;
         const has = d => b.some(x => x.d === d);
         // 1) 官方日線
-        for (const d of dates) { if (has(d)) continue; const o = pool[d] && pool[d][id]; if (o) b.push({ d, ...o, src: isOTC ? 'tpex' : 'twse' }); }
+        for (const d of dates) { const o = pool[d] && pool[d][id]; if (!o) continue; const nb = { d, ...o, src: isOTC ? 'tpex' : 'twse' }; const k = b.findIndex(x => x.d === d); if (k >= 0) b[k] = nb; else b.push(nb); }
+        b.sort((x, y) => (x.d < y.d ? -1 : 1));
         // 2) 還缺的交易日（以官方行事曆判斷；官方全掛就不判斷）→ FinMind 日線
         const calendarKnown = srcLog.twseDays.length > 0 || srcLog.tpexDays.length > 0;
         const isTradeDay = d => !calendarKnown || !!(official.twse[d] || official.tpex[d]);
@@ -294,9 +332,13 @@ function analyze(s, bars, inst) {
         const oi = isOTC ? offInst.tpex : offInst.twse, od = isOTC ? srcLog.tpexDays[0] : srcLog.twseDays[0];
         if (oi && od && oi[id]) { inst = inst || {}; inst[od] = oi[id]; }
       }
+      if (!MOCK && s.sym === '^TWII') {
+        const want = dates.find(d => official.twse[d] || official.tpex[d]) || null;
+        if (want && !b.some(x => x.d === want)) { const e = await fetchEstBar(s.sym, want); if (e) { b.push(e); b.sort((x, y) => (x.d < y.d ? -1 : 1)); srcLog.estBars.push(s.sym); } }
+      }
       bars[s.sym] = { bars: b, inst };
-      if (s.sym.startsWith('^')) { results.push({ sym: s.sym, name: s.name, mkt: s.mkt, status: 'ok', index: true, asOf: b[b.length - 1].d, close: b[b.length - 1].c, chgPct: r2((b[b.length - 1].c / b[b.length - 2].c - 1) * 100) }); continue; }
-      results.push(analyze(s, b, inst));
+      if (s.sym.startsWith('^')) { results.push({ sym: s.sym, name: s.name, mkt: s.mkt, status: 'ok', index: true, asOf: b[b.length - 1].d, close: r2(b[b.length - 1].c), chgPct: r2((b[b.length - 1].c / b[b.length - 2].c - 1) * 100) }); continue; }
+      results.push(analyze(s, b, inst, (bars['^TWII'] || {}).bars || (raw['^TWII'] || {}).bars || null));
     } catch (e) {
       errors.push({ sym: s.sym, stage: 'analyze', msg: String(e.message || e) });
       results.push({ sym: s.sym, name: s.name, tag: s.tag, mkt: s.mkt, status: 'fail' });
@@ -323,6 +365,8 @@ function analyze(s, bars, inst) {
       short: results.filter(r => r.signals && r.signals.S1).map(r => r.sym),
       shortNoInst: results.filter(r => r.signals && r.signals.S1v && !r.signals.S1).map(r => r.sym),
       swing: results.filter(r => r.signals && r.signals.W1).map(r => r.sym),
+      rsPull: results.filter(r => r.signals && r.signals.D).map(r => r.sym),
+      sweepPull: results.filter(r => r.signals && r.signals.B).map(r => r.sym),
     },
     groups: byTag, ok: results.filter(r => r.status === 'ok').length, failed: results.filter(r => r.status === 'fail').length,
     errors, stocks: results,
@@ -331,8 +375,18 @@ function analyze(s, bars, inst) {
   fs.writeFileSync(path.join(ROOT, 'data', 'latest.json'), JSON.stringify(out, null, 1));
   fs.writeFileSync(path.join(ROOT, 'data', 'bars.json'), JSON.stringify(bars));
   if (asOfTW) fs.writeFileSync(path.join(ROOT, 'data', 'history', asOfTW + '.json'), JSON.stringify(out, null, 1));
+  // 3 年日線（回測用，含空頭年份）：每 30 天更新一次
+  if (!MOCK) {
+    const p3 = path.join(ROOT, 'data', 'bars3y.json'); let old = null;
+    try { old = JSON.parse(fs.readFileSync(p3, 'utf8')); } catch (e) { old = null; }
+    if (!old || !old.generatedAt || Date.now() - Date.parse(old.generatedAt) > 30 * 86400e3) {
+      const b3 = { generatedAt: new Date().toISOString(), bars: {} };
+      for (const s of stocks) { try { b3.bars[s.sym] = (await fetchChart(s.sym, '3y')).map(b => ({ d: b.d, o: r2(b.o), h: r2(b.h), l: r2(b.l), c: r2(b.c), v: b.v })); } catch (e) { } await sleep(300); }
+      fs.writeFileSync(p3, JSON.stringify(b3)); console.log('bars3y 更新:', Object.keys(b3.bars).length, '檔');
+    }
+  }
   console.log(`asOf=${asOfTW} ok=${out.ok} failed=${out.failed} twOnAsOf=${out.coverage.twOnAsOf}/${twIds.length} todayInst=${out.coverage.withTodayInst} src=${JSON.stringify(srcLog)}`);
-  console.log(`short=${out.lists.short.join(',') || '-'} swing=${out.lists.swing.join(',') || '-'}`);
+  console.log(`short=${out.lists.short.join(',') || '-'} swing=${out.lists.swing.join(',') || '-'} rsPull=${out.lists.rsPull.join(',') || '-'} sweepPull=${out.lists.sweepPull.join(',') || '-'}`);
   if (errors.length) console.log('errors:', JSON.stringify(errors));
   if (out.ok < stocks.length * 0.9) { console.error('抓取成功率低於 90%，標記失敗'); process.exit(1); }
 })();
