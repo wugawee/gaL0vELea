@@ -268,6 +268,25 @@ async function fetchStock(sym,tries=0){
 
 function ma(arr,p){return arr.map((_,i)=>i<p-1?null:rnd(arr.slice(i-p+1,i+1).reduce((a,b)=>a+b,0)/p));}
 function calcKD(data,p=9){let K=50,D=50;return data.map((d,i)=>{const sl=data.slice(Math.max(0,i-p+1),i+1);const hi=Math.max(...sl.map(x=>x.h)),lo=Math.min(...sl.map(x=>x.l));const rsv=hi===lo?50:((d.c-lo)/(hi-lo))*100;K=(2/3)*K+(1/3)*rsv;D=(2/3)*D+(1/3)*K;return{K:rnd(K),D:rnd(D)};});}
+// RSI（Wilder 平滑法）：前 p 根的平均漲跌當起點，之後 平均=(前平均×(p-1)+今天)/p；資料不足 p+1 根回 null
+function calcRSI(closes,p){
+  const out=closes.map(()=>null);
+  if(closes.length<=p)return out;
+  const val=(ag,al)=>al===0?(ag===0?50:100):rnd(100-100/(1+ag/al),1);
+  let g=0,l=0;
+  for(let i=1;i<=p;i++){const d=closes[i]-closes[i-1];if(d>0)g+=d;else l-=d;}
+  let ag=g/p,al=l/p;
+  out[p]=val(ag,al);
+  for(let i=p+1;i<closes.length;i++){
+    const d=closes[i]-closes[i-1];
+    ag=(ag*(p-1)+(d>0?d:0))/p;al=(al*(p-1)+(d<0?-d:0))/p;
+    out[i]=val(ag,al);
+  }
+  return out;
+}
+// RSI 標籤門檻：6日 ≥80 超買／≤20 超賣；14日 ≥70 超買／≤30 超賣（只描述漲跌急緩，不是買賣訊號）
+function rsiState(v,p){if(v==null)return 0;const hi=p===6?80:70,lo=p===6?20:30;return v>=hi?1:v<=lo?-1:0;}
+function rsiCell(v,p){if(v==null)return'—';const st=rsiState(v,p);return v.toFixed(1)+(st>0?'<span class="badge s-gold">超買</span>':st<0?'<span class="badge s-blue">超賣</span>':'');}
 function calcMACD(closes){const ema=(arr,pp)=>{const k=2/(pp+1);let e=arr[0];return arr.map((v,i)=>{if(i===0)return e;e=v*k+e*(1-k);return rnd(e,4);});};const ef=ema(closes,12),es=ema(closes,26);const dif=closes.map((_,i)=>rnd(ef[i]-es[i],4));const esig=ema(dif,9);return{dif,hist:dif.map((v,i)=>rnd(v-esig[i],4))};}
 
 // ── K棒型態偵測（單根/雙根/三根/五根，含「出現在漲勢末端或跌勢末端」的位置判斷）──
@@ -523,7 +542,7 @@ function processStock(sym,data){
   const closes=data.map(d=>d.c);
   const _piv=findPivots(data),_ma5=ma(closes,5),_ma20=ma(closes,20),_kd=calcKD(data),_macd=calcMACD(closes);
   const _pats=[...detectPatterns(data),...detectForms(data,_piv)];
-  DB[sym]={data,closes,ma5:_ma5,ma10:ma(closes,10),ma20:_ma20,ma60:ma(closes,60),kd:_kd,macd:_macd,pats:_pats,piv:_piv,levels:findLevels(data,_piv),sigs:calcSignals(data,_ma5,_ma20,_kd,_macd,_pats,_piv),last:data[data.length-1],prev:(data.length>=2?data[data.length-2]:data[data.length-1])};
+  DB[sym]={data,closes,ma5:_ma5,ma10:ma(closes,10),ma20:_ma20,ma60:ma(closes,60),rsi6:calcRSI(closes,6),rsi14:calcRSI(closes,14),kd:_kd,macd:_macd,pats:_pats,piv:_piv,levels:findLevels(data,_piv),sigs:calcSignals(data,_ma5,_ma20,_kd,_macd,_pats,_piv),last:data[data.length-1],prev:(data.length>=2?data[data.length-2]:data[data.length-1])};
 }
 
 // ── 風險徽章：月線/季線用本頁均線；外資大賣讀 GitHub 每日篩選結果 data/latest.json（官方法人資料）──
@@ -588,7 +607,7 @@ function render(){
 // ── 總覽（首頁）──
 function sumRow(s){
   const db=DB[s.sym];
-  if(!db)return`<tr><td class="nm">${nmTag(s)}</td><td>${s.sym}</td><td colspan="9" style="color:#f85149">無資料</td></tr>`;
+  if(!db)return`<tr><td class="nm">${nmTag(s)}</td><td>${s.sym}</td><td colspan="11" style="color:#f85149">無資料</td></tr>`;
   const last=db.last,prev=db.prev,chg=rnd(last.c-prev.c),chgP=rnd(chg/prev.c*100);
   const kL=db.kd[db.kd.length-1],kP=db.kd[db.kd.length-2];
   const hL=db.macd.hist[db.macd.hist.length-1],hP=db.macd.hist[db.macd.hist.length-2];
@@ -620,27 +639,29 @@ function sumRow(s){
     <td>${kL.K}</td><td>${kL.D}</td>
     <td>${kL.K>kL.D?'<span class="up">K&gt;D</span>':'<span class="dn">K&lt;D</span>'}</td>
     <td>${hL>0?'<span class="up">正</span>':'<span class="dn">負</span>'}</td>
+    <td>${rsiCell((db.rsi6||[])[(db.rsi6||[]).length-1],6)}</td><td>${rsiCell((db.rsi14||[])[(db.rsi14||[]).length-1],14)}</td>
     <td style="text-align:left">${al.join('')}</td></tr>`;
 }
 function renderSummary(){
   const tw=STOCKS.filter(s=>s.mkt==='TW'),us=STOCKS.filter(s=>s.mkt==='US');
   const CAT_ETF=new Set(['0050.TW','009816.TW','00403A.TW','00981A.TW','0056.TW','00984A.TW','009826.TW','00696B.TWO','VOO','QQQ','GLD','IAU']);
   const CAT_AI=new Set(['2330.TW','2303.TW','2454.TW','3017.TW','3324.TWO','2421.TW','3105.TWO','3711.TW','3680.TWO','2408.TW','2344.TW','2337.TW','6770.TW','2409.TW','3037.TW','2455.TW','3081.TWO','6116.TW','3481.TW','6902.TW','3443.TW','7769.TW','3665.TW','6239.TW','2308.TW','8227.TWO','3653.TW','3231.TW','6274.TWO','2383.TW','6213.TW','6214.TW','3029.TW','3450.TW','6442.TW','2368.TW','TSM','NVDA','INTC','SKHY','ASX','GOOGL','MRVL','MU','CRWV','SNPS','CDNS','AXTI','AAOI','SIVE.ST']);
-  const catBlock=(arr,label)=>arr.length?`<tr><td colspan="11" style="background:#1a1f26;color:#e3b341;font-weight:700;text-align:left;font-size:12px;padding:6px 16px">${label}</td></tr>`+sortTag(arr).map(sumRow).join(''):'';
+  const catBlock=(arr,label)=>arr.length?`<tr><td colspan="13" style="background:#1a1f26;color:#e3b341;font-weight:700;text-align:left;font-size:12px;padding:6px 16px">${label}</td></tr>`+sortTag(arr).map(sumRow).join(''):'';
   const grp=list=>({idx:list.filter(s=>s.sym.startsWith('^')),etf:list.filter(s=>CAT_ETF.has(s.sym)),ai:list.filter(s=>CAT_AI.has(s.sym)),min:list.filter(s=>!s.sym.startsWith('^')&&!CAT_ETF.has(s.sym)&&!CAT_AI.has(s.sym))});
   const twG=grp(tw),usG=grp(us);
-  const head=`<tr><th>名稱</th><th>代號</th><th>收盤</th><th style="color:#e3b341">MA5</th><th style="color:#bc8cff">MA20</th><th style="color:#26a641">MA60</th><th>K值</th><th>D值</th><th>KD比</th><th>MACD</th><th style="text-align:left">⚠️ 入場／風險提醒</th></tr>`;
+  const head=`<tr><th>名稱</th><th>代號</th><th>收盤</th><th style="color:#e3b341">MA5</th><th style="color:#bc8cff">MA20</th><th style="color:#26a641">MA60</th><th>K值</th><th>D值</th><th>KD比</th><th>MACD</th><th>RSI6</th><th>RSI14</th><th style="text-align:left">⚠️ 入場／風險提醒</th></tr>`;
   document.getElementById('mainView').innerHTML=`
 <div class="panel">
   <div style="font-size:14px;font-weight:700;margin-bottom:8px;color:#e3b341">📊 總覽 ｜ 點任一列看K線　<span id="dataDate" style="font-size:11px;color:#8b949e;font-weight:400"></span></div>
   <table class="tbl"><thead>${head}</thead><tbody>
-    <tr class="sec-row"><td colspan="11">📌 台股</td></tr>
+    <tr class="sec-row"><td colspan="13">📌 台股</td></tr>
     ${catBlock(twG.idx,'📈 指數')}${catBlock(twG.etf,'📊 ETF')}${catBlock(twG.ai,'🤖 AI股')}${catBlock(twG.min,'🏠 民生股')}
-    <tr class="sec-row"><td colspan="11">🌐 美股</td></tr>
+    <tr class="sec-row"><td colspan="13">🌐 美股</td></tr>
     ${catBlock(usG.idx,'📈 指數')}${catBlock(usG.etf,'📊 ETF')}${catBlock(usG.ai,'🤖 AI股')}${catBlock(usG.min,'🏠 民生股')}
   </tbody></table>
   <div style="margin-top:10px;font-size:10px;color:#8b949e;line-height:1.8">
     <span class="badge s-warn">🔴買入</span><span class="badge s-grn">🟢賣出</span>＝近3日的果斷訊號（紅＝買、綠＝賣）。以 K棒型態為觸發（W底/三重底/頭肩底突破、M頭/三重頂/頭肩頂跌破 直接出訊號；單根/雙根/三根型態需加確認：均線/KD交叉、MACD翻轉、突破前高低、放量）；沒有K棒型態的日子不出訊號。買入後進入「持有」：只有 收盤跌破停損 / M頭類跌破 / 看跌型態＋確認且跌破MA20 才會喊賣，其餘看跌型態只標 <span class="badge s-gold">⚠️注意</span> 續抱。滑鼠停在徽章上看理由<br>
+    RSI（Wilder 算法）：<span class="badge s-gold">超買</span>＝6日 ≥80／14日 ≥70　<span class="badge s-blue">超賣</span>＝6日 ≤20／14日 ≤30。只是描述漲跌的急緩，不是買賣訊號；強勢股可以長時間停在超買<br>
     其他提醒：<span class="badge s-gold">KD金叉</span><span class="badge s-blue">突破/近20MA</span><span class="badge s-grn">MACD翻正</span><br>
     風險提醒：<span class="badge s-grn">跌破月線</span><span class="badge s-grn">跌破季線</span>＝收盤低於 MA20 / MA60；<span class="badge s-grn">外資大賣N%</span>＝外資當日賣超占成交量 ≥10%（官方法人資料，每個交易日 18:05 更新，滑鼠停上去看張數與日期）
     看漲型態：<span class="badge s-warn">⭐晨星</span><span class="badge s-warn">🔨錘子線</span><span class="badge s-warn">倒錘線</span><span class="badge s-warn">蜻蜓十字</span><span class="badge s-warn">🔴看漲吞噬</span><span class="badge s-warn">貫穿線</span><span class="badge s-warn">多頭孕線</span><span class="badge s-warn">鑷子底</span><span class="badge s-warn">三白兵</span><span class="badge s-warn">上升三法</span><span class="badge s-warn">W底/三重底/頭肩底突破</span>
@@ -676,7 +697,7 @@ function cardHTML(s){
   const chg=rnd(db.last.c-db.prev.c),chgP=rnd(chg/db.prev.c*100),cls=chg>0?'up':chg<0?'dn':'fl';
   return`<div class="sc${s.sym===curSym?' on':''}" onclick="curSym='${s.sym}';renderChartInline('${s.sym}','${s.mkt}')">
     <div class="sc-nm">${nmTag(s)}</div><div class="sc-pr ${cls}">${db.last.c}</div>
-    <div class="sc-ch ${cls}">${chg>0?'+':''}${chg} (${chgP>0?'+':''}${chgP}%)</div>${(()=>{const rb=riskBadges(s,db,true);return rb.length?`<div style="margin-top:3px;line-height:1.2">${rb.join('')}</div>`:'';})()}</div>`;
+    <div class="sc-ch ${cls}">${chg>0?'+':''}${chg} (${chgP>0?'+':''}${chgP}%)</div><div style="font-size:10px;color:#8b949e;margin-top:3px;line-height:1.4">RSI 6日 ${rsiCell((db.rsi6||[])[(db.rsi6||[]).length-1],6)}　14日 ${rsiCell((db.rsi14||[])[(db.rsi14||[]).length-1],14)}</div>${(()=>{const rb=riskBadges(s,db,true);return rb.length?`<div style="margin-top:3px;line-height:1.2">${rb.join('')}</div>`:'';})()}</div>`;
 }
 function renderList(mkt){
   const _l=STOCKS.filter(s=>s.mkt===mkt);
@@ -719,6 +740,8 @@ function chartHTML(sym){
       <span style="color:#58a6ff">MA10: ${db.ma10[db.ma10.length-1]??'—'}</span>
       <span style="color:#bc8cff">MA20: ${db.ma20[db.ma20.length-1]??'—'}</span>
       <span style="color:#26a641">MA60: ${db.ma60[db.ma60.length-1]??'—'}</span>
+      <span style="color:#8b949e">RSI6: ${rsiCell((db.rsi6||[])[(db.rsi6||[]).length-1],6)}</span>
+      <span style="color:#8b949e">RSI14: ${rsiCell((db.rsi14||[])[(db.rsi14||[]).length-1],14)}</span>
     </div>
     <canvas id="kC" style="width:100%;cursor:crosshair"></canvas>
     <div style="font-size:10px;color:#8b949e;margin:6px 0 3px">KD　K: ${kL.K}　D: ${kL.D}</div>
@@ -742,6 +765,8 @@ function dataTableHTML(sym){
   const patOf=(fi)=>{const ps=(db.pats||[]).filter(p=>p.i===fi);if(!ps.length)return{txt:'—',color:'#8b949e'};ps.sort((a,b)=>(_PP[b.short]||5)-(_PP[a.short]||5));return{txt:ps[0].type,color:ps[0].color};};
   const m5=db.ma5.slice(-N),m20=db.ma20.slice(-N),m60=db.ma60.slice(-N);
   const kd=db.kd.slice(-N),dif=db.macd.dif.slice(-N),hist=db.macd.hist.slice(-N);
+  const r6=(db.rsi6||[]).slice(-N),r14=(db.rsi14||[]).slice(-N);
+  const rsiTd=(v,p)=>{const st=rsiState(v,p);return`<td${st>0?' style="color:#e3b341;font-weight:700"':st<0?' style="color:#58a6ff;font-weight:700"':''}>${v==null?'—':v.toFixed(1)}</td>`;};
   const macdL=db.macd.dif.slice(-N).map((d,i)=>{
     // 重算MACD訊號線值用 dif-hist
     return rnd(dif[i]-hist[i],2);
@@ -772,6 +797,7 @@ function dataTableHTML(sym){
       <td style="color:#26a641">${m60[i]??'—'}</td>
       <td>${k?k.K:'—'}</td><td>${k?k.D:'—'}</td>
       <td>${kdState}</td>
+      ${rsiTd(r6[i],6)}${rsiTd(r14[i],14)}
       <td>${dif[i]??'—'}</td>
       <td>${macdL[i]??'—'}</td>
       <td class="${hv>0?'up':hv<0?'dn':'fl'}">${hv??'—'}</td>
@@ -779,11 +805,11 @@ function dataTableHTML(sym){
       <td class="${cls}">${chgP>0?'+':''}${chgP}%</td>
     </tr>`;
   }).join('');
-  return`<table class="tbl" style="min-width:1160px">
+  return`<table class="tbl" style="min-width:1260px">
     <thead><tr>
       <th>日期</th><th>開盤</th><th>最高</th><th>最低</th><th>收盤</th><th>K棒型態</th><th>買賣訊號</th><th>成交量(張)</th>
       <th style="color:#e3b341">MA5</th><th style="color:#bc8cff">MA20</th><th style="color:#26a641">MA60</th>
-      <th>K值</th><th>D值</th><th>KD狀態</th><th>DIF</th><th>MACD</th><th>柱狀</th><th>漲跌</th><th>漲跌%</th>
+      <th>K值</th><th>D值</th><th>KD狀態</th><th>RSI6</th><th>RSI14</th><th>DIF</th><th>MACD</th><th>柱狀</th><th>漲跌</th><th>漲跌%</th>
     </tr></thead><tbody>${rows}</tbody></table>`;
 }
 function drawAll(sym){
