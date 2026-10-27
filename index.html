@@ -169,6 +169,7 @@ function rnd(n,d=2){return n==null?null:+n.toFixed(d);}
 // 多代理，最穩定的優先
 // 你的專屬 Cloudflare Worker（穩定、免費、無 CORS 問題）
 const WORKER_URL="https://gentle-mountain-7c00.wugawee.workers.dev";
+const SHOW_N=80; // K線圖與「近N日數據」表共用同一個區間（使用者 2026/10/27 要求兩者一致）
 
 function parseChart(json){
   const R=json.chart.result[0];const q=R.indicators.quote[0];
@@ -732,7 +733,7 @@ function chartHTML(sym){
   const kL=db.kd[db.kd.length-1],hL=db.macd.hist[db.macd.hist.length-1];
   return`<div class="panel">
     <div class="phead">
-      <div><div class="pname">${stk.name} (${sym})</div><div style="font-size:10px;color:#8b949e">近一個月K線 ｜ 滑鼠移到K線看數據</div></div>
+      <div><div class="pname">${stk.name} (${sym})</div><div style="font-size:10px;color:#8b949e">近${Math.min(SHOW_N,db.data.length)}日K線（${db.data[Math.max(0,db.data.length-SHOW_N)].date}–${db.last.date}） ｜ 滑鼠移到K線看數據</div></div>
       <div style="text-align:right"><div class="ppr ${cls}">${db.last.c} ${stk.cur}</div><div style="font-size:11px" class="${cls}">${chg>0?'+':''}${chg} (${chgP>0?'+':''}${chgP}%)</div></div>
     </div>
     <div class="ma-row">
@@ -750,7 +751,7 @@ function chartHTML(sym){
     <canvas id="mC" style="width:100%"></canvas>
   </div>
   <div class="panel" style="overflow-x:auto">
-    <div style="font-size:13px;font-weight:700;margin-bottom:8px;color:#e3b341">📋 近60日數據（可回顧）<span style="font-size:10px;color:#8b949e;font-weight:400">　日期旁 <span style="color:#e3b341">*</span>＝Yahoo日線缺漏、以小時線補齊（成交量會偏少）</span></div>
+    <div style="font-size:13px;font-weight:700;margin-bottom:8px;color:#e3b341">📋 近${Math.min(SHOW_N,db.data.length)}日數據（${db.data[Math.max(0,db.data.length-SHOW_N)].date}–${db.last.date}，與K線圖同區間）<span style="font-size:10px;color:#8b949e;font-weight:400">　日期旁 <span style="color:#e3b341">*</span>＝Yahoo日線缺漏、以小時線補齊（成交量會偏少）</span></div>
     ${dataTableHTML(sym)}
   </div>`;
 }
@@ -758,7 +759,7 @@ function chartHTML(sym){
 // 近20日逐日數據表格（像看盤軟體）
 function dataTableHTML(sym){
   const db=DB[sym];if(!db)return'';
-  const N=60;
+  const N=SHOW_N;
   const data=db.data.slice(-N);
   const offset=db.data.length-data.length;
   const _PP={'頭肩底':14,'頭肩頂':14,'三底':13,'三頂':13,'W底':12,'M頭':12,'兵':10,'鴉':10,'晨':10,'昏':10,'吞':8,'空吞':8,'雲':8,'貫':8,'升三':8,'降三':8,'錘':6,'倒':6,'蜻':6,'吊':6,'射':6,'墓':6,'頂':6,'底':6,'孕':6,'空孕':6,'十':2};
@@ -814,7 +815,7 @@ function dataTableHTML(sym){
 }
 function drawAll(sym){
   const db=DB[sym];if(!db)return;
-  const SHOW=80;
+  const SHOW=SHOW_N;
   const sl=db.data.slice(-SHOW),m5=db.ma5.slice(-SHOW),m10=db.ma10.slice(-SHOW),m20=db.ma20.slice(-SHOW),m60=db.ma60.slice(-SHOW);
   const kd=db.kd.slice(-SHOW),hist=db.macd.hist.slice(-SHOW),dif=db.macd.dif.slice(-SHOW);
   const _off=Math.max(0,db.data.length-SHOW);
