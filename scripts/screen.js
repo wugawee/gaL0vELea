@@ -1,5 +1,5 @@
 // ============================================================
-// 收盤技術篩選 v4（GitHub Actions 每日自動執行）
+// 收盤技術篩選 v4.1（GitHub Actions 每日自動執行；v4.1：剔除假日占位棒與美股未收盤的盤中棒）
 // 讀 index.html 的 STOCKS 清單 → Worker 抓 1 年日線 + 法人
 // → 用證交所／櫃買中心官方資料補 Yahoo 缺的日線（最新一天常是空的）；櫃買被擋就改走 Worker 或 FinMind
 // → 算指標、跑篩選 → 寫 data/latest.json、data/bars.json、data/history/YYYY-MM-DD.json
@@ -73,7 +73,14 @@ async function fetchChart(sym, range = '1y') {
       const bars = [];
       for (let i = 0; i < r.timestamp.length; i++) {
         if (q.close[i] == null || q.volume[i] == null) continue; // Yahoo 空白日先跳過，之後用官方資料補
+        // v4.1：假日占位棒（休市日 Yahoo 仍回一根 量 0、四價相同 的棒，例 2026-10-23 光復節連假）一律剔除，否則均線、RSI、K 線都會多一根假的
+        if (q.volume[i] === 0 && q.open[i] === q.high[i] && q.high[i] === q.low[i] && q.low[i] === q.close[i]) continue;
         bars.push({ d: ymd(r.timestamp[i], off), o: q.open[i], h: q.high[i], l: q.low[i], c: q.close[i], v: q.volume[i], src: 'yahoo' });
+      }
+      // v4.1：美股盤中跑到（例如 GitHub 排程延遲到台北凌晨）時，最後一根是未收盤的盤中快照，剔除，只留已收盤的日線
+      if (r.meta.marketState === 'REGULAR' && bars.length) {
+        const todayEx = ymd(Math.floor(Date.now() / 1000), off);
+        if (bars[bars.length - 1].d === todayEx) bars.pop();
       }
       if (bars.length < 25) throw new Error('bars 不足 ' + bars.length);
       return bars;
