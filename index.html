@@ -167,9 +167,9 @@ const STOCKS=[
 const TAG_ORDER=["市值型","主動式","高股息","全球股","科技型","美債","黃金","晶圓代工","IC設計","晶片","EDA","記憶體","封測","設備","PCB","散熱","光通訊","連接線","電源","伺服器","面板","雲端","AI軟體","資訊服務","綠能","零售","保健","消費電子","光學鏡頭","電商","平台","電動車","太空","保險","金控","證券","航運","電信"];
 const tagIdx=s=>{const i=TAG_ORDER.indexOf(s.tag||'');return i<0?999:i;};
 
-// ── 估值欄（使用者 2026/11/05 核准）：分類本益比倍數 [低標,中值,高標]；純資訊欄，不進風險徽章、不進推播 ──
+// ── 估值欄（使用者 2026/11/05 核准；11/06 依五年歷史驗證後改：設備 30→35、電源 30→25，並加「自身歷史位置」第二基準）：分類本益比倍數 [低標,中值,高標]；純資訊欄，不進風險徽章、不進推播 ──
 // 資料：data/latest.json 每檔 val（GitHub 程式每天抓證交所／櫃買中心「個股本益比、殖利率、淨值比」，近四季 EPS）；eps＝官方收盤÷本益比
-const PE_BAND={'晶圓代工':[15,20,25],'IC設計':[18,22,26],'晶片':[25,30,40],'封測':[14,17,20],'設備':[25,30,35],'PCB':[18,22,28],'散熱':[25,30,35],'光通訊':[35,45,60],'連接線':[20,24,28],'電源':[25,30,35],'伺服器':[15,18,22],'資訊服務':[15,18,22],'AI軟體':[30,40,50],'綠能':[20,25,30],'零售':[20,24,28],'保健':[25,30,35],'光學鏡頭':[15,18,22],'平台':[20,24,28],'消費電子':[28,30,35],'EDA':[35,40,45],'電商':[30,35,45],'證券':[12,15,18],'電信':[22,25,28]};
+const PE_BAND={'晶圓代工':[15,20,25],'IC設計':[18,22,26],'晶片':[25,30,40],'封測':[14,17,20],'設備':[25,35,45],'PCB':[18,22,28],'散熱':[25,30,35],'光通訊':[35,45,60],'連接線':[20,24,28],'電源':[20,25,30],'伺服器':[15,18,22],'資訊服務':[15,18,22],'AI軟體':[30,40,50],'綠能':[20,25,30],'零售':[20,24,28],'保健':[25,30,35],'光學鏡頭':[15,18,22],'平台':[20,24,28],'消費電子':[28,30,35],'EDA':[35,40,45],'電商':[30,35,45],'證券':[12,15,18],'電信':[22,25,28]};
 const PB_BAND={'記憶體':[1.0,1.5,2.0],'面板':[0.6,0.9,1.2],'金控':[1.2,1.5,1.8],'保險':[1.2,1.5,1.8]}; // 景氣股／金融：用股價淨值比
 const VAL_OVERRIDE={'2303.TW':{pe:[10,12,16]},'3443.TW':{pe:[35,45,55]},'6770.TW':{skip:'常虧損，不算合理價'}}; // 個股例外
 const VAL_INFO_ONLY={'電動車':'市場不用本益比定價','太空':'市場不用本益比定價','雲端':'市場不用本益比定價','航運':'景氣股：本益比高峰最低、谷底最高，只當參考'};
@@ -191,6 +191,17 @@ function valInfo(s,db){
   return{...base,mode:'pe',band,fair:fp(v.eps*mid),lo:fp(flo),hi:fp(fhi),label:price<flo?'便宜':price>fhi?'貴':'合理'};
 }
 const valBadge=l=>`<span class="badge ${l==='便宜'?'s-blue':l==='貴'?'s-gold':'s-gray'}">${l}</span>`;
+// 第二基準：這檔自己五年的本益比（淨值比模式用淨值比）P10～P90，現在落在哪裡
+function valHist(vi,v){
+  const h=v&&v.hist;if(!h)return null;
+  const usePB=vi.mode==='pb';
+  const st=usePB?h.pbr:h, cur=usePB?vi.pbr:vi.pe, unit=usePB?'淨值比':'本益比';
+  const years=h.from?Math.max(1,Math.round((Date.parse(h.to||h.asOf)-Date.parse(h.from))/31557600e3)):5;
+  if(!st||st.p10==null)return{txt:`歷史：${years} 年內 ${h.lossPct!=null?h.lossPct+'% 的時間虧損，':''}沒有可用的${unit}區間`,label:null,years};
+  let label=null;if(cur!=null)label=cur<st.p10?'歷史低檔':cur<st.p50?'歷史偏低':cur<=st.p90?'歷史偏高':'歷史高檔';
+  return{txt:`歷史：${years} 年${unit} P10～P90 ＝ ${st.p10}～${st.p90}（中位 ${st.p50}）${h.lossPct?'，'+h.lossPct+'% 的時間虧損':''}`,label,years,st};
+}
+const histBadge=l=>l?`<span class="badge ${l==='歷史低檔'?'s-blue':l==='歷史高檔'?'s-gold':'s-gray'}">${l}</span>`:'';
 function valRowHTML(s,db){
   const vi=valInfo(s,db);if(!vi)return'';
   const src=`<span style="color:#8b949e">（近四季，${vi.src} ${vi.date||''}）</span>`;
@@ -199,12 +210,15 @@ function valRowHTML(s,db){
   if(vi.mode==='pe')body=`${peTxt}｜EPS ≈ ${vi.eps}｜合理價 <b>${vi.fair}</b>（${s.tag} 中值 ${vi.band[1]} 倍，區間 ${vi.lo}～${vi.hi}）${valBadge(vi.label)}`;
   else if(vi.mode==='pb')body=`淨值比 ${vi.pbr??'—'}｜每股淨值 ≈ ${vi.bvps}｜合理價 <b>${vi.fair}</b>（${s.tag} 用淨值比，中值 ${vi.band[1]} 倍，區間 ${vi.lo}～${vi.hi}）${valBadge(vi.label)}${peTxt!=='本益比 —'?`<span style="color:#8b949e">　${peTxt}</span>`:''}`;
   else body=`${peTxt}${vi.pbr!=null?`｜淨值比 ${vi.pbr}`:''}<span style="color:#8b949e">　${vi.why}</span>`;
-  return`<div class="ma-row" style="margin-top:4px"><span style="color:#e3b341">💰 估值</span><span>${body}</span>${src}</div>`;
+  const hv=valHist(vi,SCREEN.stocks[s.sym].val);
+  const hist=hv?`<div class="ma-row" style="margin-top:2px"><span style="color:#8b949e">📜</span><span>${hv.txt}${histBadge(hv.label)}</span></div>`:'';
+  return`<div class="ma-row" style="margin-top:4px"><span style="color:#e3b341">💰 估值</span><span>${body}</span>${src}</div>${hist}`;
 }
 function valCardHTML(s,db){
   const vi=valInfo(s,db);if(!vi)return'';
   const t=(vi.mode==='pe'||vi.mode==='pb')?`${vi.mode==='pe'?'本益比 '+(vi.pe??'—'):'淨值比 '+(vi.pbr??'—')} · 合理 ${vi.fair} ${valBadge(vi.label)}`:`本益比 ${vi.pe??'—'}`;
-  return`<div style="font-size:10px;color:#8b949e;margin-top:2px;white-space:nowrap">${t}</div>`;
+  const hv=valHist(vi,SCREEN.stocks[s.sym].val);
+  return`<div style="font-size:10px;color:#8b949e;margin-top:2px;white-space:nowrap">${t}${hv&&hv.label?' '+histBadge(hv.label):''}</div>`;
 }
 const sortTag=arr=>arr.map((s,i)=>[s,i]).sort((x,y)=>tagIdx(x[0])-tagIdx(y[0])||x[1]-y[1]).map(x=>x[0]);
 const nmTag=s=>s.tag?`${s.name}<span style="font-size:.8em;color:#8b949e;font-weight:400">-${s.tag}</span>`:s.name;
