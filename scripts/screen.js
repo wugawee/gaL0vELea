@@ -3,6 +3,7 @@
 // 讀 index.html 的 STOCKS 清單 → Worker 抓 1 年日線 + 法人
 // → 用證交所／櫃買中心官方資料補 Yahoo 缺的日線（最新一天常是空的）；櫃買被擋就改走 Worker 或 FinMind
 // → 算指標、跑篩選 → 寫 data/latest.json、data/bars.json、data/history/YYYY-MM-DD.json
+// v4.3（2026/11/06）：val 加 hist（自身五年本益比 P10/P50/P90，data/pe_hist.json 每檔 30 天更新一次）
 // v4.2（2026/11/05）：每檔台股加 val（官方近四季本益比／淨值比／殖利率，eps、bvps 由官方收盤反推）；網頁用分類倍數算合理價
 // 不需要任何密鑰：FinMind token 在 Worker 裡。
 // ============================================================
@@ -203,6 +204,19 @@ async function fetchFinMindPER(id, start) {
   const x = rows[rows.length - 1]; if (!x) return null;
   const pe = num(x.PER); return { pe: pe != null && pe > 0 ? pe : null, pbr: num(x.PBR), yieldPct: num(x.dividend_yield), finQ: null, date: x.date, src: 'finmind' };
 }
+// FinMind 本益比五年歷史（經 Worker）→ 統計 {p10,p50,p90,min,max,n,lossPct,pbr{p10,p50,p90}}；PER 為 0 代表該日近四季虧損，不進百分位、只算 lossPct
+async function fetchFinMindPERHist(id, start) {
+  const j = await getJSON(`${WORKER}/?type=fm&dataset=TaiwanStockPER&id=${id}&start=${start}&_t=${Date.now()}`, 1);
+  if (!j || !Array.isArray(j.data)) throw new Error('FinMind ' + (j && j.status) + ' ' + (j && j.msg));
+  const rows = j.data.filter(x => x && x.date);
+  if (rows.length < 60) throw new Error('資料不足 ' + rows.length);
+  const q = (a, pct) => { const b = [...a].sort((x, y) => x - y); const k = (b.length - 1) * pct, f = Math.floor(k), c = Math.min(f + 1, b.length - 1); return b[f] + (b[c] - b[f]) * (k - f); };
+  const pes = rows.map(x => num(x.PER)).filter(x => x != null), pos = pes.filter(x => x > 0), pbs = rows.map(x => num(x.PBR)).filter(x => x != null && x > 0);
+  const out = { from: rows[0].date, to: rows[rows.length - 1].date, n: rows.length, lossPct: r2(pes.length ? (pes.length - pos.length) / pes.length * 100 : null) };
+  if (pos.length >= 60) Object.assign(out, { p10: r2(q(pos, 0.1)), p50: r2(q(pos, 0.5)), p90: r2(q(pos, 0.9)), min: r2(Math.min(...pos)), max: r2(Math.max(...pos)) });
+  if (pbs.length >= 60) out.pbr = { p10: r2(q(pbs, 0.1)), p50: r2(q(pbs, 0.5)), p90: r2(q(pbs, 0.9)) };
+  return out;
+}
 // FinMind 法人歷史（經 Worker）→ {date:{f,t}}，單位：股
 async function fetchInstFinMind(id, start) {
   const j = await getJSON(`${WORKER}/?type=inst&id=${id}&start=${start}&_t=${Date.now()}`, 3, x => x && Array.isArray(x.data));
@@ -349,6 +363,8 @@ function analyze(s, bars, inst, idxBars) {
     if (latestOTC) { offPE.tpex = await fetchTPExPE(latestOTC); srcLog.tpexPE = !!offPE.tpex; }
   }
 
+  let peHist = { generatedAt: null, stocks: {} };
+  try { peHist = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'pe_hist.json'), 'utf8')); } catch (e) { peHist = { generatedAt: null, stocks: {} }; }
   for (const s of stocks) {
     if (!raw[s.sym]) continue;
     let { bars: b, inst } = raw[s.sym];
@@ -394,6 +410,9 @@ function analyze(s, bars, inst, idxBars) {
           else { try { v = await fetchFinMindPER(id, dates[dates.length - 1]); if (v) srcLog.fmPE.push(s.sym); } catch (e) { v = null; } }
         }
         if (v) { const px = (v.date === r.asOf) ? r.close : null; v.eps = (v.pe && px) ? r2(px / v.pe) : null; v.bvps = (v.pbr && px) ? r2(px / v.pbr) : null; }
+        // 自身五年歷史（data/pe_hist.json，每檔每 30 天更新一次；見主流程最後一段）
+        const h = MOCK ? mockHist(s) : (peHist.stocks && peHist.stocks[id]) || null;
+        if (h && h.stats) { v = v || { pe: null, pbr: null, yieldPct: null, finQ: null, date: null, src: null, eps: null, bvps: null }; v.hist = { ...h.stats, asOf: h.asOf }; }
         r.val = v;
       }
       results.push(r);
@@ -433,6 +452,23 @@ function analyze(s, bars, inst, idxBars) {
   fs.writeFileSync(path.join(ROOT, 'data', 'latest.json'), JSON.stringify(out, null, 1));
   fs.writeFileSync(path.join(ROOT, 'data', 'bars.json'), JSON.stringify(bars));
   if (asOfTW) fs.writeFileSync(path.join(ROOT, 'data', 'history', asOfTW + '.json'), JSON.stringify(out, null, 1));
+  // 本益比五年歷史（網站「自身歷史位置」用）：每檔每 30 天更新一次，分天做、遇到 FinMind 額度上限就停，下次接著做
+  if (!MOCK) {
+    const ph = path.join(ROOT, 'data', 'pe_hist.json');
+    const cur = peHist && peHist.stocks ? peHist : { generatedAt: null, stocks: {} };
+    const todo = twIds.filter(s => { const id = s.sym.replace(/\.TWO?$/, ''); const h = cur.stocks[id]; return !h || !h.asOf || Date.now() - Date.parse(h.asOf) > 30 * 86400e3; });
+    const start5y = new Date(Date.now() - 5 * 365 * 86400e3).toISOString().slice(0, 10);
+    let done = 0, stopped = null;
+    for (const s of todo.slice(0, 20)) { // 一天最多 20 檔，避免吃光 FinMind 每小時額度
+      const id = s.sym.replace(/\.TWO?$/, '');
+      try { cur.stocks[id] = { asOf: new Date().toISOString().slice(0, 10), stats: await fetchFinMindPERHist(id, start5y) }; done++; }
+      catch (e) { const m = String(e.message || e); if (/402|upper limit/i.test(m)) { stopped = m; break; } cur.stocks[id] = { asOf: new Date().toISOString().slice(0, 10), stats: null, error: m }; }
+      await sleep(1500);
+    }
+    cur.generatedAt = new Date().toISOString();
+    fs.writeFileSync(ph, JSON.stringify(cur, null, 1));
+    console.log(`pe_hist: 更新 ${done} 檔，待更新 ${Math.max(0, todo.length - done)} 檔${stopped ? '，FinMind 額度上限先停：' + stopped : ''}`);
+  }
   // 3 年日線（回測用，含空頭年份）：每 30 天更新一次
   if (!MOCK) {
     const p3 = path.join(ROOT, 'data', 'bars3y.json'); let old = null;
@@ -462,5 +498,11 @@ function mockVal(s, r) {
   if (s.sym === '6770.TW') return { pe: null, pbr: 1.3, yieldPct: 0, finQ: '115/2', date: r.asOf, src: 'twse' }; // 虧損：本益比 "-"
   if (s.sym === '3081.TWO') return null; // 抓不到
   return { pe: r2(10 + (seed % 50)), pbr: r2(1 + (seed % 7) * 0.5), yieldPct: r2((seed % 40) / 10), finQ: '115/2', date: r.asOf, src: s.sym.endsWith('.TWO') ? 'tpex' : 'twse' };
+}
+function mockHist(s) {
+  const seed = [...s.sym].reduce((a, c) => a + c.charCodeAt(0), 5);
+  if (s.sym === '3105.TWO') return { asOf: '2026-11-06', stats: { from: '2021-11-08', to: '2026-11-05', n: 1200, lossPct: 20, pbr: { p10: 1.1, p50: 2.0, p90: 4.5 } } }; // 常虧損：沒有本益比百分位
+  const p50 = 15 + (seed % 30);
+  return { asOf: '2026-11-06', stats: { from: '2021-11-08', to: '2026-11-05', n: 1200, lossPct: 0, p10: r2(p50 * 0.6), p50, p90: r2(p50 * 1.8), min: r2(p50 * 0.4), max: r2(p50 * 3), pbr: { p10: 2, p50: 4, p90: 8 } } };
 }
 function mockInst(bars) { const m = {}; bars.forEach((b, i) => { m[b.d] = { f: (i % 3 - 1) * 500000, t: i % 2 ? 200000 : -100000 }; }); m[bars[bars.length - 1].d] = { f: 800000, t: 300000 }; return m; }
