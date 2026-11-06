@@ -166,6 +166,46 @@ const STOCKS=[
 // 股名後小字標籤＋同標籤排在一起
 const TAG_ORDER=["市值型","主動式","高股息","全球股","科技型","美債","黃金","晶圓代工","IC設計","晶片","EDA","記憶體","封測","設備","PCB","散熱","光通訊","連接線","電源","伺服器","面板","雲端","AI軟體","資訊服務","綠能","零售","保健","消費電子","光學鏡頭","電商","平台","電動車","太空","保險","金控","證券","航運","電信"];
 const tagIdx=s=>{const i=TAG_ORDER.indexOf(s.tag||'');return i<0?999:i;};
+
+// ── 估值欄（使用者 2026/11/05 核准）：分類本益比倍數 [低標,中值,高標]；純資訊欄，不進風險徽章、不進推播 ──
+// 資料：data/latest.json 每檔 val（GitHub 程式每天抓證交所／櫃買中心「個股本益比、殖利率、淨值比」，近四季 EPS）；eps＝官方收盤÷本益比
+const PE_BAND={'晶圓代工':[15,20,25],'IC設計':[18,22,26],'晶片':[25,30,40],'封測':[14,17,20],'設備':[25,30,35],'PCB':[18,22,28],'散熱':[25,30,35],'光通訊':[35,45,60],'連接線':[20,24,28],'電源':[25,30,35],'伺服器':[15,18,22],'資訊服務':[15,18,22],'AI軟體':[30,40,50],'綠能':[20,25,30],'零售':[20,24,28],'保健':[25,30,35],'光學鏡頭':[15,18,22],'平台':[20,24,28],'消費電子':[28,30,35],'EDA':[35,40,45],'電商':[30,35,45],'證券':[12,15,18],'電信':[22,25,28]};
+const PB_BAND={'記憶體':[1.0,1.5,2.0],'面板':[0.6,0.9,1.2],'金控':[1.2,1.5,1.8],'保險':[1.2,1.5,1.8]}; // 景氣股／金融：用股價淨值比
+const VAL_OVERRIDE={'2303.TW':{pe:[10,12,16]},'3443.TW':{pe:[35,45,55]},'6770.TW':{skip:'常虧損，不算合理價'}}; // 個股例外
+const VAL_INFO_ONLY={'電動車':'市場不用本益比定價','太空':'市場不用本益比定價','雲端':'市場不用本益比定價','航運':'景氣股：本益比高峰最低、谷底最高，只當參考'};
+const VAL_SRC={twse:'證交所',tpex:'櫃買中心',finmind:'FinMind'};
+function valInfo(s,db){
+  const sc=SCREEN.stocks[s.sym],v=sc&&sc.val;if(!v)return null;
+  const price=(db&&db.last&&db.last.c!=null)?db.last.c:sc.close;
+  const fp=x=>x==null?null:rnd(x,price>=500?0:price>=100?1:2);
+  const base={pe:v.pe,pbr:v.pbr,yieldPct:v.yieldPct,eps:v.eps,bvps:v.bvps,date:v.date,src:VAL_SRC[v.src]||v.src||'',price};
+  const ov=VAL_OVERRIDE[s.sym]||{};
+  if(ov.skip)return{...base,mode:'skip',why:ov.skip};
+  if(VAL_INFO_ONLY[s.tag])return{...base,mode:'info',why:VAL_INFO_ONLY[s.tag]};
+  const pb=PB_BAND[s.tag];
+  if(pb){if(v.bvps==null)return{...base,mode:'info',why:'缺淨值資料'};const [lo,mid,hi]=pb,flo=v.bvps*lo,fhi=v.bvps*hi;return{...base,mode:'pb',band:pb,fair:fp(v.bvps*mid),lo:fp(flo),hi:fp(fhi),label:price<flo?'便宜':price>fhi?'貴':'合理'};}
+  const band=ov.pe||PE_BAND[s.tag];
+  if(!band)return{...base,mode:'info',why:'此分類未設倍數'};
+  if(v.eps==null)return{...base,mode:'loss',why:'近四季虧損，本益比算不出來'};
+  const [lo,mid,hi]=band,flo=v.eps*lo,fhi=v.eps*hi;
+  return{...base,mode:'pe',band,fair:fp(v.eps*mid),lo:fp(flo),hi:fp(fhi),label:price<flo?'便宜':price>fhi?'貴':'合理'};
+}
+const valBadge=l=>`<span class="badge ${l==='便宜'?'s-blue':l==='貴'?'s-gold':'s-gray'}">${l}</span>`;
+function valRowHTML(s,db){
+  const vi=valInfo(s,db);if(!vi)return'';
+  const src=`<span style="color:#8b949e">（近四季，${vi.src} ${vi.date||''}）</span>`;
+  const peTxt=vi.pe!=null?`本益比 ${vi.pe}`:'本益比 —';
+  let body;
+  if(vi.mode==='pe')body=`${peTxt}｜EPS ≈ ${vi.eps}｜合理價 <b>${vi.fair}</b>（${s.tag} 中值 ${vi.band[1]} 倍，區間 ${vi.lo}～${vi.hi}）${valBadge(vi.label)}`;
+  else if(vi.mode==='pb')body=`淨值比 ${vi.pbr??'—'}｜每股淨值 ≈ ${vi.bvps}｜合理價 <b>${vi.fair}</b>（${s.tag} 用淨值比，中值 ${vi.band[1]} 倍，區間 ${vi.lo}～${vi.hi}）${valBadge(vi.label)}${peTxt!=='本益比 —'?`<span style="color:#8b949e">　${peTxt}</span>`:''}`;
+  else body=`${peTxt}${vi.pbr!=null?`｜淨值比 ${vi.pbr}`:''}<span style="color:#8b949e">　${vi.why}</span>`;
+  return`<div class="ma-row" style="margin-top:4px"><span style="color:#e3b341">💰 估值</span><span>${body}</span>${src}</div>`;
+}
+function valCardHTML(s,db){
+  const vi=valInfo(s,db);if(!vi)return'';
+  const t=(vi.mode==='pe'||vi.mode==='pb')?`${vi.mode==='pe'?'本益比 '+(vi.pe??'—'):'淨值比 '+(vi.pbr??'—')} · 合理 ${vi.fair} ${valBadge(vi.label)}`:`本益比 ${vi.pe??'—'}`;
+  return`<div style="font-size:10px;color:#8b949e;margin-top:2px;white-space:nowrap">${t}</div>`;
+}
 const sortTag=arr=>arr.map((s,i)=>[s,i]).sort((x,y)=>tagIdx(x[0])-tagIdx(y[0])||x[1]-y[1]).map(x=>x[0]);
 const nmTag=s=>s.tag?`${s.name}<span style="font-size:.8em;color:#8b949e;font-weight:400">-${s.tag}</span>`:s.name;
 
@@ -710,7 +750,7 @@ function cardHTML(s){
   const chg=rnd(db.last.c-db.prev.c),chgP=rnd(chg/db.prev.c*100),cls=chg>0?'up':chg<0?'dn':'fl';
   return`<div class="sc${s.sym===curSym?' on':''}" onclick="curSym='${s.sym}';renderChartInline('${s.sym}','${s.mkt}')">
     <div class="sc-nm">${nmTag(s)}</div><div class="sc-pr ${cls}">${db.last.c}</div>
-    <div class="sc-ch ${cls}">${chg>0?'+':''}${chg} (${chgP>0?'+':''}${chgP}%)</div><div style="font-size:10px;color:#8b949e;margin-top:3px;line-height:1.6">RSI <span style="white-space:nowrap">6日 ${rsiCell((db.rsi6||[])[(db.rsi6||[]).length-1],6)}</span>　<span style="white-space:nowrap">14日 ${rsiCell((db.rsi14||[])[(db.rsi14||[]).length-1],14)}</span></div>${(()=>{const rb=riskBadges(s,db,true);return rb.length?`<div style="margin-top:3px;line-height:1.2">${rb.join('')}</div>`:'';})()}</div>`;
+    <div class="sc-ch ${cls}">${chg>0?'+':''}${chg} (${chgP>0?'+':''}${chgP}%)</div><div style="font-size:10px;color:#8b949e;margin-top:3px;line-height:1.6">RSI <span style="white-space:nowrap">6日 ${rsiCell((db.rsi6||[])[(db.rsi6||[]).length-1],6)}</span>　<span style="white-space:nowrap">14日 ${rsiCell((db.rsi14||[])[(db.rsi14||[]).length-1],14)}</span></div>${valCardHTML(s,db)}${(()=>{const rb=riskBadges(s,db,true);return rb.length?`<div style="margin-top:3px;line-height:1.2">${rb.join('')}</div>`:'';})()}</div>`;
 }
 function renderList(mkt){
   const _l=STOCKS.filter(s=>s.mkt===mkt);
@@ -756,6 +796,7 @@ function chartHTML(sym){
       <span style="color:#8b949e">RSI6: ${rsiCell((db.rsi6||[])[(db.rsi6||[]).length-1],6)}</span>
       <span style="color:#8b949e">RSI14: ${rsiCell((db.rsi14||[])[(db.rsi14||[]).length-1],14)}</span>
     </div>
+    ${valRowHTML(stk,db)}
     <canvas id="kC" style="width:100%;cursor:crosshair"></canvas>
     <div style="font-size:10px;color:#8b949e;margin:6px 0 3px">KD　K: ${kL.K}　D: ${kL.D}</div>
     <canvas id="kdC" style="width:100%"></canvas>
