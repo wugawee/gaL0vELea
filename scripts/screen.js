@@ -3,6 +3,7 @@
 // 讀 index.html 的 STOCKS 清單 → Worker 抓 1 年日線 + 法人
 // → 用證交所／櫃買中心官方資料補 Yahoo 缺的日線（最新一天常是空的）；櫃買被擋就改走 Worker 或 FinMind
 // → 算指標、跑篩選 → 寫 data/latest.json、data/bars.json、data/history/YYYY-MM-DD.json
+// v4.2（2026/11/05）：每檔台股加 val（官方近四季本益比／淨值比／殖利率，eps、bvps 由官方收盤反推）；網頁用分類倍數算合理價
 // 不需要任何密鑰：FinMind token 在 Worker 裡。
 // ============================================================
 const fs = require('fs');
@@ -169,6 +170,39 @@ async function fetchTPExInst(dateYMD) {
     return out;
   } catch (e) { return null; }
 }
+// ── 4b. 官方本益比（近四季）：證交所 BWIBBU_d（上市）／櫃買 peQryDate（上櫃）；抓不到回 null，不影響主流程 ──
+// 回傳 {代號:{pe,pbr,yieldPct,finQ}}；本益比為 "-"（近四季虧損）時 pe 為 null
+async function fetchTWSEPE(dateYMD) {
+  try {
+    const j = await getJSON(`https://www.twse.com.tw/rwd/zh/afterTrading/BWIBBU_d?date=${dateYMD.replace(/-/g, '')}&selectType=ALL&response=json`, 2);
+    const tables = j && (j.tables || (j.fields ? [j] : [])) || [];
+    const t = tables.find(x => x.fields && pickCol(x.fields, '證券代號') >= 0 && pickCol(x.fields, '本益比') >= 0);
+    if (!t || !t.data || !t.data.length) return null;
+    const f = t.fields, iId = pickCol(f, '證券代號'), iPE = pickCol(f, '本益比'), iPB = pickCol(f, '淨值比'), iY = pickCol(f, '殖利率'), iQ = pickCol(f, '財報');
+    const out = {};
+    for (const row of t.data) out[String(row[iId]).trim()] = { pe: num(row[iPE]), pbr: iPB >= 0 ? num(row[iPB]) : null, yieldPct: iY >= 0 ? num(row[iY]) : null, finQ: iQ >= 0 ? String(row[iQ] ?? '').trim() || null : null };
+    return Object.keys(out).length ? out : null;
+  } catch (e) { return null; }
+}
+async function fetchTPExPE(dateYMD) {
+  try {
+    const j = await tpexJSON('afterTrading/peQryDate', dateYMD, 'type=EW');
+    const tables = j && (j.tables || (j.fields ? [j] : [])) || [];
+    const t = tables.find(x => x.fields && pickCol(x.fields, '代號') >= 0 && pickCol(x.fields, '本益比') >= 0);
+    if (!t || !t.data || !t.data.length) return null;
+    const f = t.fields, iId = pickCol(f, '代號'), iPE = pickCol(f, '本益比'), iPB = pickCol(f, '淨值比'), iY = pickCol(f, '殖利率');
+    const out = {};
+    for (const row of t.data) out[String(row[iId]).trim()] = { pe: num(row[iPE]), pbr: iPB >= 0 ? num(row[iPB]) : null, yieldPct: iY >= 0 ? num(row[iY]) : null, finQ: null };
+    return Object.keys(out).length ? out : null;
+  } catch (e) { return null; }
+}
+// FinMind 本益比（經 Worker，dataset=TaiwanStockPER；Worker 白名單需含此 dataset）：官方抓不到那檔時的備援，取最新一列
+async function fetchFinMindPER(id, start) {
+  const j = await getJSON(`${WORKER}/?type=fm&dataset=TaiwanStockPER&id=${id}&start=${start}&_t=${Date.now()}`, 2, x => x && Array.isArray(x.data));
+  const rows = j.data.filter(x => x && x.date).sort((a, b) => (a.date < b.date ? -1 : 1));
+  const x = rows[rows.length - 1]; if (!x) return null;
+  const pe = num(x.PER); return { pe: pe != null && pe > 0 ? pe : null, pbr: num(x.PBR), yieldPct: num(x.dividend_yield), finQ: null, date: x.date, src: 'finmind' };
+}
 // FinMind 法人歷史（經 Worker）→ {date:{f,t}}，單位：股
 async function fetchInstFinMind(id, start) {
   const j = await getJSON(`${WORKER}/?type=inst&id=${id}&start=${start}&_t=${Date.now()}`, 3, x => x && Array.isArray(x.data));
@@ -256,8 +290,8 @@ function analyze(s, bars, inst, idxBars) {
   const start = new Date(Date.now() - 370 * 86400e3).toISOString().slice(0, 10);
   const results = [], errors = [], bars = {};
   const dates = recentTradeDates(12);
-  const official = { twse: {}, tpex: {} }, offInst = { twse: null, tpex: null };
-  const srcLog = { twseDays: [], tpexDays: [], twseInst: false, tpexInst: false, fmBars: [], estBars: [] };
+  const official = { twse: {}, tpex: {} }, offInst = { twse: null, tpex: null }, offPE = { twse: null, tpex: null };
+  const srcLog = { twseDays: [], tpexDays: [], twseInst: false, tpexInst: false, twsePE: false, tpexPE: false, fmPE: [], fmBars: [], estBars: [] };
 
   // 6a. 先抓所有台股的 Yahoo 日線 + FinMind 法人
   const raw = {};
@@ -310,6 +344,9 @@ function analyze(s, bars, inst, idxBars) {
     const latestTW = srcLog.twseDays[0] || null, latestOTC = srcLog.tpexDays[0] || null;
     if (latestTW) { offInst.twse = await fetchTWSEInst(latestTW); srcLog.twseInst = !!offInst.twse; }
     if (latestOTC) { offInst.tpex = await fetchTPExInst(latestOTC); srcLog.tpexInst = !!offInst.tpex; }
+    // 官方本益比（同一天）
+    if (latestTW) { offPE.twse = await fetchTWSEPE(latestTW); srcLog.twsePE = !!offPE.twse; }
+    if (latestOTC) { offPE.tpex = await fetchTPExPE(latestOTC); srcLog.tpexPE = !!offPE.tpex; }
   }
 
   for (const s of stocks) {
@@ -345,7 +382,21 @@ function analyze(s, bars, inst, idxBars) {
       }
       bars[s.sym] = { bars: b, inst };
       if (s.sym.startsWith('^')) { results.push({ sym: s.sym, name: s.name, mkt: s.mkt, status: 'ok', index: true, asOf: b[b.length - 1].d, close: r2(b[b.length - 1].c), chgPct: r2((b[b.length - 1].c / b[b.length - 2].c - 1) * 100) }); continue; }
-      results.push(analyze(s, b, inst, (bars['^TWII'] || {}).bars || (raw['^TWII'] || {}).bars || null));
+      const r = analyze(s, b, inst, (bars['^TWII'] || {}).bars || (raw['^TWII'] || {}).bars || null);
+      // 估值欄 val：官方本益比／淨值比／殖利率（近四季）；eps＝官方收盤÷本益比；抓不到就 null（網頁顯示「—」）
+      if (s.mkt === 'TW') {
+        const id = s.sym.replace(/\.TWO?$/, ''), isOTC = s.sym.endsWith('.TWO');
+        let v = null;
+        if (MOCK) v = mockVal(s, r);
+        else {
+          const pm = isOTC ? offPE.tpex : offPE.twse, pd = isOTC ? srcLog.tpexDays[0] : srcLog.twseDays[0];
+          if (pm && pd && pm[id]) v = { ...pm[id], date: pd, src: isOTC ? 'tpex' : 'twse' };
+          else { try { v = await fetchFinMindPER(id, dates[dates.length - 1]); if (v) srcLog.fmPE.push(s.sym); } catch (e) { v = null; } }
+        }
+        if (v) { const px = (v.date === r.asOf) ? r.close : null; v.eps = (v.pe && px) ? r2(px / v.pe) : null; v.bvps = (v.pbr && px) ? r2(px / v.pbr) : null; }
+        r.val = v;
+      }
+      results.push(r);
     } catch (e) {
       errors.push({ sym: s.sym, stage: 'analyze', msg: String(e.message || e) });
       results.push({ sym: s.sym, name: s.name, tag: s.tag, mkt: s.mkt, status: 'fail' });
@@ -405,5 +456,11 @@ function mockBars(s) {
   for (let i = 0; i < 250; i++) { const d = new Date(t0 + i * 86400e3); if (d.getUTCDay() % 6 === 0) continue; const o = p, c = p * (1 + (R() - 0.5) * 0.06); bars.push({ d: d.toISOString().slice(0, 10), o, h: Math.max(o, c) * (1 + R() * 0.01), l: Math.min(o, c) * (1 - R() * 0.01), c, v: Math.round(1e6 + R() * 3e6), src: 'yahoo' }); p = c; }
   if (s.sym === '2330.TW') { const l = bars[bars.length - 1]; l.c = Math.max(...bars.slice(-21, -1).map(b => b.c)) * 1.02; l.v = 2e7; l.h = Math.max(l.h, l.c); }
   return bars;
+}
+function mockVal(s, r) {
+  const seed = [...s.sym].reduce((a, c) => a + c.charCodeAt(0), 3);
+  if (s.sym === '6770.TW') return { pe: null, pbr: 1.3, yieldPct: 0, finQ: '115/2', date: r.asOf, src: 'twse' }; // 虧損：本益比 "-"
+  if (s.sym === '3081.TWO') return null; // 抓不到
+  return { pe: r2(10 + (seed % 50)), pbr: r2(1 + (seed % 7) * 0.5), yieldPct: r2((seed % 40) / 10), finQ: '115/2', date: r.asOf, src: s.sym.endsWith('.TWO') ? 'tpex' : 'twse' };
 }
 function mockInst(bars) { const m = {}; bars.forEach((b, i) => { m[b.d] = { f: (i % 3 - 1) * 500000, t: i % 2 ? 200000 : -100000 }; }); m[bars[bars.length - 1].d] = { f: 800000, t: 300000 }; return m; }
