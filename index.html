@@ -167,7 +167,7 @@ const STOCKS=[
 const TAG_ORDER=["市值型","主動式","高股息","全球股","科技型","美債","黃金","晶圓代工","IC設計","晶片","EDA","記憶體","封測","設備","PCB","散熱","光通訊","連接線","電源","伺服器","面板","雲端","AI軟體","資訊服務","綠能","零售","保健","消費電子","光學鏡頭","電商","平台","電動車","太空","保險","金控","證券","航運","電信"];
 const tagIdx=s=>{const i=TAG_ORDER.indexOf(s.tag||'');return i<0?999:i;};
 
-// ── 估值欄（使用者 2026/11/05 核准；11/06 依五年歷史驗證後改：設備 30→35、電源 30→25，並加「自身歷史位置」第二基準）：分類本益比倍數 [低標,中值,高標]；純資訊欄，不進風險徽章、不進推播 ──
+// ── 估值欄（使用者 2026/11/05 核准；11/06 依五年歷史驗證後改：設備 30→35、電源 30→25，並加「自身歷史位置」第二基準；11/08 依使用者要求只放在「近N日數據」表上方，卡片與K線表頭不顯示，RSI 同樣只留在表格）：分類本益比倍數 [低標,中值,高標]；純資訊欄，不進風險徽章、不進推播 ──
 // 資料：data/latest.json 每檔 val（GitHub 程式每天抓證交所／櫃買中心「個股本益比、殖利率、淨值比」，近四季 EPS）；eps＝官方收盤÷本益比
 const PE_BAND={'晶圓代工':[15,20,25],'IC設計':[18,22,26],'晶片':[25,30,40],'封測':[14,17,20],'設備':[25,35,45],'PCB':[18,22,28],'散熱':[25,30,35],'光通訊':[35,45,60],'連接線':[20,24,28],'電源':[20,25,30],'伺服器':[15,18,22],'資訊服務':[15,18,22],'AI軟體':[30,40,50],'綠能':[20,25,30],'零售':[20,24,28],'保健':[25,30,35],'光學鏡頭':[15,18,22],'平台':[20,24,28],'消費電子':[28,30,35],'EDA':[35,40,45],'電商':[30,35,45],'證券':[12,15,18],'電信':[22,25,28]};
 const PB_BAND={'記憶體':[1.0,1.5,2.0],'面板':[0.6,0.9,1.2],'金控':[1.2,1.5,1.8],'保險':[1.2,1.5,1.8]}; // 景氣股／金融：用股價淨值比
@@ -212,7 +212,7 @@ function valRowHTML(s,db){
   else body=`${peTxt}${vi.pbr!=null?`｜淨值比 ${vi.pbr}`:''}<span style="color:#8b949e">　${vi.why}</span>`;
   const hv=valHist(vi,SCREEN.stocks[s.sym].val);
   const hist=hv?`<div class="ma-row" style="margin-top:2px"><span style="color:#8b949e">📜</span><span>${hv.txt}${histBadge(hv.label)}</span></div>`:'';
-  return`<div class="ma-row" style="margin-top:4px"><span style="color:#e3b341">💰 估值</span><span>${body}</span>${src}</div>${hist}`;
+  return`<div style="margin:0 0 8px"><div class="ma-row"><span style="color:#e3b341">💰 估值</span><span>${body}</span>${src}</div>${hist}</div>`;
 }
 function valCardHTML(s,db){
   const vi=valInfo(s,db);if(!vi)return'';
@@ -230,7 +230,8 @@ function rnd(n,d=2){return n==null?null:+n.toFixed(d);}
 // 多代理，最穩定的優先
 // 你的專屬 Cloudflare Worker（穩定、免費、無 CORS 問題）
 const WORKER_URL="https://gentle-mountain-7c00.wugawee.workers.dev";
-const SHOW_N=80; // K線圖與「近N日數據」表共用同一個區間（使用者 2026/10/27 要求兩者一致）
+const SHOW_N=80; // K線圖顯示近 80 日（2026/10/27 曾與數據表同區間；2026/11/08 使用者改為：K線維持 80 日、數據表改半年）
+const TABLE_N=120; // 「近N日數據」表顯示近 120 個交易日（約半年）；日線改抓 1 年，讓最早那幾列的 MA60／RSI／MACD 都算得出來
 
 function parseChart(json){
   const R=json.chart.result[0];const q=R.indicators.quote[0];
@@ -313,7 +314,7 @@ async function fillGapsFromIntraday(sym,data){
 }
 async function fetchStock(sym,tries=0){
   const cacheBuster=Date.now();
-  const url=`${WORKER_URL}/?symbol=${encodeURIComponent(sym)}&_t=${cacheBuster}`;
+  const url=`${WORKER_URL}/?symbol=${encodeURIComponent(sym)}&range=1y&_t=${cacheBuster}`;
   try{
     const ctrl=new AbortController();
     const timer=setTimeout(()=>ctrl.abort(),12000);
@@ -764,7 +765,7 @@ function cardHTML(s){
   const chg=rnd(db.last.c-db.prev.c),chgP=rnd(chg/db.prev.c*100),cls=chg>0?'up':chg<0?'dn':'fl';
   return`<div class="sc${s.sym===curSym?' on':''}" onclick="curSym='${s.sym}';renderChartInline('${s.sym}','${s.mkt}')">
     <div class="sc-nm">${nmTag(s)}</div><div class="sc-pr ${cls}">${db.last.c}</div>
-    <div class="sc-ch ${cls}">${chg>0?'+':''}${chg} (${chgP>0?'+':''}${chgP}%)</div><div style="font-size:10px;color:#8b949e;margin-top:3px;line-height:1.6">RSI <span style="white-space:nowrap">6日 ${rsiCell((db.rsi6||[])[(db.rsi6||[]).length-1],6)}</span>　<span style="white-space:nowrap">14日 ${rsiCell((db.rsi14||[])[(db.rsi14||[]).length-1],14)}</span></div>${valCardHTML(s,db)}${(()=>{const rb=riskBadges(s,db,true);return rb.length?`<div style="margin-top:3px;line-height:1.2">${rb.join('')}</div>`:'';})()}</div>`;
+    <div class="sc-ch ${cls}">${chg>0?'+':''}${chg} (${chgP>0?'+':''}${chgP}%)</div>${(()=>{const rb=riskBadges(s,db,true);return rb.length?`<div style="margin-top:3px;line-height:1.2">${rb.join('')}</div>`:'';})()}</div>`;
 }
 function renderList(mkt){
   const _l=STOCKS.filter(s=>s.mkt===mkt);
@@ -807,10 +808,7 @@ function chartHTML(sym){
       <span style="color:#58a6ff">MA10: ${db.ma10[db.ma10.length-1]??'—'}</span>
       <span style="color:#bc8cff">MA20: ${db.ma20[db.ma20.length-1]??'—'}</span>
       <span style="color:#26a641">MA60: ${db.ma60[db.ma60.length-1]??'—'}</span>
-      <span style="color:#8b949e">RSI6: ${rsiCell((db.rsi6||[])[(db.rsi6||[]).length-1],6)}</span>
-      <span style="color:#8b949e">RSI14: ${rsiCell((db.rsi14||[])[(db.rsi14||[]).length-1],14)}</span>
     </div>
-    ${valRowHTML(stk,db)}
     <canvas id="kC" style="width:100%;cursor:crosshair"></canvas>
     <div style="font-size:10px;color:#8b949e;margin:6px 0 3px">KD　K: ${kL.K}　D: ${kL.D}</div>
     <canvas id="kdC" style="width:100%"></canvas>
@@ -818,7 +816,8 @@ function chartHTML(sym){
     <canvas id="mC" style="width:100%"></canvas>
   </div>
   <div class="panel" style="overflow-x:auto">
-    <div style="font-size:13px;font-weight:700;margin-bottom:8px;color:#e3b341">📋 近${Math.min(SHOW_N,db.data.length)}日數據（${db.data[Math.max(0,db.data.length-SHOW_N)].date}–${db.last.date}，與K線圖同區間）<span style="font-size:10px;color:#8b949e;font-weight:400">　日期旁 <span style="color:#e3b341">*</span>＝Yahoo日線缺漏、以小時線補齊（成交量會偏少）</span></div>
+    <div style="font-size:13px;font-weight:700;margin-bottom:8px;color:#e3b341">📋 近${Math.min(TABLE_N,db.data.length)}日數據（${db.data[Math.max(0,db.data.length-TABLE_N)].date}–${db.last.date}，約半年；K線圖只畫近 ${Math.min(SHOW_N,db.data.length)} 日）<span style="font-size:10px;color:#8b949e;font-weight:400">　日期旁 <span style="color:#e3b341">*</span>＝Yahoo日線缺漏、以小時線補齊（成交量會偏少）</span></div>
+    ${valRowHTML(stk,db)}
     ${dataTableHTML(sym)}
   </div>`;
 }
@@ -826,7 +825,7 @@ function chartHTML(sym){
 // 近20日逐日數據表格（像看盤軟體）
 function dataTableHTML(sym){
   const db=DB[sym];if(!db)return'';
-  const N=SHOW_N;
+  const N=TABLE_N;
   const data=db.data.slice(-N);
   const offset=db.data.length-data.length;
   const _PP={'頭肩底':14,'頭肩頂':14,'三底':13,'三頂':13,'W底':12,'M頭':12,'兵':10,'鴉':10,'晨':10,'昏':10,'吞':8,'空吞':8,'雲':8,'貫':8,'升三':8,'降三':8,'錘':6,'倒':6,'蜻':6,'吊':6,'射':6,'墓':6,'頂':6,'底':6,'孕':6,'空孕':6,'十':2};
