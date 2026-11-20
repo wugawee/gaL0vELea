@@ -63,7 +63,6 @@ body{background:#0d1117;color:#e6edf3;font-family:-apple-system,"Microsoft Jheng
     <button class="tab" id="t-us" onclick="setView('us',this)">美股</button>
     <button class="tab" id="t-calc" onclick="setView('calc',this)">🧮 計算機</button>
     <button class="tab" id="t-inst" onclick="setView('inst',this)">🏦 法人</button>
-    <button class="tab" id="t-instrank" onclick="setView('instrank',this)">🌊 法人排行</button>
   </div>
 </div>
 
@@ -146,6 +145,7 @@ const STOCKS=[
   {sym:"SPCX",name:"SpaceX",mkt:"US",cur:"USD",tag:"太空"},
   {sym:"ENPH",name:"ENPH",mkt:"US",cur:"USD",tag:"綠能"},
   {sym:"MRVL",name:"MRVL",mkt:"US",cur:"USD",tag:"晶片"},
+{sym:"CBRS",name:"Cerebras",mkt:"US",cur:"USD",tag:"晶片"},
   {sym:"MU",name:"美光Micron",mkt:"US",cur:"USD",tag:"記憶體"},
   {sym:"SKHY",name:"SK海力士ADR",mkt:"US",cur:"USD",tag:"記憶體"},
   {sym:"ASX",name:"日月光ADR",mkt:"US",cur:"USD",tag:"封測"},
@@ -154,6 +154,7 @@ const STOCKS=[
   {sym:"GLD",name:"GLD黃金",mkt:"US",cur:"USD",tag:"黃金"},
   {sym:"IAU",name:"IAU黃金",mkt:"US",cur:"USD",tag:"黃金"},
   {sym:"CRWV",name:"CoreWeave",mkt:"US",cur:"USD",tag:"雲端"},
+  {sym:"ANT",name:"Anthropic(Claude)",mkt:"US",cur:"USD",tag:"AI軟體"},
   {sym:"SNPS",name:"Synopsys",mkt:"US",cur:"USD",tag:"EDA"},
   {sym:"CDNS",name:"Cadence",mkt:"US",cur:"USD",tag:"EDA"},
   {sym:"AXTI",name:"AXT磷化銦",mkt:"US",cur:"USD",tag:"光通訊"},
@@ -668,7 +669,6 @@ function render(){
   else if(curView==='us')renderList('US');
   else if(curView==='calc')renderCalcPage();
   else if(curView==='inst')renderInst();
-  else if(curView==='instrank')renderInstRank();
   else renderChart(curSym);
 }
 
@@ -713,7 +713,7 @@ function sumRow(s){
 function renderSummary(){
   const tw=STOCKS.filter(s=>s.mkt==='TW'),us=STOCKS.filter(s=>s.mkt==='US');
   const CAT_ETF=new Set(['0050.TW','009816.TW','00403A.TW','00981A.TW','00998A.TWO','0056.TW','00984A.TW','00878.TW','009826.TW','00696B.TWO','VOO','QQQ','GLD','IAU']);
-  const CAT_AI=new Set(['2330.TW','2303.TW','2454.TW','3017.TW','3324.TWO','2421.TW','3105.TWO','3711.TW','3680.TWO','2408.TW','2344.TW','2337.TW','6770.TW','2409.TW','3037.TW','2455.TW','3081.TWO','6116.TW','3481.TW','6902.TW','3443.TW','7769.TW','3665.TW','6239.TW','2308.TW','8227.TWO','3653.TW','3231.TW','6274.TWO','2383.TW','6213.TW','6214.TW','3029.TW','3450.TW','6442.TW','2368.TW','1815.TWO','TSM','NVDA','INTC','SKHY','ASX','GOOGL','MRVL','MU','CRWV','SNPS','CDNS','AXTI','AAOI','LITE','SIVE.ST','META']);
+  const CAT_AI=new Set(['2330.TW','2303.TW','2454.TW','3017.TW','3324.TWO','2421.TW','3105.TWO','3711.TW','3680.TWO','2408.TW','2344.TW','2337.TW','6770.TW','2409.TW','3037.TW','2455.TW','3081.TWO','6116.TW','3481.TW','6902.TW','3443.TW','7769.TW','3665.TW','6239.TW','2308.TW','8227.TWO','3653.TW','3231.TW','6274.TWO','2383.TW','6213.TW','6214.TW','3029.TW','3450.TW','6442.TW','2368.TW','1815.TWO','TSM','NVDA','INTC','SKHY','ASX','GOOGL','MRVL','CBRS','MU','CRWV','SNPS','CDNS','AXTI','AAOI','LITE','SIVE.ST','META','ANT']);
   const catBlock=(arr,label)=>arr.length?`<tr><td colspan="13" style="background:#1a1f26;color:#e3b341;font-weight:700;text-align:left;font-size:12px;padding:6px 16px">${label}</td></tr>`+sortTag(arr).map(sumRow).join(''):'';
   const grp=list=>({idx:list.filter(s=>s.sym.startsWith('^')),etf:list.filter(s=>CAT_ETF.has(s.sym)),ai:list.filter(s=>CAT_AI.has(s.sym)),min:list.filter(s=>!s.sym.startsWith('^')&&!CAT_ETF.has(s.sym)&&!CAT_AI.has(s.sym))});
   const twG=grp(tw),usG=grp(us);
@@ -721,6 +721,7 @@ function renderSummary(){
   document.getElementById('mainView').innerHTML=`
 <div class="panel">
   <div style="font-size:14px;font-weight:700;margin-bottom:8px;color:#e3b341">📊 總覽 ｜ 點任一列看K線　<span id="dataDate" style="font-size:11px;color:#8b949e;font-weight:400"></span></div>
+  <div id="mktMargin" style="font-size:12px;line-height:1.7;margin-bottom:10px;padding:8px 10px;background:#0d1117;border:1px solid #30363d;border-radius:8px">${mktMarginHTML()}</div>
   <table class="tbl"><thead>${head}</thead><tbody>
     <tr class="sec-row"><td colspan="13">📌 台股</td></tr>
     ${catBlock(twG.idx,'📈 指數')}${catBlock(twG.etf,'📊 ETF')}${catBlock(twG.ai,'🤖 AI股')}${catBlock(twG.min,'🏠 民生股')}
@@ -756,6 +757,7 @@ function renderSummary(){
     }
     dd.textContent='（'+txt+'）';
   }
+  ensureMktMargin(); // 大盤融資餘額：背景抓，抓到後填進上面那一格
 }
 
 // ── 台股/美股列表（卡片）──
@@ -785,6 +787,7 @@ function renderChartInline(sym,mkt){
   if(!holder)return;
   holder.innerHTML=chartHTML(sym);
   drawAll(sym);
+  ensureFlow(sym); // 台股：背景抓法人／融資，抓到後只重畫數據表
 }
 function renderList_updateActive(){
   document.querySelectorAll('.sgrid .sc').forEach(el=>{
@@ -825,6 +828,7 @@ function chartHTML(sym){
 // 近20日逐日數據表格（像看盤軟體）
 function dataTableHTML(sym){
   const db=DB[sym];if(!db)return'';
+  const fid=flowId(sym),fc=fid?FLOW_CACHE[fid]:null; // 台股才有法人／融資四欄
   const N=TABLE_N;
   const data=db.data.slice(-N);
   const offset=db.data.length-data.length;
@@ -868,16 +872,17 @@ function dataTableHTML(sym){
       <td>${dif[i]??'—'}</td>
       <td>${macdL[i]??'—'}</td>
       <td class="${hv>0?'up':hv<0?'dn':'fl'}">${hv??'—'}</td>
+      ${fid?flowTds(fc,d):''}
       <td class="${cls}">${chg>0?'+':''}${chg}</td>
       <td class="${cls}">${chgP>0?'+':''}${chgP}%</td>
     </tr>`;
   }).join('');
-  return`<table class="tbl" style="min-width:1260px">
+  return`<table class="tbl" id="dataTbl" data-sym="${sym}" style="min-width:${fid?1700:1260}px">
     <thead><tr>
       <th>日期</th><th>開盤</th><th>最高</th><th>最低</th><th>收盤</th><th>K棒型態</th><th>買賣訊號</th><th>成交量(張)</th>
       <th style="color:#e3b341">MA5</th><th style="color:#bc8cff">MA20</th><th style="color:#26a641">MA60</th>
-      <th>K值</th><th>D值</th><th>KD狀態</th><th>RSI6</th><th>RSI14</th><th>DIF</th><th>MACD</th><th>柱狀</th><th>漲跌</th><th>漲跌%</th>
-    </tr></thead><tbody>${rows}</tbody></table>`;
+      <th>K值</th><th>D值</th><th>KD狀態</th><th>RSI6</th><th>RSI14</th><th>DIF</th><th>MACD</th><th>柱狀</th>${fid?'<th style="white-space:nowrap">法人合計(張)</th><th style="white-space:nowrap">法人金額(估)</th><th style="white-space:nowrap">融資增減(張)</th><th style="white-space:nowrap">融資餘額(張)</th>':''}<th>漲跌</th><th>漲跌%</th>
+    </tr></thead><tbody>${rows}</tbody></table>${fid?flowNoteHTML(fc):''}`;
 }
 function drawAll(sym){
   const db=DB[sym];if(!db)return;
@@ -1016,47 +1021,122 @@ function aggInstByDate(rows){
   });
   return byDate;
 }
-let rankPeriod=1;
-async function renderInstRank(){
-  const twStocks=STOCKS.filter(s=>s.mkt==='TW'&&!s.sym.startsWith('^'));
-  const pb=(p,t)=>`<button onclick="rankPeriod=${p};renderInstRank()" style="padding:6px 14px;border-radius:6px;border:1px solid #30363d;background:${rankPeriod===p?'#e3b341':'#21262d'};color:${rankPeriod===p?'#0d1117':'#8b949e'};font-weight:700;font-size:13px;cursor:pointer">${t}</button>`;
-  document.getElementById('mainView').innerHTML=`
-  <div class="panel">
-    <div style="font-size:15px;font-weight:700;color:#e3b341;margin-bottom:10px">🌊 三大法人買賣超排行（自選${twStocks.length}檔，單位:張）</div>
-    <div style="display:flex;gap:8px;margin-bottom:12px">${pb(1,'今日')}${pb(5,'近5日')}${pb(20,'近20日')}</div>
-    <div id="rankBox"><div class="loading">🔄 載入法人資料中…（約${twStocks.length}檔，第一次較久）</div></div>
-  </div>`;
-  const results=[];
-  const BATCH=5;
-  for(let i=0;i<twStocks.length;i+=BATCH){
-    const batch=twStocks.slice(i,i+BATCH);
-    await Promise.all(batch.map(async s=>{
-      const id=s.sym.replace(/\.TWO?$/,'');
-      const raw=await fetchInstHist(id);
-      if(raw&&raw.status===200&&raw.data&&raw.data.length){
-        const byDate=aggInstByDate(raw.data);
-        const dates=Object.keys(byDate).sort().reverse().slice(0,rankPeriod);
-        let f=0,t=0,dl=0;
-        dates.forEach(d=>{f+=byDate[d].foreign;t+=byDate[d].trust;dl+=byDate[d].dealer;});
-        results.push({name:s.name,id,f,t,dl,total:f+t+dl});
-      }else{
-        results.push({name:s.name,id,f:0,t:0,dl:0,total:0,err:true});
-      }
-    }));
-    if(i+BATCH<twStocks.length)await new Promise(r=>setTimeout(r,150));
+// ── 個股每日「三大法人合計＋融資」，放進近120日數據表（2026/11/19；原本的「法人排行」分頁已移除）──
+// 只有台股個股／ETF 有這份資料；美股、指數沒有，不顯示這四欄
+const FLOW_CACHE={},FLOW_PENDING={};
+const FLOW_TTL=30*60*1000,FLOW_FAIL_TTL=5*60*1000; // 成功的資料 30 分鐘後重抓；失敗 5 分鐘後重試
+const FLOW_DAYS=200; // 往回抓 200 天，蓋得住數據表的 120 個交易日
+function flowId(sym){const s=STOCKS.find(x=>x.sym===sym);if(!s||s.mkt!=='TW'||sym.startsWith('^'))return null;return sym.replace(/\.TWO?$/,'');}
+function flowKey(dateStr){return String(dateStr).slice(5,10).replace('-','/');} // '2026-11-17' → '11/17'（跟K線資料的日期同格式）
+async function flowGetJSON(u){try{const r=await fetch(u,{cache:'no-store'});return await r.json();}catch(e){return null;}}
+async function fetchFlow(sym){
+  const id=flowId(sym);if(!id||FLOW_PENDING[id])return false;
+  FLOW_PENDING[id]=true;
+  try{
+    const d=new Date();d.setDate(d.getDate()-FLOW_DAYS);
+    const start=d.toISOString().slice(0,10);
+    const [ins,mg]=await Promise.all([
+      flowGetJSON(`${WORKER_URL}/?type=inst&id=${id}&start=${start}&_t=${Date.now()}`),
+      flowGetJSON(`${WORKER_URL}/?type=fm&dataset=TaiwanStockMarginPurchaseShortSale&id=${id}&start=${start}&_t=${Date.now()}`)
+    ]);
+    const okI=!!(ins&&ins.status===200&&Array.isArray(ins.data));
+    const okM=!!(mg&&mg.status===200&&Array.isArray(mg.data));
+    const needWorker=!!(mg&&mg.error&&String(mg.error).includes('白名單')); // Worker 還是舊版（沒開放融資資料集）
+    const old=FLOW_CACHE[id];
+    const inst=okI?{}:(old?old.inst:{}),margin=okM?{}:(old?old.margin:{});
+    if(okI)ins.data.forEach(r=>{const b=+r.buy,sl=+r.sell;if(!isFinite(b)||!isFinite(sl))return;const k=flowKey(r.date);inst[k]=(inst[k]||0)+(b-sl);}); // 外資＋投信＋自營商全部加總（股）
+    if(okM)mg.data.forEach(r=>{const t=+r.MarginPurchaseTodayBalance,y=+r.MarginPurchaseYesterdayBalance;if(r.MarginPurchaseTodayBalance==null||!isFinite(t))return;margin[flowKey(r.date)]={bal:t,chg:(r.MarginPurchaseYesterdayBalance==null||!isFinite(y))?null:t-y};}); // 單位：張
+    FLOW_CACHE[id]={ts:Date.now(),ok:okI&&okM,okI:okI||!!(old&&old.okI),okM:okM||!!(old&&old.okM),needWorker,inst,margin};
+  }finally{FLOW_PENDING[id]=false;}
+  return true;
+}
+function ensureFlow(sym){
+  const id=flowId(sym);if(!id||FLOW_PENDING[id])return;
+  const c=FLOW_CACHE[id];
+  if(c&&Date.now()-c.ts<(c.ok?FLOW_TTL:FLOW_FAIL_TTL))return;
+  fetchFlow(sym).then(done=>{if(done)refreshDataTable(sym);});
+}
+function refreshDataTable(sym){
+  const t=document.getElementById('dataTbl');
+  if(!t||t.getAttribute('data-sym')!==sym)return; // 使用者已經切到別檔，就不動畫面
+  const n=document.getElementById('flowNote');if(n)n.remove();
+  t.outerHTML=dataTableHTML(sym);
+}
+function flowAmtTxt(v){ // 元 → 億／萬
+  const a=Math.abs(v),sg=v>0?'+':v<0?'-':'';
+  if(a>=1e8)return sg+(a/1e8).toFixed(2)+'億';
+  return sg+Math.round(a/1e4).toLocaleString()+'萬';
+}
+function flowTds(fc,d){
+  if(!fc)return'<td class="fl">…</td><td class="fl">…</td><td class="fl">…</td><td class="fl">…</td>';
+  const dash='<td class="fl">—</td>';
+  const sh=fc.inst[d.date],m=fc.margin[d.date];
+  let out='';
+  if(sh==null)out+=dash+dash;
+  else{
+    const lots=Math.round(sh/1000),c1=lots>0?'up':lots<0?'dn':'fl';
+    const amt=sh*d.c,c2=amt>0?'up':amt<0?'dn':'fl';
+    out+=`<td class="${c1}" style="white-space:nowrap">${lots>0?'+':''}${lots.toLocaleString()}</td>`;
+    out+=(d.gap||!isFinite(amt))?dash:`<td class="${c2}" style="white-space:nowrap">${flowAmtTxt(amt)}</td>`;
   }
-  const box=document.getElementById('rankBox');
-  if(!box)return;
-  results.sort((a,b)=>b.total-a.total);
-  const lot=n=>Math.round(n/1000);
-  const cell=n=>{const v=lot(n);const cls=v>0?'up':v<0?'dn':'fl';return `<td class="${cls}" style="text-align:right">${v>0?'+':''}${v.toLocaleString()}</td>`;};
-  const rows=results.map((r,idx)=>{
-    if(r.err)return `<tr><td style="color:#8b949e">${idx+1}</td><td>${r.name} <span style="color:#8b949e">${r.id}</span></td><td colspan="4" style="color:#8b949e;text-align:center">—</td></tr>`;
-    const tl=lot(r.total);const tc=tl>0?'up':tl<0?'dn':'fl';
-    return `<tr><td style="color:#8b949e">${idx+1}</td><td style="white-space:nowrap">${r.name} <span style="color:#8b949e">${r.id}</span></td>${cell(r.f)}${cell(r.t)}${cell(r.dl)}<td class="${tc}" style="text-align:right;font-weight:700">${tl>0?'+':''}${tl.toLocaleString()}</td></tr>`;
-  }).join('');
-  box.innerHTML=`<div style="overflow-x:auto"><table class="tbl" style="min-width:520px;width:100%"><thead><tr><th>#</th><th>股票</th><th>外資</th><th>投信</th><th>自營</th><th>合計</th></tr></thead><tbody>${rows}</tbody></table></div>
-  <div style="font-size:11px;color:#8b949e;margin-top:8px">依「合計」買賣超排序（買超在上、賣超在下）。單位:張(1張=1000股)。標「—」為當下抓取失敗(FinMind限流,可稍後重點分頁)。資料源:FinMind。非投資建議。</div>`;
+  if(!m)out+=dash+dash;
+  else{
+    const g=m.chg,c3=g>0?'up':g<0?'dn':'fl';
+    out+=g==null?dash:`<td class="${c3}" style="white-space:nowrap">${g>0?'+':''}${g.toLocaleString()}</td>`;
+    out+=`<td style="white-space:nowrap">${m.bal.toLocaleString()}</td>`;
+  }
+  return out;
+}
+function flowNoteHTML(fc){
+  let warn='';
+  if(!fc)warn='🔄 法人／融資資料載入中…';
+  else if(fc.needWorker&&!fc.okM)warn='⚠️ 融資兩欄要先把 Cloudflare Worker 更新到 v4.3 才會有數字（法人兩欄不受影響）。';
+  else if(!fc.okI&&!fc.okM)warn='⚠️ 法人／融資資料這次抓不到（可能是 FinMind 限流或連線問題），約 5 分鐘後會自動重試。';
+  else if(!fc.okI)warn='⚠️ 法人資料這次抓不到，約 5 分鐘後會自動重試。';
+  else if(!fc.okM)warn='⚠️ 融資資料這次抓不到，約 5 分鐘後會自動重試。';
+  return`<div id="flowNote" style="margin-top:8px;font-size:10px;color:#8b949e;line-height:1.7">${warn?`<span style="color:#e3b341">${warn}</span><br>`:''}
+    法人合計＝外資＋投信＋自營商當日買賣超（張，<span class="up">紅＝買超</span>、<span class="dn">綠＝賣超</span>）。法人金額(估)＝合計股數 × 當日收盤價，<b>是估算</b>：交易所不公布個股的法人買賣金額。<br>
+    融資增減＝今日融資餘額 − 前一日餘額（張，<span class="up">紅＝增加</span>、<span class="dn">綠＝減少</span>）。當日的法人資料傍晚才有、融資晚上才有，還沒公布前顯示「—」。資料來源：FinMind（證交所／櫃買中心）。
+  </div>`;
+}
+// ── 大盤（上市）融資餘額，顯示在總覽頁（2026/11/19）──
+const MM={ts:0,ok:false,needWorker:false,rows:[],pending:false};
+async function fetchMktMargin(){
+  if(MM.pending)return false;
+  MM.pending=true;
+  try{
+    const d=new Date();d.setDate(d.getDate()-20);
+    const j=await flowGetJSON(`${WORKER_URL}/?type=fm&dataset=TaiwanStockTotalMarginPurchaseShortSale&start=${d.toISOString().slice(0,10)}&_t=${Date.now()}`);
+    const ok=!!(j&&j.status===200&&Array.isArray(j.data));
+    MM.needWorker=!!(j&&j.error&&(String(j.error).includes('白名單')||String(j.error).includes('缺少 id')));
+    if(ok){
+      MM.rows=j.data.filter(r=>r.name==='MarginPurchaseMoney'&&r.TodayBalance!=null&&isFinite(+r.TodayBalance))
+        .map(r=>({date:String(r.date),bal:+r.TodayBalance,chg:(r.YesBalance==null||!isFinite(+r.YesBalance))?null:+r.TodayBalance-+r.YesBalance}))
+        .sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);
+    }
+    MM.ok=ok&&MM.rows.length>0;MM.ts=Date.now();
+  }finally{MM.pending=false;}
+  return true;
+}
+function ensureMktMargin(){
+  if(MM.pending)return;
+  if(MM.ts&&Date.now()-MM.ts<(MM.ok?FLOW_TTL:FLOW_FAIL_TTL))return;
+  fetchMktMargin().then(done=>{const el=document.getElementById('mktMargin');if(done&&el)el.innerHTML=mktMarginHTML();});
+}
+function mktMarginHTML(){
+  const head='<b style="color:#e3b341">💰 大盤融資餘額（上市）</b>　';
+  if(!MM.rows.length){
+    if(!MM.ts)return head+'<span style="color:#8b949e">載入中…</span>';
+    if(MM.needWorker)return head+'<span style="color:#e3b341">要先把 Cloudflare Worker 更新到 v4.3 才會顯示。</span>';
+    return head+'<span style="color:#8b949e">這次抓不到（約 5 分鐘後自動重試）。</span>';
+  }
+  const yi=v=>v/1e8;
+  const chgTxt=(g,dec)=>g==null?'—':`<span class="${g>0?'up':g<0?'dn':'fl'}">${g>0?'+':g<0?'-':''}${Math.abs(yi(g)).toLocaleString(undefined,{minimumFractionDigits:dec,maximumFractionDigits:dec})}</span>`;
+  const last=MM.rows[MM.rows.length-1];
+  const recent=MM.rows.slice(-5).reverse().map(r=>`<span style="white-space:nowrap;margin-right:12px">${flowKey(r.date)}　${Math.round(yi(r.bal)).toLocaleString()} 億（${chgTxt(r.chg,1)}）</span>`).join('');
+  return head+`<b style="font-size:14px">${yi(last.bal).toLocaleString(undefined,{minimumFractionDigits:1,maximumFractionDigits:1})} 億</b>　<span style="color:#8b949e">${flowKey(last.date)}，較前一日</span> ${chgTxt(last.chg,1)} <span style="color:#8b949e">億</span>
+    <div style="margin-top:4px;color:#8b949e">近5日：${recent}</div>
+    <div style="margin-top:2px;font-size:10px;color:#8b949e">融資餘額＝投資人向券商借錢買股、還沒還的總金額（<span class="up">紅＝增加</span>、<span class="dn">綠＝減少</span>）。證交所晚上才公布當日數字。資料來源：FinMind（證交所）。</div>`;
 }
 let instCurId=null;
 async function renderInst(){
