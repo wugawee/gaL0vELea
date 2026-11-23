@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-23T22:01:48.343Z",
+ "generatedAt": "2026-11-23T22:49:10.711Z",
  "asOfTW": "2026-11-23",
  "coverage": {
   "twStocks": 55,
@@ -26,7 +26,7 @@
    "estBars": [
     "^TWII"
    ],
-   "reusedOfficialBars": 1384
+   "reusedOfficialBars": 1439
   }
  },
  "lists": {
