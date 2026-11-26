@@ -63,6 +63,7 @@ body{background:#0d1117;color:#e6edf3;font-family:-apple-system,"Microsoft Jheng
     <button class="tab" id="t-us" onclick="setView('us',this)">美股</button>
     <button class="tab" id="t-calc" onclick="setView('calc',this)">🧮 計算機</button>
     <button class="tab" id="t-inst" onclick="setView('inst',this)">🏦 法人</button>
+    <button class="tab" id="t-mkt" onclick="setView('mkt',this)">📉 大盤籌碼</button>
   </div>
 </div>
 
@@ -669,6 +670,7 @@ function render(){
   else if(curView==='us')renderList('US');
   else if(curView==='calc')renderCalcPage();
   else if(curView==='inst')renderInst();
+  else if(curView==='mkt')renderMkt();
   else renderChart(curSym);
 }
 
@@ -1105,7 +1107,7 @@ async function fetchMktMargin(){
   if(MM.pending)return false;
   MM.pending=true;
   try{
-    const d=new Date();d.setDate(d.getDate()-20);
+    const d=new Date();d.setDate(d.getDate()-MKT_DAYS); // 2026/11/24：改抓六個月，給「大盤籌碼」分頁用；總覽這一格仍只顯示近5日
     const j=await flowGetJSON(`${WORKER_URL}/?type=fm&dataset=TaiwanStockTotalMarginPurchaseShortSale&start=${d.toISOString().slice(0,10)}&_t=${Date.now()}`);
     const ok=!!(j&&j.status===200&&Array.isArray(j.data));
     MM.needWorker=!!(j&&j.error&&(String(j.error).includes('白名單')||String(j.error).includes('缺少 id')));
@@ -1135,8 +1137,123 @@ function mktMarginHTML(){
   const last=MM.rows[MM.rows.length-1];
   const recent=MM.rows.slice(-5).reverse().map(r=>`<span style="white-space:nowrap;margin-right:12px">${flowKey(r.date)}　${Math.round(yi(r.bal)).toLocaleString()} 億（${chgTxt(r.chg,1)}）</span>`).join('');
   return head+`<b style="font-size:14px">${yi(last.bal).toLocaleString(undefined,{minimumFractionDigits:1,maximumFractionDigits:1})} 億</b>　<span style="color:#8b949e">${flowKey(last.date)}，較前一日</span> ${chgTxt(last.chg,1)} <span style="color:#8b949e">億</span>
-    <div style="margin-top:4px;color:#8b949e">近5日：${recent}</div>
+    <div style="margin-top:4px;color:#8b949e">近5日：${recent}<span style="white-space:nowrap;color:#58a6ff;cursor:pointer" onclick="setView('mkt',document.getElementById('t-mkt'))">看六個月 →</span></div>
     <div style="margin-top:2px;font-size:10px;color:#8b949e">融資餘額＝投資人向券商借錢買股、還沒還的總金額（<span class="up">紅＝增加</span>、<span class="dn">綠＝減少</span>）。證交所晚上才公布當日數字。資料來源：FinMind（證交所）。</div>`;
+}
+// ── 「大盤籌碼」分頁：台指期日盤／夜盤、期現貨價差、外資期貨淨空單、大盤融資，近六個月（2026/11/24）──
+const MKT_DAYS=200,MKT_ROWS=120; // 往回抓 200 天，表格顯示最近 120 個交易日（約六個月）
+const TXF={ts:0,ok:false,okD:false,okI:false,needWorker:false,day:{},night:{},fnet:{},pending:false};
+async function fetchTxf(){
+  if(TXF.pending)return false;
+  TXF.pending=true;
+  try{
+    const d=new Date();d.setDate(d.getDate()-MKT_DAYS);
+    const st=d.toISOString().slice(0,10);
+    const [fd,fi]=await Promise.all([
+      flowGetJSON(`${WORKER_URL}/?type=fm&dataset=TaiwanFuturesDaily&id=TX&start=${st}&_t=${Date.now()}`),
+      flowGetJSON(`${WORKER_URL}/?type=fm&dataset=TaiwanFuturesInstitutionalInvestors&id=TX&start=${st}&_t=${Date.now()}`)
+    ]);
+    const okD=!!(fd&&fd.status===200&&Array.isArray(fd.data));
+    const okI=!!(fi&&fi.status===200&&Array.isArray(fi.data));
+    TXF.needWorker=[fd,fi].some(j=>j&&j.error&&String(j.error).includes('白名單')); // Worker 還是舊版（沒開放期貨資料集）
+    if(okD){
+      const day={},night={};
+      fd.data.forEach(r=>{
+        if(String(r.contract_date).includes('/'))return; // 跨月價差單不算
+        const v=+r.volume,c=+r.close;
+        if(!(v>0)||!(c>0))return;
+        const tgt=r.trading_session==='position'?day:r.trading_session==='after_market'?night:null;
+        if(!tgt)return;
+        const k=String(r.date).slice(0,10),cur=tgt[k];
+        // 同一天同一時段取成交量最大的合約（＝近月主力；結算日當天會自動換到次月）
+        if(!cur||v>cur.vol)tgt[k]={c,chg:isFinite(+r.spread)?+r.spread:null,pct:isFinite(+r.spread_per)?+r.spread_per:null,vol:v,contract:String(r.contract_date)};
+      });
+      TXF.day=day;TXF.night=night;
+    }
+    if(okI){
+      const fnet={};
+      fi.data.forEach(r=>{
+        if(!String(r.institutional_investors).includes('外資'))return;
+        const sh=+r.short_open_interest_balance_volume,lg=+r.long_open_interest_balance_volume;
+        if(r.short_open_interest_balance_volume==null||r.long_open_interest_balance_volume==null||!isFinite(sh)||!isFinite(lg))return;
+        fnet[String(r.date).slice(0,10)]=sh-lg; // 空單未平倉 − 多單未平倉（口）；正數＝淨空
+      });
+      TXF.fnet=fnet;
+    }
+    TXF.okD=okD||TXF.okD;TXF.okI=okI||TXF.okI;
+    TXF.ok=okD&&okI;TXF.ts=Date.now();
+  }finally{TXF.pending=false;}
+  return true;
+}
+function ensureMkt(){
+  const stale=o=>!o.ts||Date.now()-o.ts>=(o.ok?FLOW_TTL:FLOW_FAIL_TTL);
+  const redraw=done=>{if(done&&curView==='mkt')renderMkt(true);};
+  if(!TXF.pending&&stale(TXF))fetchTxf().then(redraw);
+  if(!MM.pending&&stale(MM))fetchMktMargin().then(redraw);
+}
+function mktRows(){
+  // 加權指數收盤：用已載入的 ^TWII 日線，只取最近 140 根（避免去年同月同日撞到）
+  const tw={};const idx=DB['^TWII'];
+  if(idx&&idx.data)idx.data.slice(-140).forEach(d=>{if(d&&!d.gap&&d.c!=null&&isFinite(d.c))tw[d.date]=d.c;});
+  const mg={};MM.rows.forEach(r=>{mg[r.date.slice(0,10)]=r;});
+  const set={};[TXF.day,TXF.night,TXF.fnet,mg].forEach(o=>Object.keys(o).forEach(k=>{set[k]=1;}));
+  const dates=Object.keys(set).sort(); // 舊→新
+  let prevNet=null;const out=[];
+  dates.forEach(k=>{
+    const dy=TXF.day[k]||null,nt=TXF.night[k]||null,net=(k in TXF.fnet)?TXF.fnet[k]:null,m=mg[k]||null;
+    const twc=tw[flowKey(k)];
+    out.push({date:k,tw:twc==null?null:twc,dy,nt,basis:(dy&&twc!=null)?dy.c-twc:null,net,netChg:(net!=null&&prevNet!=null)?net-prevNet:null,m});
+    if(net!=null)prevNet=net;
+  });
+  return out.slice(-MKT_ROWS).reverse(); // 新→舊
+}
+function renderMkt(keepScroll){
+  const mv=document.getElementById('mainView');if(!mv)return;
+  const old=document.getElementById('mktPanel');const sl=old?old.scrollLeft:0;const sy=window.scrollY;
+  const num=(v,dec)=>v==null||!isFinite(v)?'—':v.toLocaleString(undefined,{minimumFractionDigits:dec||0,maximumFractionDigits:dec||0});
+  const sgn=(v,dec,unit)=>v==null||!isFinite(v)?'<td class="fl">—</td>':`<td class="${v>0?'up':v<0?'dn':'fl'}" style="white-space:nowrap">${v>0?'+':v<0?'-':''}${num(Math.abs(v),dec)}${unit||''}</td>`;
+  const loading=!TXF.ts&&!MM.ts;
+  const rows=mktRows();
+  let warn='';
+  if(loading||!TXF.ts)warn='🔄 資料載入中（六個月的期貨資料比較大，第一次要等幾秒）…';
+  else if(TXF.needWorker&&!(TXF.okD&&TXF.okI))warn='⚠️ 台指期與外資期貨這幾欄，要先把 Cloudflare Worker 更新到 v4.4 才會有數字（融資那兩欄不受影響）。';
+  else if(TXF.ts&&!TXF.okD&&!TXF.okI)warn='⚠️ 期貨資料這次抓不到（可能是 FinMind 限流或連線問題），約 5 分鐘後會自動重試。';
+  else if(TXF.ts&&!TXF.okD)warn='⚠️ 台指期行情這次抓不到，約 5 分鐘後會自動重試。';
+  else if(TXF.ts&&!TXF.okI)warn='⚠️ 外資期貨未平倉這次抓不到，約 5 分鐘後會自動重試。';
+  if(MM.ts&&!MM.rows.length)warn+=(warn?'<br>':'')+(MM.needWorker?'⚠️ 融資兩欄要先把 Cloudflare Worker 更新到 v4.3 以上。':'⚠️ 大盤融資這次抓不到，約 5 分鐘後會自動重試。');
+  const body=rows.map(r=>{
+    const dy=r.dy,nt=r.nt,m=r.m;
+    return `<tr><td style="white-space:nowrap">${r.date.slice(5).replace('-','/')}</td>
+      <td>${num(r.tw,0)}</td>
+      <td>${dy?num(dy.c,0):'—'}</td>${sgn(dy?dy.chg:null,0)}${sgn(dy?dy.pct:null,2,'%')}
+      <td>${nt?num(nt.c,0):'—'}</td>${sgn(nt?nt.chg:null,0)}${sgn(nt?nt.pct:null,2,'%')}
+      ${sgn(r.basis==null?null:Math.round(r.basis),0)}
+      <td style="white-space:nowrap">${num(r.net,0)}</td>${sgn(r.netChg,0)}
+      <td style="white-space:nowrap">${m?num(m.bal/1e8,1):'—'}</td>${sgn(m&&m.chg!=null?m.chg/1e8:null,1)}</tr>`;
+  }).join('');
+  mv.innerHTML=`
+  <div class="panel" id="mktPanel">
+    <div style="font-size:15px;font-weight:700;color:#e3b341;margin-bottom:8px">📉 大盤籌碼｜台指期、外資期貨、融資（近六個月，最多 ${MKT_ROWS} 個交易日）</div>
+    ${warn?`<div style="font-size:11px;color:#e3b341;margin-bottom:8px;line-height:1.7">${warn}</div>`:''}
+    ${rows.length?`<table class="tbl" id="mktTbl" style="min-width:1080px"><thead><tr>
+      <th>日期</th><th style="white-space:nowrap">加權收盤</th>
+      <th style="white-space:nowrap">台指期日盤</th><th style="white-space:nowrap">日盤漲跌</th><th style="white-space:nowrap">日盤%</th>
+      <th style="white-space:nowrap">台指期夜盤</th><th style="white-space:nowrap">夜盤漲跌</th><th style="white-space:nowrap">夜盤%</th>
+      <th style="white-space:nowrap">價差(期−現)</th>
+      <th style="white-space:nowrap">外資淨空單(口)</th><th style="white-space:nowrap">淨空增減</th>
+      <th style="white-space:nowrap">融資餘額(億)</th><th style="white-space:nowrap">融資增減(億)</th>
+    </tr></thead><tbody>${body}</tbody></table>`:(loading?'':'<div class="loading">目前沒有資料</div>')}
+    <div style="margin-top:8px;font-size:10px;color:#8b949e;line-height:1.8">
+      顏色：<span class="up">紅＝數字增加或上漲</span>、<span class="dn">綠＝數字減少或下跌</span>（外資淨空單「增加」代表外資更偏空，這一欄紅色不是好消息）。<br>
+      台指期＝臺股期貨當天成交量最大的那個月份合約（平常是近月，結算日會換到下個月）；漲跌是跟前一個交易日的結算價比。<br>
+      夜盤列在它所屬的交易日：某一天那一列的夜盤，是「前一個交易日下午 3 點開盤、到當天清晨 5 點收盤」那一場，所以它比同一列的日盤早發生。<br>
+      價差＝台指期日盤收盤 − 加權指數收盤；正數叫正價差（期貨比現貨貴），負數叫逆價差。除息旺季逆價差會偏大，不能只看數字大小。<br>
+      外資淨空單＝外資臺股期貨「空單未平倉 − 多單未平倉」（口），不含小型臺指與選擇權。融資餘額是上市的金額。<br>
+      期交所下午、證交所晚上才公布當日數字，還沒公布的格子顯示「—」。資料來源：FinMind（期交所、證交所）；加權指數來自 Yahoo。
+    </div>
+  </div>`;
+  if(keepScroll){const p=document.getElementById('mktPanel');if(p)p.scrollLeft=sl;window.scrollTo(0,sy);}
+  ensureMkt();
 }
 let instCurId=null;
 async function renderInst(){
